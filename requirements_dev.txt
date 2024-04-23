@@ -1,0 +1,4 @@
+black==24.3.0
+autopep
+pip==24.0
+check-manifest==0.49

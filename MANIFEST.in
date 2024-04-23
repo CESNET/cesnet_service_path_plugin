@@ -1,0 +1,13 @@
+include CONTRIBUTING.md
+include LICENSE
+include README.md
+
+recursive-include tests *
+recursive-include komora-service-path-plugin/templates *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+
+
+recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+
+graft templates
