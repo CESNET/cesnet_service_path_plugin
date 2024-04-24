@@ -14,7 +14,7 @@ segment_plugin_buttons = [
 
 service_plugin_buttons = [
     PluginMenuButton(
-        link="plugins:komora_service_path_plugin:segmentpath_add",
+        link="plugins:komora_service_path_plugin:segment_add",
         title="Add",
         icon_class="mdi mdi-plus-thick",
         color=ButtonColorChoices.GREEN,
@@ -24,7 +24,7 @@ service_plugin_buttons = [
 
 _menu_items = (
     PluginMenuItem(
-        link="plugins:komora_service_path_plugin:segmentpath_list",
+        link="plugins:komora_service_path_plugin:segment_list",
         link_text="Segments",
         buttons=segment_plugin_buttons,
     ),

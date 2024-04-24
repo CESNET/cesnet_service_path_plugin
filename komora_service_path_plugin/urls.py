@@ -5,31 +5,31 @@ from . import models, views
 
 urlpatterns = (
     path(
-        "segment-paths/",
-        views.SegmentPathListView.as_view(),
-        name="segmentpath_list"),
+        "segments/",
+        views.SegmentListView.as_view(),
+        name="segment_list"),
     path(
-        "segment-paths/add/",
-        views.SegmentPathEditView.as_view(),
-        name="segmentpath_add"),
+        "segments/add/",
+        views.SegmentEditView.as_view(),
+        name="segment_add"),
     path(
-        "segment-paths/<int:pk>/",
-        views.SegmentPathView.as_view(),
-        name="segmentpath"),
+        "segments/<int:pk>/",
+        views.SegmentView.as_view(),
+        name="segment"),
     path(
-        "segment-paths/<int:pk>/edit/",
-        views.SegmentPathEditView.as_view(),
-        name="segmentpath_edit"),
+        "segments/<int:pk>/edit/",
+        views.SegmentEditView.as_view(),
+        name="segment_edit"),
     path(
-        "segment-paths/<int:pk>/delete/",
-        views.SegmentPathDeleteView.as_view(),
-        name="segmentpath_delete"),
+        "segments/<int:pk>/delete/",
+        views.SegmentDeleteView.as_view(),
+        name="segment_delete"),
     path(
-        "segment-paths/<int:pk>/changelog/",
+        "segments/<int:pk>/changelog/",
         ObjectChangeLogView.as_view(),
-        name="segmentpath_changelog",
+        name="segment_changelog",
         kwargs={
-            "model": models.SegmentPath},
+            "model": models.Segment},
     ),
     path(
         "service-paths/",

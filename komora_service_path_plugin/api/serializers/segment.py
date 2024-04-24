@@ -3,15 +3,15 @@ from dcim.api.nested_serializers import NestedDeviceSerializer
 from netbox.api.serializers import NetBoxModelSerializer, WritableNestedSerializer
 from rest_framework import serializers
 
-from ...models.segment_path import SegmentPath
+from ...models.segment import Segment
 
 
-class SegmentPathSerializer(NetBoxModelSerializer):
+class SegmentSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:komora_service_path_plugin-api:segmentpath-detail")
+        view_name="plugins-api:komora_service_path_plugin-api:segment-detail")
 
     class Meta:
-        model = SegmentPath
+        model = Segment
         fields = (
             "id",
             "url",)

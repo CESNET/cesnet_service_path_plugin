@@ -1,10 +1,10 @@
 from netbox.filtersets import NetBoxModelFilterSet
-from ..models import SegmentPath
+from ..models import Segment
 
 
-class SegmentPathFilterSet(NetBoxModelFilterSet):
+class SegmentFilterSet(NetBoxModelFilterSet):
     class Meta:
-        model = SegmentPath
+        model = Segment
         fields = []
 
     def search(self, queryset, name, value):

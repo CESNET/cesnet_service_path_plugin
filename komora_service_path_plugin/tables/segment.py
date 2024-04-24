@@ -1,13 +1,13 @@
 import django_tables2 as tables
 from netbox.tables import NetBoxTable, ChoiceFieldColumn
 
-from ..models import SegmentPath
+from ..models import Segment
 
 
-class SegmentPathTable(NetBoxTable):
+class SegmentTable(NetBoxTable):
     name = tables.Column(linkify=True)
 
     class Meta(NetBoxTable.Meta):
-        model = SegmentPath
+        model = Segment
         fields = ("pk", "id", "name", "actions")
         default_columns = ("name",)

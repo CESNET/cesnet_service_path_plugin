@@ -1,2 +1,2 @@
-from .segment_path import *
+from .segment import *
 from .service_path import *

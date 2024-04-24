@@ -3,10 +3,10 @@ from ipam.models import Prefix
 from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
 from utilities.forms.fields import CommentField, DynamicModelChoiceField
 
-from ..models import SegmentPath
+from ..models import Segment
 
 
-class SegmentPathForm(NetBoxModelForm):
+class SegmentForm(NetBoxModelForm):
     class Meta:
-        model = SegmentPath
+        model = Segment
         fields = ("name", "tags")
