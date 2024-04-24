@@ -1,12 +1,11 @@
 from netbox.filtersets import NetBoxModelFilterSet
-from . import service_path
+from ..models import ServicePath
 
 
-# class komora_service_path_pluginFilterSet(NetBoxModelFilterSet):
-#
-#     class Meta:
-#         model = komora_service_path_plugin
-#         fields = ['name', ]
-#
-#     def search(self, queryset, name, value):
-#         return queryset.filter(description__icontains=value)
+class ServicePathFilterSet(NetBoxModelFilterSet):
+    class Meta:
+        model = ServicePath
+        fields = []
+
+    def search(self, queryset, name, value):
+        return queryset.filter(description__icontains=value)

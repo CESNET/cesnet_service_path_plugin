@@ -2,7 +2,7 @@
 
 __author__ = """Jan Krupa"""
 __email__ = "jan.krupa@cesnet.cz"
-__version__ = "0.1.0" # change according to setup.py or pyprojet.toml
+__version__ = "0.1.0"  # change according to setup.py or pyprojet.toml
 
 
 from extras.plugins import PluginConfig

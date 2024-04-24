@@ -8,8 +8,7 @@ from ...models.service_path import ServicePath
 
 class ServicePathSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:komora_service_path_plugin-api:servicepath-detail"
-    )
+        view_name="plugins-api:komora_service_path_plugin-api:servicepath-detail")
 
     class Meta:
         model = ServicePath
@@ -21,5 +20,3 @@ class ServicePathSerializer(NetBoxModelSerializer):
     #    # Enforce model validation
     #    super().validate(data)
     #    return data
-
-

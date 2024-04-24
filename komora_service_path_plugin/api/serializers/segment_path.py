@@ -8,8 +8,7 @@ from ...models.segment_path import SegmentPath
 
 class SegmentPathSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:komora_service_path_plugin-api:segmentpath-detail"
-    )
+        view_name="plugins-api:komora_service_path_plugin-api:segmentpath-detail")
 
     class Meta:
         model = SegmentPath
@@ -21,5 +20,3 @@ class SegmentPathSerializer(NetBoxModelSerializer):
     #    # Enforce model validation
     #    super().validate(data)
     #    return data
-
-

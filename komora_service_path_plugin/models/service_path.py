@@ -3,7 +3,7 @@ from django.urls import reverse
 from netbox.models import NetBoxModel
 
 
-class segment_path(NetBoxModel):
+class ServicePath(NetBoxModel):
     pass
     '''
     name = models.CharField(max_length=100)
