@@ -94,7 +94,7 @@ class Segment(NetBoxModel):
 
     def get_absolute_url(self):
         return reverse(
-            "plugins:komora_service_path_plugin:service_path",
+            "plugins:komora_service_path_plugin:segment",
             args=[
                 self.pk])
 
