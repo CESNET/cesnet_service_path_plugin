@@ -13,7 +13,7 @@ class KomoraServicePathPluginConfig(PluginConfig):
     verbose_name = "Komora ServicePath Plugin"
     description = "Synchronize data between Komora and NetBox. Copies Segment and Service Paths from Komora."
     version = __version__
-    base_url = "komora_service_path_plugin"
+    base_url = "komora-service-path-plugin"
 
 
 config = KomoraServicePathPluginConfig
