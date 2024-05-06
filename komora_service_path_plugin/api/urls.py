@@ -4,7 +4,7 @@ from . import views
 
 app_name = 'komora_service_path_plugin'
 router = NetBoxRouter()
-router.register('segment', views.SegmentViewSet)
-router.register('service-path', views.ServicePathViewSet)
+router.register('segments', views.SegmentViewSet)
+router.register('service-paths', views.ServicePathViewSet)
 
 urlpatterns = router.urls

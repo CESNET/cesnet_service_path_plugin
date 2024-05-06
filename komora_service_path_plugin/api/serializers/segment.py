@@ -9,15 +9,15 @@ class SegmentSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="plugins-api:komora_service_path_plugin-api:segment-detail"
     )
-    supplier = NestedTenantSerializer(read_only=True)
-    site_a = NestedSiteSerializer(read_only=True)
-    location_a = NestedLocationSerializer(read_only=True)
-    device_a = NestedDeviceSerializer(read_only=True)
-    port_a = NestedInterfaceSerializer(read_only=True)
-    site_b = NestedSiteSerializer(read_only=True)
-    location_b = NestedLocationSerializer(read_only=True)
-    device_b = NestedDeviceSerializer(read_only=True)
-    port_b = NestedInterfaceSerializer(read_only=True)
+    supplier = NestedTenantSerializer(required=True)
+    site_a = NestedSiteSerializer(required=True)
+    location_a = NestedLocationSerializer(required=True)
+    device_a = NestedDeviceSerializer(required=False, allow_null=True)
+    port_a = NestedInterfaceSerializer(required=False, allow_null=True)
+    site_b = NestedSiteSerializer(required=True)
+    location_b = NestedLocationSerializer(required=True)
+    device_b = NestedDeviceSerializer(required=False, allow_null=True)
+    port_b = NestedInterfaceSerializer(required=False, allow_null=True)
 
     class Meta:
         model = Segment

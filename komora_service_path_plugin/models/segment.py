@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 class Segment(NetBoxModel):
     name = models.CharField(max_length=255)
     network_label = models.CharField(max_length=255, null=True, blank=True)
-    install_date = models.DateField()
+    install_date = models.DateField(null=True, blank=True)
     termination_date = models.DateField(null=True, blank=True)
 
     supplier = models.ForeignKey(
