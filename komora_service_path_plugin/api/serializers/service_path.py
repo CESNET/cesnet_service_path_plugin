@@ -8,11 +8,19 @@ class ServicePathSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="plugins-api:komora_service_path_plugin-api:servicepath-detail"
     )
-    # segments = SegmentSerializer(many=True, read_only=True)
+    segments = SegmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = ServicePath
-        fields = "__all__"
+        fields = [
+            "id",
+            "url",
+            "display",
+            "name",
+            "state",
+            "kind",
+            "segments",
+        ]
 
     def validate(self, data):
         super().validate(data)

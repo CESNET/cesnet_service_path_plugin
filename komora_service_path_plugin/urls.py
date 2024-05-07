@@ -48,4 +48,35 @@ urlpatterns = (
         name="servicepath_changelog",
         kwargs={"model": models.ServicePath},
     ),
+    path(
+        "service-path-segment-mappings/",
+        views.ServicePathSegmentMappingListView.as_view(),
+        name="servicepathsegmentmapping_list",
+    ),
+    path(
+        "service-path-segment-mappings/add/",
+        views.ServicePathSegmentMappingEditView.as_view(),
+        name="servicepathsegmentmapping_add",
+    ),
+    path(
+        "service-path-segment-mappings/<int:pk>/",
+        views.ServicePathSegmentMappingView.as_view(),
+        name="servicepathsegmentmapping",
+    ),
+    path(
+        "service-path-segment-mappings/<int:pk>/edit/",
+        views.ServicePathSegmentMappingEditView.as_view(),
+        name="servicepathsegmentmapping_edit",
+    ),
+    path(
+        "service-path-segment-mappings/<int:pk>/delete/",
+        views.ServicePathSegmentMappingDeleteView.as_view(),
+        name="servicepathsegmentmapping_delete",
+    ),
+    path(
+        "service-path-segment-mappings/<int:pk>/changelog/",
+        ObjectChangeLogView.as_view(),
+        name="servicepathsegmentmapping_changelog",
+        kwargs={"model": models.ServicePathSegmentMapping},
+    ),
 )

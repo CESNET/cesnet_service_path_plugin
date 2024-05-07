@@ -1,7 +1,8 @@
 from django.db import models
 from django.urls import reverse
 from netbox.models import NetBoxModel
-#from .segment import Segment
+from .segment import Segment
+
 
 class ServicePath(NetBoxModel):
     name = models.CharField(max_length=225)
@@ -11,7 +12,8 @@ class ServicePath(NetBoxModel):
     kind = models.CharField(
         max_length=225
     )  # TODO: maybe choice field? Or extra table? (I don't like extra table)
-    #segments = models.ManyToManyField(Segment, through="ServicePathSegment")
+
+    segments = models.ManyToManyField(Segment, through="ServicePathSegmentMapping")
 
     class Meta:
         ordering = ("name", "state", "kind")
@@ -20,6 +22,4 @@ class ServicePath(NetBoxModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse(
-            "plugins:komora_service_path_plugin:servicepath", args=[self.pk]
-        )
+        return reverse("plugins:komora_service_path_plugin:servicepath", args=[self.pk])

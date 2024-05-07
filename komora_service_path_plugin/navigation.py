@@ -33,6 +33,10 @@ _menu_items = (
         link_text="Service Paths",
         buttons=service_plugin_buttons,
     ),
+    PluginMenuItem(
+        link="plugins:komora_service_path_plugin:servicepathsegmentmapping_list",
+        link_text="Segment Mappings",
+    ),
 )
 
 menu = PluginMenu(
