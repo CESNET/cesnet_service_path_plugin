@@ -1,7 +1,8 @@
 from django.db.models import Count
 
 from netbox.views import generic
-from ..filtersets import ServicePathFilterSet
+
+# from ..filtersets import ServicePathFilterSet
 from ..forms import ServicePathForm
 from ..models import ServicePath
 from ..tables import ServicePathTable

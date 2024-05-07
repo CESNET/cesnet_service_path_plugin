@@ -1,22 +1,19 @@
-from ipam.api.nested_serializers import NestedIPAddressSerializer, NestedPrefixSerializer, NestedVRFSerializer
-from dcim.api.nested_serializers import NestedDeviceSerializer
-from netbox.api.serializers import NetBoxModelSerializer, WritableNestedSerializer
 from rest_framework import serializers
-
-from ...models.service_path import ServicePath
+from netbox.api.serializers import NetBoxModelSerializer
+from .segment import SegmentSerializer
+from ...models import ServicePath
 
 
 class ServicePathSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:komora_service_path_plugin-api:servicepath-detail")
+        view_name="plugins-api:komora_service_path_plugin-api:servicepath-detail"
+    )
+    # segments = SegmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = ServicePath
-        fields = (
-            "id",
-            "url",)
+        fields = "__all__"
 
-    # def validate(self, data):
-    #    # Enforce model validation
-    #    super().validate(data)
-    #    return data
+    def validate(self, data):
+        super().validate(data)
+        return data

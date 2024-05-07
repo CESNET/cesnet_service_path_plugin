@@ -5,7 +5,10 @@ from ..models import ServicePath
 class ServicePathFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = ServicePath
-        fields = []
+        fields = [
+            "name",
+        ]
 
     def search(self, queryset, name, value):
-        return queryset.filter(description__icontains=value)
+        # TODO:
+        return queryset.filter(name__icontains=value)
