@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="device_a",
+                        related_name="+",
                         to="dcim.device",
                     ),
                 ),
@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="device_b",
+                        related_name="+",
                         to="dcim.device",
                     ),
                 ),
@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
                     "location_a",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="location_a",
+                        related_name="+",
                         to="dcim.location",
                     ),
                 ),
@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
                     "location_b",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="location_b",
+                        related_name="+",
                         to="dcim.location",
                     ),
                 ),
@@ -100,7 +100,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="port_a",
+                        related_name="+",
                         to="dcim.interface",
                     ),
                 ),
@@ -110,7 +110,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="port_b",
+                        related_name="+",
                         to="dcim.interface",
                     ),
                 ),
@@ -118,7 +118,7 @@ class Migration(migrations.Migration):
                     "site_a",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="site_a",
+                        related_name="+",
                         to="dcim.site",
                     ),
                 ),
@@ -126,14 +126,16 @@ class Migration(migrations.Migration):
                     "site_b",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
-                        related_name="site_b",
+                        related_name="+",
                         to="dcim.site",
                     ),
                 ),
                 (
                     "supplier",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT, to="tenancy.tenant"
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="+",
+                        to="tenancy.tenant",
                     ),
                 ),
                 (

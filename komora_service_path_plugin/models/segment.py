@@ -11,7 +11,11 @@ class Segment(NetBoxModel):
     termination_date = models.DateField(null=True, blank=True)
 
     supplier = models.ForeignKey(
-        "tenancy.tenant", on_delete=models.PROTECT, null=False, blank=False
+        "tenancy.tenant",
+        on_delete=models.PROTECT,
+        null=False,
+        blank=False,
+        related_name="+",
     )
     supplier_segment_id = models.CharField(max_length=255, null=True, blank=True)
     supplier_segment_name = models.CharField(max_length=255, null=True, blank=True)
@@ -20,28 +24,28 @@ class Segment(NetBoxModel):
     site_a = models.ForeignKey(
         "dcim.site",
         on_delete=models.PROTECT,
-        related_name="site_a",
+        related_name="+",
         null=False,
         blank=False,
     )
     location_a = models.ForeignKey(
         "dcim.location",
         on_delete=models.PROTECT,
-        related_name="location_a",
+        related_name="+",
         null=False,
         blank=False,
     )
     device_a = models.ForeignKey(
         "dcim.device",
         on_delete=models.SET_NULL,
-        related_name="device_a",
+        related_name="+",
         null=True,
         blank=True,
     )
     port_a = models.ForeignKey(
         "dcim.interface",
         on_delete=models.SET_NULL,
-        related_name="port_a",
+        related_name="+",
         null=True,
         blank=True,
     )
@@ -50,28 +54,28 @@ class Segment(NetBoxModel):
     site_b = models.ForeignKey(
         "dcim.site",
         on_delete=models.PROTECT,
-        related_name="site_b",
+        related_name="+",
         null=False,
         blank=False,
     )
     location_b = models.ForeignKey(
         "dcim.location",
         on_delete=models.PROTECT,
-        related_name="location_b",
+        related_name="+",
         null=False,
         blank=False,
     )
     device_b = models.ForeignKey(
         "dcim.device",
         on_delete=models.SET_NULL,
-        related_name="device_b",
+        related_name="+",
         null=True,
         blank=True,
     )
     port_b = models.ForeignKey(
         "dcim.interface",
         on_delete=models.SET_NULL,
-        related_name="port_b",
+        related_name="+",
         null=True,
         blank=True,
     )
