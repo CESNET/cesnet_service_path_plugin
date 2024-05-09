@@ -5,7 +5,10 @@ from ..models import Segment
 class SegmentFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = Segment
-        fields = []
+        fields = [
+            "name",
+            "komora_id",
+        ]
 
     def search(self, queryset, name, value):
         return queryset.filter(description__icontains=value)

@@ -9,5 +9,5 @@ class SegmentTable(NetBoxTable):
 
     class Meta(NetBoxTable.Meta):
         model = Segment
-        fields = ("pk", "id", "name", "actions")
+        fields = ("pk", "id", "name", "actions", "komora_id")
         default_columns = ("name",)

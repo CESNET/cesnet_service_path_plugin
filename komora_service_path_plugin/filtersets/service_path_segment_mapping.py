@@ -9,6 +9,7 @@ class ServicePathSegmentMappingFilterSet(NetBoxModelFilterSet):
             "service_path",
             "segment",
             "index",
+            "komora_id",
         ]
 
     def search(self, queryset, name, value):

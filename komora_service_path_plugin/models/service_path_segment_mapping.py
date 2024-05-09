@@ -14,6 +14,10 @@ class ServicePathSegmentMapping(NetBoxModel):
     )
     index = models.IntegerField(null=False, blank=False, default=0)
 
+    # Komora fields
+    imported_data = models.JSONField(null=True, blank=True)
+    komora_id = models.BigIntegerField(null=True, blank=True)  # TODO: change to False
+
     class Meta:
         ordering = ("service_path", "segment", "index")
         unique_together = ("service_path", "segment", "index")

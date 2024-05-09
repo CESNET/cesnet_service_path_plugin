@@ -1,9 +1,15 @@
 from rest_framework import serializers
 from tenancy.api.nested_serializers import NestedTenantSerializer
-from dcim.api.nested_serializers import NestedSiteSerializer, NestedLocationSerializer, NestedDeviceSerializer, NestedInterfaceSerializer
+from dcim.api.nested_serializers import (
+    NestedSiteSerializer,
+    NestedLocationSerializer,
+    NestedDeviceSerializer,
+    NestedInterfaceSerializer,
+)
 from netbox.api.serializers import NetBoxModelSerializer, WritableNestedSerializer
 
 from ...models.segment import Segment
+
 
 class SegmentSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
@@ -43,9 +49,25 @@ class SegmentSerializer(NetBoxModelSerializer):
             "port_b",
             "note_b",
             "imported_data",
+            "komora_id",
         )
 
     def validate(self, data):
         # Enforce model validation
         super().validate(data)
         return data
+
+
+class WritableNestedSegmentSerializer(WritableNestedSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name="plugins-api:komora_service_path_plugin-api:servicepath-detail"
+    )
+
+    class Meta:
+        model = Segment
+        fields = (
+            "id",
+            "url",
+            "name",
+            "komora_id",
+        )

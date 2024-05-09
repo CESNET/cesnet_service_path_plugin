@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from netbox.api.serializers import NetBoxModelSerializer
-from .segment import SegmentSerializer
-from .service_path import ServicePathSerializer
-from ...models import ServicePathSegmentMapping, ServicePath
+from .segment import WritableNestedSegmentSerializer
+from .service_path import WritableNestedServicePathSerializer
+from ...models import ServicePathSegmentMapping
 
 
 class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
@@ -13,8 +13,8 @@ class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
     #    queryset=ServicePath.objects.all(),
     #    required=True
     # )
-    service_path = ServicePathSerializer(read_only=True)
-    segment = SegmentSerializer(read_only=True)
+    service_path = WritableNestedServicePathSerializer()
+    segment = WritableNestedSegmentSerializer()
 
     class Meta:
         model = ServicePathSegmentMapping

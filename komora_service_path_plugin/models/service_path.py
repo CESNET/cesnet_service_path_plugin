@@ -15,6 +15,10 @@ class ServicePath(NetBoxModel):
 
     segments = models.ManyToManyField(Segment, through="ServicePathSegmentMapping")
 
+    # Komora fields
+    imported_data = models.JSONField(null=True, blank=True)
+    komora_id = models.BigIntegerField(null=True, blank=True)  # TODO: change to False
+
     class Meta:
         ordering = ("name", "state", "kind")
 
