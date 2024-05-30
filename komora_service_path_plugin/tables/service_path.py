@@ -9,5 +9,5 @@ class ServicePathTable(NetBoxTable):
 
     class Meta(NetBoxTable.Meta):
         model = ServicePath
-        fields = ("pk", "id", "name", "actions")
-        default_columns = ("name",)
+        fields = ("pk", "name", "state", "kind", "komora_id", "actions")
+        default_columns = ("name", "state", "kind")

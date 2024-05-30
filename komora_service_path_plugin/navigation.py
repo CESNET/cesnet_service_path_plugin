@@ -1,14 +1,12 @@
 from django.conf import settings
 
-from extras.plugins import PluginMenuButton, PluginMenuItem, PluginMenu
-from utilities.choices import ButtonColorChoices
+from netbox.plugins import PluginMenuButton, PluginMenuItem, PluginMenu
 
 segment_plugin_buttons = [
     PluginMenuButton(
         link="plugins:komora_service_path_plugin:servicepath_add",
         title="Add",
         icon_class="mdi mdi-plus-thick",
-        color=ButtonColorChoices.GREEN,
     ),
 ]
 
@@ -17,7 +15,6 @@ service_plugin_buttons = [
         link="plugins:komora_service_path_plugin:segment_add",
         title="Add",
         icon_class="mdi mdi-plus-thick",
-        color=ButtonColorChoices.GREEN,
     ),
 ]
 

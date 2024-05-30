@@ -1,5 +1,5 @@
 {% load render_table from django_tables2 %}
 <div class="card">
     <h5 class="card-header">Related Segments</h5>
-    <div class="card-body">{% render_table related_session_table 'inc/table.html' %}</div>
+    {% render_table related_session_table 'inc/table.html' %}
 </div>

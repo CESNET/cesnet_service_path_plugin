@@ -5,7 +5,7 @@ from dcim.models import Device, Interface
 from ipam.models import IPAddress, Prefix, VRF
 from tenancy.models import Tenant
 
-from extras.plugins import PluginTemplateExtension
+from netbox.plugins import PluginTemplateExtension
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 

@@ -48,75 +48,69 @@
       </div>
       <div class="card">
         <h5 class="card-header">A</h5>
-        <div class="card-body">
-          <!-- A card content -->
-          <table class="table table-hover attr-table">
-            <tr>
-              <th scope="row">Site A</th>
-              <td>
-                <a href="{{ object.site_a.get_absolute_url }}">{{ object.site_a }}</a>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Location A</th>
-              <td>
-                <a href="{{ object.location_a.get_absolute_url }}">{{ object.location_a }}</a>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Device A</th>
-              <td>
-                <a href="{{ object.device_a.get_absolute_url }}">{{ object.device_a }}</a>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Port A</th>
-              <td>
-                <a href="{{ object.port_a.get_absolute_url }}">{{ object.port_a }}</a>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Note A</th>
-              <td>{{ object.note_a|markdown }}</td>
-            </tr>
-          </table>
-        </div>
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">Site A</th>
+            <td>
+              <a href="{{ object.site_a.get_absolute_url }}">{{ object.site_a }}</a>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Location A</th>
+            <td>
+              <a href="{{ object.location_a.get_absolute_url }}">{{ object.location_a }}</a>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Device A</th>
+            <td>
+              <a href="{{ object.device_a.get_absolute_url }}">{{ object.device_a }}</a>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Port A</th>
+            <td>
+              <a href="{{ object.port_a.get_absolute_url }}">{{ object.port_a }}</a>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Note A</th>
+            <td>{{ object.note_a|markdown }}</td>
+          </tr>
+        </table>
       </div>
       <div class="card">
         <h5 class="card-header">B</h5>
-        <div class="card-body">
-          <!-- B card content -->
-          <table class="table table-hover attr-table">
-            <tr>
-              <th scope="row">Site B</th>
-              <td>
-                <a href="{{ object.site_b.get_absolute_url }}">{{ object.site_b }}</a>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Location B</th>
-              <td>
-                <a href="{{ object.location_b.get_absolute_url }}">{{ object.location_b }}</a>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Device B</th>
-              <td>
-                <a href="{{ object.device_b.get_absolute_url }}">{{ object.device_b }}</a>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Port B</th>
-              <td>
-                <a href="{{ object.port_b.get_absolute_url }}">{{ object.port_b }}</a>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Note B</th>
-              <td>{{ object.note_b|markdown }}</td>
-            </tr>
-          </table>
-        </div>
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">Site B</th>
+            <td>
+              <a href="{{ object.site_b.get_absolute_url }}">{{ object.site_b }}</a>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Location B</th>
+            <td>
+              <a href="{{ object.location_b.get_absolute_url }}">{{ object.location_b }}</a>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Device B</th>
+            <td>
+              <a href="{{ object.device_b.get_absolute_url }}">{{ object.device_b }}</a>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Port B</th>
+            <td>
+              <a href="{{ object.port_b.get_absolute_url }}">{{ object.port_b }}</a>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Note B</th>
+            <td>{{ object.note_b|markdown }}</td>
+          </tr>
+        </table>
       </div>
     </div>
     <div class="col col-md-6">
@@ -126,16 +120,13 @@
       {% include 'inc/panels/comments.html' %}
       <div class="card">
         <h5 class="card-header">Imported Data</h5>
-        <div class="card-body">
-          <!-- Imported Data card content -->
-          <table class="table table-hover attr-table">
-            <tr>
-              <td>
-                <pre class="card-body">{{ object.imported_data|json|wordwrap:80 }}</pre>
-              </td>
-            </tr>
-          </table>
-        </div>
+        <table class="table table-hover attr-table">
+          <tr>
+            <td>
+              <pre class="card-body">{{ object.imported_data|json|wordwrap:80 }}</pre>
+            </td>
+          </tr>
+        </table>
       </div>
     </div>
   </div>
