@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from netbox.api.serializers import NetBoxModelSerializer
-from .segment import WritableNestedSegmentSerializer
-from .service_path import WritableNestedServicePathSerializer
-from ...models import ServicePathSegmentMapping
+from komora_service_path_plugin.api.serializers.segment import SegmentSerializer
+from komora_service_path_plugin.api.serializers.service_path import ServicePathSerializer
+from komora_service_path_plugin.models import ServicePathSegmentMapping
 
 
 class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
@@ -13,12 +13,25 @@ class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
     #    queryset=ServicePath.objects.all(),
     #    required=True
     # )
-    service_path = WritableNestedServicePathSerializer()
-    segment = WritableNestedSegmentSerializer()
+    service_path = ServicePathSerializer(nested=True)
+    segment = SegmentSerializer(nested=True)
 
     class Meta:
         model = ServicePathSegmentMapping
-        fields = "__all__"
+        fields = [
+            "id",
+            "url",
+            "service_path",
+            "segment",
+            "komora_id",
+        ]
+        brief_fields = [
+            "id",
+            "url",
+            "service_path",
+            "segment",
+            "komora_id",
+        ]
 
     def validate(self, data):
         super().validate(data)

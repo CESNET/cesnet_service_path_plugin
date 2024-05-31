@@ -1,29 +1,29 @@
 from rest_framework import serializers
-from tenancy.api.nested_serializers import NestedTenantSerializer
-from dcim.api.nested_serializers import (
-    NestedSiteSerializer,
-    NestedLocationSerializer,
-    NestedDeviceSerializer,
-    NestedInterfaceSerializer,
+from tenancy.api.serializers import TenantSerializer
+from dcim.api.serializers import (
+    SiteSerializer,
+    LocationSerializer,
+    DeviceSerializer,
+    InterfaceSerializer,
 )
-from netbox.api.serializers import NetBoxModelSerializer, WritableNestedSerializer
+from netbox.api.serializers import NetBoxModelSerializer
 
-from ...models.segment import Segment
+from komora_service_path_plugin.models.segment import Segment
 
 
 class SegmentSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="plugins-api:komora_service_path_plugin-api:segment-detail"
     )
-    supplier = NestedTenantSerializer(required=True)
-    site_a = NestedSiteSerializer(required=True)
-    location_a = NestedLocationSerializer(required=True)
-    device_a = NestedDeviceSerializer(required=False, allow_null=True)
-    port_a = NestedInterfaceSerializer(required=False, allow_null=True)
-    site_b = NestedSiteSerializer(required=True)
-    location_b = NestedLocationSerializer(required=True)
-    device_b = NestedDeviceSerializer(required=False, allow_null=True)
-    port_b = NestedInterfaceSerializer(required=False, allow_null=True)
+    supplier = TenantSerializer(required=True, nested=True)
+    site_a = SiteSerializer(required=True, nested=True)
+    location_a = LocationSerializer(required=True, nested=True)
+    device_a = DeviceSerializer(required=False, allow_null=True, nested=True)
+    port_a = InterfaceSerializer(required=False, allow_null=True, nested=True)
+    site_b = SiteSerializer(required=True, nested=True)
+    location_b = LocationSerializer(required=True, nested=True)
+    device_b = DeviceSerializer(required=False, allow_null=True, nested=True)
+    port_b = InterfaceSerializer(required=False, allow_null=True, nested=True)
 
     class Meta:
         model = Segment
@@ -51,23 +51,14 @@ class SegmentSerializer(NetBoxModelSerializer):
             "imported_data",
             "komora_id",
         )
-
-    def validate(self, data):
-        # Enforce model validation
-        super().validate(data)
-        return data
-
-
-class WritableNestedSegmentSerializer(WritableNestedSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:komora_service_path_plugin-api:servicepath-detail"
-    )
-
-    class Meta:
-        model = Segment
-        fields = (
+        brief_fields = (
             "id",
             "url",
             "name",
             "komora_id",
         )
+
+    def validate(self, data):
+        # Enforce model validation
+        super().validate(data)
+        return data
