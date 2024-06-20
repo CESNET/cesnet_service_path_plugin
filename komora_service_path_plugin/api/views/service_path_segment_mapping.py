@@ -1,8 +1,8 @@
 from netbox.api.metadata import ContentTypeMetadata
 from netbox.api.viewsets import NetBoxModelViewSet
 
-from ... import filtersets, models
-from ..serializers import ServicePathSegmentMappingSerializer
+from komora_service_path_plugin import filtersets, models
+from komora_service_path_plugin.api.serializers import ServicePathSegmentMappingSerializer
 
 
 class ServicePathSegmentMappingViewSet(NetBoxModelViewSet):

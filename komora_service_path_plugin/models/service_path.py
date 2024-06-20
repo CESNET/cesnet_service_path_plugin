@@ -1,7 +1,8 @@
 from django.db import models
 from django.urls import reverse
 from netbox.models import NetBoxModel
-from .segment import Segment
+from komora_service_path_plugin.models import Segment
+from circuits.models import Circuit
 
 
 class ServicePath(NetBoxModel):
@@ -14,6 +15,7 @@ class ServicePath(NetBoxModel):
     )  # TODO: maybe choice field? Or extra table? (I don't like extra table)
 
     segments = models.ManyToManyField(Segment, through="ServicePathSegmentMapping")
+    circuits = models.ManyToManyField(Circuit, through="ServicePathCircuitMapping")
 
     # Komora fields
     imported_data = models.JSONField(null=True, blank=True)

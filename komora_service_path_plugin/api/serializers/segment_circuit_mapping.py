@@ -2,37 +2,29 @@ from rest_framework import serializers
 from netbox.api.serializers import NetBoxModelSerializer
 from komora_service_path_plugin.api.serializers.segment import SegmentSerializer
 from komora_service_path_plugin.api.serializers.service_path import ServicePathSerializer
-from komora_service_path_plugin.models import ServicePathSegmentMapping
+from komora_service_path_plugin.models import SegmentCircuitMapping
+from circuits.api.serializers import CircuitSerializer
 
-
-class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
+class SegmentCircuitMappingSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:komora_service_path_plugin-api:servicepathsegmentmapping-detail"
+        view_name="plugins-api:komora_service_path_plugin-api:SegmentCircuitmapping-detail"
     )
-    # service_path = serializers.PrimaryKeyRelatedField(
-    #    queryset=ServicePath.objects.all(),
-    #    required=True
-    # )
-    service_path = ServicePathSerializer(nested=True)
+    circuit = CircuitSerializer(nested=True)
     segment = SegmentSerializer(nested=True)
 
     class Meta:
-        model = ServicePathSegmentMapping
+        model = SegmentCircuitMapping
         fields = [
             "id",
             "url",
-            "service_path",
             "segment",
-            "komora_id",
-            "index",
+            "circuit",
         ]
         brief_fields = [
             "id",
             "url",
-            "service_path",
             "segment",
-            "komora_id",
-            "index",
+            "circuit",
         ]
 
     def validate(self, data):

@@ -1,3 +1,4 @@
+from circuits.models import Circuit
 from django.db import models
 from django.urls import reverse
 from netbox.models import NetBoxModel
@@ -94,6 +95,9 @@ class Segment(NetBoxModel):
     # Notes
     # Documents
     # Attachments
+
+    # Circuit    
+    circuits = models.ManyToManyField(Circuit, through="SegmentCircuitMapping")
 
     class Meta:
         ordering = ("name",)

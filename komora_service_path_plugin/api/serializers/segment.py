@@ -6,6 +6,7 @@ from dcim.api.serializers import (
     DeviceSerializer,
     InterfaceSerializer,
 )
+from circuits.api.serializers import CircuitSerializer
 from netbox.api.serializers import NetBoxModelSerializer
 
 from komora_service_path_plugin.models.segment import Segment
@@ -24,6 +25,7 @@ class SegmentSerializer(NetBoxModelSerializer):
     location_b = LocationSerializer(required=True, nested=True)
     device_b = DeviceSerializer(required=False, allow_null=True, nested=True)
     port_b = InterfaceSerializer(required=False, allow_null=True, nested=True)
+    circuits = CircuitSerializer(required=False, many=True, nested=True)
 
     class Meta:
         model = Segment
@@ -50,12 +52,14 @@ class SegmentSerializer(NetBoxModelSerializer):
             "note_b",
             "imported_data",
             "komora_id",
+            "circuits",
         )
         brief_fields = (
             "id",
             "url",
             "name",
             "komora_id",
+            "circuits",
         )
 
     def validate(self, data):
