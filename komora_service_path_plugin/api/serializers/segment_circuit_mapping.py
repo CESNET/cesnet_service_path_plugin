@@ -7,7 +7,7 @@ from circuits.api.serializers import CircuitSerializer
 
 class SegmentCircuitMappingSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:komora_service_path_plugin-api:SegmentCircuitmapping-detail"
+        view_name="plugins-api:komora_service_path_plugin-api:segmentcircuitmapping-detail"
     )
     circuit = CircuitSerializer(nested=True)
     segment = SegmentSerializer(nested=True)
@@ -17,12 +17,14 @@ class SegmentCircuitMappingSerializer(NetBoxModelSerializer):
         fields = [
             "id",
             "url",
+            "display",
             "segment",
             "circuit",
         ]
         brief_fields = [
             "id",
             "url",
+            "display",
             "segment",
             "circuit",
         ]

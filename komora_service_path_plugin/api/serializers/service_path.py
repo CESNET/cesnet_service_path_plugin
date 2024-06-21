@@ -28,6 +28,7 @@ class ServicePathSerializer(NetBoxModelSerializer):
         brief_fields = [
             "id",
             "url",
+            "display",
             "name",
             "komora_id",
             "circuits",

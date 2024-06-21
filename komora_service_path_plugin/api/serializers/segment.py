@@ -32,6 +32,7 @@ class SegmentSerializer(NetBoxModelSerializer):
         fields = (
             "id",
             "url",
+            "display",
             "name",
             "network_label",
             "install_date",
@@ -57,6 +58,7 @@ class SegmentSerializer(NetBoxModelSerializer):
         brief_fields = (
             "id",
             "url",
+            "display",
             "name",
             "komora_id",
             "circuits",

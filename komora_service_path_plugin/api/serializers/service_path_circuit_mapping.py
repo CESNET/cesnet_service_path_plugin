@@ -8,7 +8,7 @@ from circuits.api.serializers import CircuitSerializer
 
 class ServicePathCircuitMappingSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:komora_service_path_plugin-api:ServicePathCircuitMapping-detail"
+        view_name="plugins-api:komora_service_path_plugin-api:servicepathcircuitmapping-detail"
     )
     circuit = CircuitSerializer(nested=True)
     service_path = ServicePathSerializer(nested=True)
@@ -18,12 +18,14 @@ class ServicePathCircuitMappingSerializer(NetBoxModelSerializer):
         fields = [
             "id",
             "url",
+            "display",
             "service_path",
             "circuit",
         ]
         brief_fields = [
             "id",
             "url",
+            "display",
             "service_path",
             "circuit",
         ]
