@@ -7,5 +7,7 @@ router = NetBoxRouter()
 router.register("segments", views.SegmentViewSet)
 router.register("service-paths", views.ServicePathViewSet)
 router.register("service-path-segment-mappings", views.ServicePathSegmentMappingViewSet)
+router.register("service-path-circuit-mappings", views.ServicePathCircuitMappingViewSet)
+router.register("segment-circuit-mappings", views.SegmnetCircuitMappingViewSet)
 
 urlpatterns = router.urls

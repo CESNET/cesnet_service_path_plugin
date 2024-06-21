@@ -18,3 +18,20 @@ class ServicePathCircuitMappingForm(NetBoxModelForm):
     class Meta:
         model = ServicePathCircuitMapping
         fields = ("service_path", "circuit")
+
+
+
+class ServicePathCircuitMappingFilterForm(NetBoxModelFilterSetForm):
+    model = ServicePathCircuitMapping
+
+    service_path = DynamicModelChoiceField(
+        queryset=ServicePath.objects.all(), required=True)
+    
+    circuit = DynamicModelChoiceField(
+        queryset=Circuit.objects.all(), required=True)
+
+
+    fieldsets = (
+        (None, ("filter_id", "q")),
+        ("Related Objects", ("service_path", "circuit")),
+    )

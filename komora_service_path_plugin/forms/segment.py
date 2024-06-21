@@ -10,3 +10,14 @@ class SegmentForm(NetBoxModelForm):
     class Meta:
         model = Segment
         fields = ("name", "tags")
+
+
+class SegmentFilterForm(NetBoxModelFilterSetForm):
+    model = Segment
+
+    name = forms.CharField(required=False)
+    # TODO:
+    fieldsets = (
+        #(None, ("filter_id", "q")),
+        ("Related Objects", ("name", )),
+    )

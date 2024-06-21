@@ -5,7 +5,7 @@ from komora_service_path_plugin import filtersets, models
 from komora_service_path_plugin.api.serializers import ServicePathCircuitMappingSerializer
 
 
-class SegmnetCircuitMappingViewSet(NetBoxModelViewSet):
+class ServicePathCircuitMappingViewSet(NetBoxModelViewSet):
     metadata_class = ContentTypeMetadata
     queryset = models.ServicePathCircuitMapping.objects.all()
     serializer_class = ServicePathCircuitMappingSerializer

@@ -10,3 +10,13 @@ class ServicePathForm(NetBoxModelForm):
     class Meta:
         model = ServicePath
         fields = ("name", "tags")
+
+class ServicePathFilterForm(NetBoxModelFilterSetForm):
+    model = ServicePath
+
+    name = forms.CharField(required=False)
+    # TODO:
+    fieldsets = (
+        #(None, ("filter_id", "q")),
+        ("Related Objects", ("name", )),
+    )
