@@ -11,14 +11,13 @@ from circuits.models import Circuit
 class ServicePathCircuitMappingForm(NetBoxModelForm):
     service_path = DynamicModelChoiceField(
         queryset=ServicePath.objects.all(), required=True, selector=True)
-    
+
     circuit = DynamicModelChoiceField(
-        queryset=Circuit.objects.all(), required=True, selector=True)
+        queryset=Circuit.objects.all(), required=True, disabled_indicator='circuit_id', disabled=True)
 
     class Meta:
         model = ServicePathCircuitMapping
         fields = ("service_path", "circuit")
-
 
 
 class ServicePathCircuitMappingFilterForm(NetBoxModelFilterSetForm):
@@ -26,10 +25,9 @@ class ServicePathCircuitMappingFilterForm(NetBoxModelFilterSetForm):
 
     service_path = DynamicModelChoiceField(
         queryset=ServicePath.objects.all(), required=True)
-    
+
     circuit = DynamicModelChoiceField(
         queryset=Circuit.objects.all(), required=True)
-
 
     fieldsets = (
         (None, ("filter_id", "q")),

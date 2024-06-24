@@ -21,7 +21,4 @@ class ServicePathCircuitMapping(NetBoxModel):
         return f"{self.service_path} - {self.circuit}"
 
     def get_absolute_url(self):
-        return reverse(
-            "plugins:komora_service_path_plugin:servicepathcircuitmapping",
-            args=[self.pk],
-        )
+        return reverse("circuits:circuit", args=[self.circuit.pk],)

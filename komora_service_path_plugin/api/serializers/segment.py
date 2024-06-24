@@ -61,7 +61,6 @@ class SegmentSerializer(NetBoxModelSerializer):
             "display",
             "name",
             "komora_id",
-            "circuits",
         )
 
     def validate(self, data):

@@ -1,7 +1,6 @@
 from django.urls import path
+from komora_service_path_plugin import models, views
 from netbox.views.generic import ObjectChangeLogView
-
-from . import models, views
 
 urlpatterns = (
     path("segments/", views.SegmentListView.as_view(), name="segment_list"),
@@ -91,44 +90,16 @@ urlpatterns = (
         name="servicepathcircuitmapping_add",
     ),
     path(
-        "service-path-circuit-mappings/<int:pk>/",
-        views.ServicePathCircuitMappingView.as_view(),
-        name="servicepathcircuitmapping",
-    ),
-    path(
-        "service-path-circuit-mappings/<int:pk>/edit/",
-        views.ServicePathCircuitMappingEditView.as_view(),
-        name="servicepathcircuitmapping_edit",
-    ),
-    path(
         "service-path-circuit-mappings/<int:pk>/delete/",
         views.ServicePathCircuitMappingDeleteView.as_view(),
         name="servicepathcircuitmapping_delete",
-    ),
-    path(
-        "service-path-circuit-mappings/<int:pk>/changelog/",
-        ObjectChangeLogView.as_view(),
-        name="servicepathcircuitmapping_changelog",
-        kwargs={"model": models.ServicePathCircuitMapping},
     ),
 
     path("segment-circuit-mappings/", views.SegmentCircuitMappingListView.as_view(),
          name="segmentcircuitmapping_list"),
     path("segment-circuit-mappings/add/",
          views.SegmentCircuitMappingEditView.as_view(), name="segmentcircuitmapping_add"),
-    path("segment-circuit-mappings/<int:pk>/",
-         views.SegmentCircuitMappingView.as_view(), name="segmentcircuitmapping"),
-    path("segment-circuit-mappings/<int:pk>/edit/",
-         views.SegmentCircuitMappingEditView.as_view(), name="segmentcircuitmapping_edit"),
     path("segment-circuit-mappings/<int:pk>/delete/",
          views.SegmentCircuitMappingDeleteView.as_view(), name="segmentcircuitmapping_delete"),
-    path("segment-circuit-mappings/<int:pk>/changelog/", ObjectChangeLogView.as_view(),
-         name="segmentcircuitmapping_changelog", kwargs={"model": models.SegmentCircuitMapping}),
 
-    # TODO: HINT: Namapovat pridavani na circuits? - Ma to smysl?
-    # path(
-    #    "circuits/circuits/<int:pk>/segment_add/",
-    #    views.SegmentCircuitEditView.as_view(),
-    #    name="segmentcircuit_add",
-    # ),
 )

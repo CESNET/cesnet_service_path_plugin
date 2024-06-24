@@ -22,8 +22,8 @@ class ServicePathSerializer(NetBoxModelSerializer):
             "state",
             "kind",
             "segments",
-            "komora_id",
             "circuits",
+            "komora_id",
         ]
         brief_fields = [
             "id",
@@ -31,7 +31,6 @@ class ServicePathSerializer(NetBoxModelSerializer):
             "display",
             "name",
             "komora_id",
-            "circuits",
         ]
 
     def validate(self, data):

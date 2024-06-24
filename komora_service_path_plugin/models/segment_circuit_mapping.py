@@ -21,7 +21,4 @@ class SegmentCircuitMapping(NetBoxModel):
         return f"{self.segment} - {self.circuit}"
 
     def get_absolute_url(self):
-        return reverse(
-            "plugins:komora_service_path_plugin:segmentcircuitmapping",
-            args=[self.pk],
-        )
+        return reverse("circuits:circuit", args=[self.circuit.pk],)
