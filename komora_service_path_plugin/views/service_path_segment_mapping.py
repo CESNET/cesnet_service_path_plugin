@@ -1,15 +1,8 @@
-from django.db.models import Count
-
 from netbox.views import generic
 
-# from ..filtersets import ServicePathSegmentMappingFilterSet
-from ..models import ServicePathSegmentMapping
-from ..forms import ServicePathSegmentMappingForm
-from ..tables import ServicePathSegmentMappingTable
-
-
-class ServicePathSegmentMappingView(generic.ObjectView):
-    queryset = ServicePathSegmentMapping.objects.all()
+from komora_service_path_plugin.models import ServicePathSegmentMapping
+from komora_service_path_plugin.forms import ServicePathSegmentMappingForm
+from komora_service_path_plugin.tables import ServicePathSegmentMappingTable
 
 
 class ServicePathSegmentMappingListView(generic.ObjectListView):
