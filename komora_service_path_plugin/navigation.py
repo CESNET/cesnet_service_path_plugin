@@ -1,18 +1,8 @@
-from django.conf import settings
-
 from netbox.plugins import PluginMenuButton, PluginMenuItem, PluginMenu
-
-segment_plugin_buttons = [
-    PluginMenuButton(
-        link="plugins:komora_service_path_plugin:servicepath_add",
-        title="Add",
-        icon_class="mdi mdi-plus-thick",
-    ),
-]
 
 service_plugin_buttons = [
     PluginMenuButton(
-        link="plugins:komora_service_path_plugin:segment_add",
+        link="plugins:komora_service_path_plugin:servicepath_add",
         title="Add",
         icon_class="mdi mdi-plus-thick",
     ),
@@ -23,7 +13,6 @@ _menu_items = (
     PluginMenuItem(
         link="plugins:komora_service_path_plugin:segment_list",
         link_text="Segments",
-        buttons=segment_plugin_buttons,
     ),
     PluginMenuItem(
         link="plugins:komora_service_path_plugin:servicepath_list",

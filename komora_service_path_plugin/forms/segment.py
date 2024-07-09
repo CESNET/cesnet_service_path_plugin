@@ -1,15 +1,7 @@
 from django import forms
-from ipam.models import Prefix
-from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
-from utilities.forms.fields import CommentField, DynamicModelChoiceField
+from netbox.forms import NetBoxModelFilterSetForm
 
-from ..models import Segment
-
-
-class SegmentForm(NetBoxModelForm):
-    class Meta:
-        model = Segment
-        fields = ("name", "tags")
+from komora_service_path_plugin.models import Segment
 
 
 class SegmentFilterForm(NetBoxModelFilterSetForm):
@@ -18,6 +10,6 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     name = forms.CharField(required=False)
     # TODO:
     fieldsets = (
-        #(None, ("filter_id", "q")),
+        # (None, ("filter_id", "q")),
         ("Related Objects", ("name", )),
     )

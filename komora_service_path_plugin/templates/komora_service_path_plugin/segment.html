@@ -1,5 +1,34 @@
 {% extends 'generic/object.html' %}
 {% load render_table from django_tables2 %}
+{% load buttons %}
+{% load custom_links %}
+{% load helpers %}
+{% load perms %}
+{% load plugins %}
+{% load tabs %}
+{% load i18n %}
+{% block controls %}
+  <div class="btn-list justify-content-end mb-2">
+    {% plugin_buttons object %}
+    {# Add/edit/delete/etc. buttons #}
+    {% block control-buttons %}
+      {# Extra buttons #}
+      {% block extra_controls %}{% endblock %}
+      {# Default buttons #}
+      {% if perms.extras.add_bookmark and object.bookmarks %}
+        {% bookmark_button object %}
+      {% endif %}
+    {% endblock control-buttons %}
+  </div>
+  {# Custom links #}
+  <div class="d-flex justify-content-end">
+    <div class="btn-list">
+      {% block custom-links %}
+        {% custom_links object %}
+      {% endblock custom-links %}
+    </div>
+  </div>
+{% endblock controls %}
 {% block content %}
   <div class="row mb-3">
     <div class="col col-md-6">
@@ -11,37 +40,41 @@
           <table class="table table-hover attr-table">
             <tr>
               <th scope="row">Name</th>
-              <td>{{ object.name }}</td>
+              <td>{{ object.name|placeholder }}</td>
             </tr>
             <tr>
               <th scope="row">Network Label</th>
-              <td>{{ object.network_label }}</td>
+              <td>{{ object.network_label|placeholder }}</td>
             </tr>
             <tr>
               <th scope="row">Install Date</th>
-              <td>{{ object.install_date }}</td>
+              <td>{{ object.install_date|placeholder }}</td>
             </tr>
             <tr>
               <th scope="row">Termination Date</th>
-              <td>{{ object.termination_date }}</td>
+              <td>{{ object.termination_date|placeholder }}</td>
             </tr>
             <tr>
               <th scope="row">Supplier</th>
               <td>
-                <a href="{{ object.supplier.get_absolute_url }}">{{ object.supplier }}</a>
+                {% if object.supplier %}
+                  <a href="{{ object.supplier.get_absolute_url }}">{{ object.supplier }}</a>
+                {% else %}
+                  {{ ''|placeholder }}
+                {% endif %}
               </td>
             </tr>
             <tr>
               <th scope="row">Supplier Name</th>
-              <td>{{ object.supplier_segment_name }}</td>
+              <td>{{ object.supplier_segment_name|placeholder }}</td>
             </tr>
             <tr>
               <th scope="row">Supplier ID</th>
-              <td>{{ object.supplier_segment_id }}</td>
+              <td>{{ object.supplier_segment_id|placeholder }}</td>
             </tr>
             <tr>
               <th scope="row">Supplier Contract</th>
-              <td>{{ object.supplier_segment_contract }}</td>
+              <td>{{ object.supplier_segment_contract|placeholder }}</td>
             </tr>
           </table>
         </div>
@@ -52,25 +85,41 @@
           <tr>
             <th scope="row">Site A</th>
             <td>
-              <a href="{{ object.site_a.get_absolute_url }}">{{ object.site_a }}</a>
+              {% if object.site_a %}
+                <a href="{{ object.site_a.get_absolute_url }}">{{ object.site_a }}</a>
+              {% else %}
+                {{ ''|placeholder }}
+              {% endif %}
             </td>
           </tr>
           <tr>
             <th scope="row">Location A</th>
             <td>
-              <a href="{{ object.location_a.get_absolute_url }}">{{ object.location_a }}</a>
+              {% if object.location_a %}
+                <a href="{{ object.location_a.get_absolute_url }}">{{ object.location_a }}</a>
+              {% else %}
+                {{ ''|placeholder }}
+              {% endif %}
             </td>
           </tr>
           <tr>
             <th scope="row">Device A</th>
             <td>
-              <a href="{{ object.device_a.get_absolute_url }}">{{ object.device_a }}</a>
+              {% if object.device_a %}
+                <a href="{{ object.device_a.get_absolute_url }}">{{ object.device_a }}</a>
+              {% else %}
+                {{ ''|placeholder }}
+              {% endif %}
             </td>
           </tr>
           <tr>
             <th scope="row">Port A</th>
             <td>
-              <a href="{{ object.port_a.get_absolute_url }}">{{ object.port_a }}</a>
+              {% if object.port_a %}
+                <a href="{{ object.port_a.get_absolute_url }}">{{ object.port_a }}</a>
+              {% else %}
+                {{ ''|placeholder }}
+              {% endif %}
             </td>
           </tr>
           <tr>
@@ -85,25 +134,41 @@
           <tr>
             <th scope="row">Site B</th>
             <td>
-              <a href="{{ object.site_b.get_absolute_url }}">{{ object.site_b }}</a>
+              {% if object.site_b %}
+                <a href="{{ object.site_b.get_absolute_url }}">{{ object.site_b }}</a>
+              {% else %}
+                {{ ''|placeholder }}
+              {% endif %}
             </td>
           </tr>
           <tr>
             <th scope="row">Location B</th>
             <td>
-              <a href="{{ object.location_b.get_absolute_url }}">{{ object.location_b }}</a>
+              {% if object.location_b %}
+                <a href="{{ object.location_b.get_absolute_url }}">{{ object.location_b }}</a>
+              {% else %}
+                {{ ''|placeholder }}
+              {% endif %}
             </td>
           </tr>
           <tr>
             <th scope="row">Device B</th>
             <td>
-              <a href="{{ object.device_b.get_absolute_url }}">{{ object.device_b }}</a>
+              {% if object.device_b %}
+                <a href="{{ object.device_b.get_absolute_url }}">{{ object.device_b }}</a>
+              {% else %}
+                {{ ''|placeholder }}
+              {% endif %}
             </td>
           </tr>
           <tr>
             <th scope="row">Port B</th>
             <td>
-              <a href="{{ object.port_b.get_absolute_url }}">{{ object.port_b }}</a>
+              {% if object.port_b %}
+                <a href="{{ object.port_b.get_absolute_url }}">{{ object.port_b }}</a>
+              {% else %}
+                {{ ''|placeholder }}
+              {% endif %}
             </td>
           </tr>
           <tr>
@@ -136,6 +201,15 @@
       <div class="card">
         <h5 class="card-header">Related Circuits</h5>
         {% render_table circuits_table 'inc/table.html' %}
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col col-12">
+      {% load render_table from django_tables2 %}
+      <div class="card">
+        <h5 class="card-header">Related ServicePaths</h5>
+        {% render_table sevice_paths_table 'inc/table.html' %}
       </div>
     </div>
   </div>

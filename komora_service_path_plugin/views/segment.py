@@ -1,10 +1,7 @@
-from django.db.models import Count
-
 from netbox.views import generic
-from komora_service_path_plugin.forms import SegmentForm
-from komora_service_path_plugin.models import Segment
-from komora_service_path_plugin.tables import SegmentTable
-# from ..filtersets import SegmentFilterSet
+from komora_service_path_plugin.models import Segment, ServicePathSegmentMapping, ServicePath
+from komora_service_path_plugin.tables import SegmentTable, ServicePathTable
+# from komora_service_path_plugin.filtersets import SegmentFilterSet
 from circuits.tables import CircuitTable
 
 
@@ -14,18 +11,25 @@ class SegmentView(generic.ObjectView):
     def get_extra_context(self, request, instance):
         circuits = instance.circuits.all()
         circuits_table = CircuitTable(circuits, exclude=())
-        return {"circuits_table": circuits_table}
+
+        related_service_paths_ids = ServicePathSegmentMapping.objects.filter(
+            segment=instance).values_list("service_path_id", flat=True)
+        service_paths = ServicePath.objects.filter(
+            id__in=related_service_paths_ids)
+        service_paths_table = ServicePathTable(service_paths, exclude=())
+        return {"circuits_table": circuits_table,
+                "sevice_paths_table": service_paths_table}
 
 
 class SegmentListView(generic.ObjectListView):
     queryset = Segment.objects.all()
     table = SegmentTable
 
-
-class SegmentEditView(generic.ObjectEditView):
-    queryset = Segment.objects.all()
-    form = SegmentForm
-
-
-class SegmentDeleteView(generic.ObjectDeleteView):
-    queryset = Segment.objects.all()
+    actions = {
+        'add': {},
+        'edit': {},
+        'import': {},
+        'export': set(),
+        'bulk_edit': {},
+        'bulk_delete': {},
+    }
