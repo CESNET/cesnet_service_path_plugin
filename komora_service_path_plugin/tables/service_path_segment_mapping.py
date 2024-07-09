@@ -13,7 +13,7 @@ class ServicePathSegmentMappingTable(NetBoxTable):
     segment__site_b = tables.Column(linkify=True, verbose_name="Site B")
     segment__location_b = tables.Column(linkify=True, verbose_name="Location B")
     index = tables.Column()
-    actions = columns.ActionsColumn(actions=('delete', ),)
+    actions = columns.ActionsColumn(actions=(),)
 
     class Meta(NetBoxTable.Meta):
         model = ServicePathSegmentMapping
