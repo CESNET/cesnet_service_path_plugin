@@ -6,6 +6,7 @@ class ServicePathSegmentMappingFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = ServicePathSegmentMapping
         fields = [
+            "id",
             "service_path",
             "segment",
             "index",

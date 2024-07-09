@@ -6,6 +6,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = Segment
         fields = [
+            "id",
             "name",
             "komora_id",
         ]

@@ -6,6 +6,7 @@ class ServicePathCircuitMappingFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = ServicePathCircuitMapping
         fields = [
+            "id",
             "service_path",
             "circuit",
         ]

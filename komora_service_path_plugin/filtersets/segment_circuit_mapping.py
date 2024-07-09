@@ -6,6 +6,7 @@ class SegmentCircuitMappingFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = SegmentCircuitMapping
         fields = [
+            "id",
             "segment",
             "circuit",
         ]
