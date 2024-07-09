@@ -15,22 +15,7 @@ urlpatterns = (
         "service-paths/", views.ServicePathListView.as_view(), name="servicepath_list"
     ),
     path(
-        "service-paths/add/",
-        views.ServicePathEditView.as_view(),
-        name="servicepath_add",
-    ),
-    path(
         "service-paths/<int:pk>/", views.ServicePathView.as_view(), name="servicepath"
-    ),
-    path(
-        "service-paths/<int:pk>/edit/",
-        views.ServicePathEditView.as_view(),
-        name="servicepath_edit",
-    ),
-    path(
-        "service-paths/<int:pk>/delete/",
-        views.ServicePathDeleteView.as_view(),
-        name="servicepath_delete",
     ),
     path(
         "service-paths/<int:pk>/changelog/",

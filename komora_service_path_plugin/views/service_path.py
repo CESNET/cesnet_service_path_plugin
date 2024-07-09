@@ -22,11 +22,11 @@ class ServicePathListView(generic.ObjectListView):
     queryset = ServicePath.objects.all()
     table = ServicePathTable
 
-
-class ServicePathEditView(generic.ObjectEditView):
-    queryset = ServicePath.objects.all()
-    form = ServicePathForm
-
-
-class ServicePathDeleteView(generic.ObjectDeleteView):
-    queryset = ServicePath.objects.all()
+    actions = {
+        'add': {},
+        'edit': {},
+        'import': {},
+        'export': set(),
+        'bulk_edit': {},
+        'bulk_delete': {},
+    }

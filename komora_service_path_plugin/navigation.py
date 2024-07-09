@@ -1,14 +1,5 @@
 from netbox.plugins import PluginMenuButton, PluginMenuItem, PluginMenu
 
-service_plugin_buttons = [
-    PluginMenuButton(
-        link="plugins:komora_service_path_plugin:servicepath_add",
-        title="Add",
-        icon_class="mdi mdi-plus-thick",
-    ),
-]
-
-
 _menu_items = (
     PluginMenuItem(
         link="plugins:komora_service_path_plugin:segment_list",
@@ -17,7 +8,6 @@ _menu_items = (
     PluginMenuItem(
         link="plugins:komora_service_path_plugin:servicepath_list",
         link_text="Service Paths",
-        buttons=service_plugin_buttons,
     ),
     PluginMenuItem(
         link="plugins:komora_service_path_plugin:servicepathsegmentmapping_list",

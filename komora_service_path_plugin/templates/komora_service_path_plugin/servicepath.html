@@ -1,6 +1,35 @@
 {% extends 'generic/object.html' %}
 {% load render_table from django_tables2 %}
 {% load plugins %}
+{% load buttons %}
+{% load custom_links %}
+{% load helpers %}
+{% load perms %}
+{% load plugins %}
+{% load tabs %}
+{% load i18n %}
+{% block controls %}
+  <div class="btn-list justify-content-end mb-2">
+    {% plugin_buttons object %}
+    {# Add/edit/delete/etc. buttons #}
+    {% block control-buttons %}
+      {# Extra buttons #}
+      {% block extra_controls %}{% endblock %}
+      {# Default buttons #}
+      {% if perms.extras.add_bookmark and object.bookmarks %}
+        {% bookmark_button object %}
+      {% endif %}
+    {% endblock control-buttons %}
+  </div>
+  {# Custom links #}
+  <div class="d-flex justify-content-end">
+    <div class="btn-list">
+      {% block custom-links %}
+        {% custom_links object %}
+      {% endblock custom-links %}
+    </div>
+  </div>
+{% endblock controls %}
 {% block content %}
   <div class="row mb-3">
     <div class="col col-md-6">
