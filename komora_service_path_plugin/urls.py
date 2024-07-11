@@ -29,22 +29,6 @@ urlpatterns = (
         name="servicepathsegmentmapping_list",
     ),
 
-    path(
-        "service-path-circuit-mappings/",
-        views.ServicePathCircuitMappingListView.as_view(),
-        name="servicepathcircuitmapping_list",
-    ),
-    path(
-        "service-path-circuit-mappings/add/",
-        views.ServicePathCircuitMappingEditView.as_view(),
-        name="servicepathcircuitmapping_add",
-    ),
-    path(
-        "service-path-circuit-mappings/<int:pk>/delete/",
-        views.ServicePathCircuitMappingDeleteView.as_view(),
-        name="servicepathcircuitmapping_delete",
-    ),
-
     path("segment-circuit-mappings/", views.SegmentCircuitMappingListView.as_view(),
          name="segmentcircuitmapping_list"),
     path("segment-circuit-mappings/add/",

@@ -2,12 +2,10 @@ from circuits.models import Circuit
 from django.conf import settings
 from komora_service_path_plugin.models import (
     SegmentCircuitMapping,
-    ServicePathCircuitMapping,
     ServicePathSegmentMapping,
 )
 from komora_service_path_plugin.tables import (
     SegmentCircuitMappingTable,
-    ServicePathCircuitMappingTable,
     ServicePathSegmentMappingTable,
 )
 from netbox.plugins import PluginTemplateExtension
@@ -46,12 +44,13 @@ template_extensions = [
 
 @register_model_view(Circuit, name='circuit-komora-service-path', path='circuit-komora-service-path')
 class CircuitKomoraServicePathView(generic.ObjectView):
-    template_name = "komora_service_path_plugin/circuit_komora_service_paths_tab.html"
+    template_name = "komora_service_path_plugin/circuit_komora_segments_tab.html"
     queryset = Circuit.objects.all()
 
     tab = ViewTab(
-        label='Komora Service Paths',
-        # badge=lambda obj: Stuff.objects.filter(site=obj).count(),
+        label='Segments',
+        badge=lambda obj: SegmentCircuitMapping.objects.filter(
+            circuit=obj.id).count(),
         # permission='myplugin.view_stuff'
     )
 
@@ -61,9 +60,4 @@ class CircuitKomoraServicePathView(generic.ObjectView):
         segment_mapping_table = SegmentCircuitMappingTable(
             segment_mapping, exclude=())
 
-        service_path_mapping = ServicePathCircuitMapping.objects.filter(
-            circuit=instance.id)
-        service_path_mapping_table = ServicePathCircuitMappingTable(
-            service_path_mapping, exclude=())
-
-        return {"segment_mapping_table": segment_mapping_table, "service_path_mapping_table": service_path_mapping_table}
+        return {"segment_mapping_table": segment_mapping_table}

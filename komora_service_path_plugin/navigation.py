@@ -1,4 +1,4 @@
-from netbox.plugins import PluginMenuButton, PluginMenuItem, PluginMenu
+from netbox.plugins import PluginMenuItem, PluginMenu
 
 _menu_items = (
     PluginMenuItem(
@@ -17,10 +17,6 @@ _menu_items = (
 )
 
 _circuits_menu_items = (
-    PluginMenuItem(
-        link="plugins:komora_service_path_plugin:servicepathcircuitmapping_list",
-        link_text="Service Path - Circuit",
-    ),
     PluginMenuItem(
         link="plugins:komora_service_path_plugin:segmentcircuitmapping_list",
         link_text="Segment - Circuit",
