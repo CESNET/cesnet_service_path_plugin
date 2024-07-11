@@ -5,9 +5,45 @@ from komora_service_path_plugin.models import Segment
 
 class SegmentTable(NetBoxTable):
     name = tables.Column(linkify=True)
+    supplier = tables.Column(linkify=True)
+    site_a = tables.Column(linkify=True)
+    location_a = tables.Column(linkify=True)
+    device_a = tables.Column(linkify=True)
+    port_a = tables.Column(linkify=True)
+    site_b = tables.Column(linkify=True)
+    location_b = tables.Column(linkify=True)
+    device_b = tables.Column(linkify=True)
+    port_b = tables.Column(linkify=True)
     actions = columns.ActionsColumn(actions=("changelog",),)
 
     class Meta(NetBoxTable.Meta):
         model = Segment
-        fields = ("pk", "id", "name", "actions", "komora_id")
-        default_columns = ("name",)
+        fields = ("pk",
+                  "id",
+                  "name",
+                  "komora_id",
+                  "network_label",
+                  "install_date",
+                  "termination_date",
+                  "supplier",
+                  "supplier_segment_id",
+                  "supplier_segment_name",
+                  "supplier_segment_contract",
+                  "site_a",
+                  "location_a",
+                  "device_a",
+                  "port_a",
+                  "site_b",
+                  "location_b",
+                  "device_b",
+                  "port_b",
+                  "actions",
+                  )
+
+        default_columns = ("name",
+                           "network_label",
+                           "supplier",
+                           "site_a",
+                           "location_a",
+                           "site_b",
+                           "location_b",)

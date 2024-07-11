@@ -1,7 +1,8 @@
 from netbox.views import generic
 from komora_service_path_plugin.models import Segment, ServicePathSegmentMapping, ServicePath
 from komora_service_path_plugin.tables import SegmentTable, ServicePathTable
-# from komora_service_path_plugin.filtersets import SegmentFilterSet
+from komora_service_path_plugin.filtersets import SegmentFilterSet
+from komora_service_path_plugin.forms import SegmentFilterForm
 from circuits.tables import CircuitTable
 
 
@@ -33,3 +34,6 @@ class SegmentListView(generic.ObjectListView):
         'bulk_edit': {},
         'bulk_delete': {},
     }
+
+    filterset = SegmentFilterSet
+    filterset_form = SegmentFilterForm

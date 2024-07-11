@@ -1,12 +1,13 @@
 from netbox.api.metadata import ContentTypeMetadata
 from netbox.api.viewsets import NetBoxModelViewSet
 
-from ... import filtersets, models
-from ..serializers import SegmentSerializer
+from komora_service_path_plugin.models import Segment
+from komora_service_path_plugin.filtersets import SegmentFilterSet
+from komora_service_path_plugin.api.serializers import SegmentSerializer
 
 
 class SegmentViewSet(NetBoxModelViewSet):
     metadata_class = ContentTypeMetadata
-    queryset = models.Segment.objects.all()
+    queryset = Segment.objects.all()
     serializer_class = SegmentSerializer
-    filterset_class = filtersets.SegmentFilterSet
+    filterset_class = SegmentFilterSet
