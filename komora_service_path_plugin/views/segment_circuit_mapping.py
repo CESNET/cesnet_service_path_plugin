@@ -1,3 +1,4 @@
+from komora_service_path_plugin.filtersets import SegmentCircuitMappingFilterSet
 from komora_service_path_plugin.forms import SegmentCircuitMappingForm
 from komora_service_path_plugin.models import SegmentCircuitMapping
 from komora_service_path_plugin.tables import SegmentCircuitMappingTable
@@ -7,6 +8,7 @@ from netbox.views import generic
 class SegmentCircuitMappingListView(generic.ObjectListView):
     queryset = SegmentCircuitMapping.objects.all()
     table = SegmentCircuitMappingTable
+    filterset = SegmentCircuitMappingFilterSet
 
     actions = {}
 
