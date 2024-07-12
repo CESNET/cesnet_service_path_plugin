@@ -1,8 +1,32 @@
 from netbox.filtersets import NetBoxModelFilterSet
-from ..models import ServicePathSegmentMapping
+from komora_service_path_plugin.models import ServicePathSegmentMapping, ServicePath, Segment
+import django_filters
+from extras.filters import TagFilter
+from netbox.filtersets import NetBoxModelFilterSet
+from komora_service_path_plugin.models import Segment
+from dcim.models import Site, Device, Interface, Location
+from django.db.models import Q
 
 
 class ServicePathSegmentMappingFilterSet(NetBoxModelFilterSet):
+    q = django_filters.CharFilter(
+        method='search',
+        label='Search',
+    )
+    tag = TagFilter()
+    service_path_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='service_path__id',
+        queryset=ServicePath.objects.all(),
+        to_field_name='id',
+        label='Service Path (ID)',
+    )
+    segment_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='segment__id',
+        queryset=Segment.objects.all(),
+        to_field_name='id',
+        label='Segment (ID)',
+    )
+
     class Meta:
         model = ServicePathSegmentMapping
         fields = [
@@ -14,5 +38,7 @@ class ServicePathSegmentMappingFilterSet(NetBoxModelFilterSet):
         ]
 
     def search(self, queryset, name, value):
-        # TODO:
-        return queryset
+        segment_name = Q(segment__name__icontains=value)
+        service_path_name = Q(service_path__name__icontains=value)
+
+        return queryset.filter(segment_name | service_path_name)
