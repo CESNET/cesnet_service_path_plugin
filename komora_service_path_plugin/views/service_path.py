@@ -1,6 +1,7 @@
 from netbox.views import generic
 
 from komora_service_path_plugin.models import ServicePath
+from komora_service_path_plugin.forms import ServicePathForm
 from komora_service_path_plugin.tables import ServicePathTable
 
 
@@ -14,9 +15,14 @@ class ServicePathListView(generic.ObjectListView):
 
     actions = {
         'add': {},
-        'edit': {},
+        'edit': {"add"},
         'import': {},
         'export': set(),
         'bulk_edit': {},
         'bulk_delete': {},
     }
+
+
+class ServicePathEditView(generic.ObjectEditView):
+    queryset = ServicePath.objects.all()
+    form = ServicePathForm

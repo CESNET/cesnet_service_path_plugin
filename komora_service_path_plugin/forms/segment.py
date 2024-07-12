@@ -1,5 +1,5 @@
 from django import forms
-from netbox.forms import NetBoxModelFilterSetForm
+from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
 from utilities.forms.fields import (DynamicModelMultipleChoiceField,
                                     TagFilterField)
 from dcim.models import Site, Device, Interface, Location
@@ -7,9 +7,32 @@ from tenancy.models import Tenant
 from django.utils.translation import gettext as _
 from utilities.forms.widgets.datetime import DatePicker
 from utilities.forms.rendering import FieldSet
+from utilities.forms.fields import CommentField
 
 
 from komora_service_path_plugin.models import Segment
+
+
+class SegmentForm(NetBoxModelForm):
+    comments = CommentField(
+        required=False, label="Comments", help_text="Comments")
+
+    fieldsets = (
+        (
+            "Misc",
+            (
+                "role",
+                "tags",
+            ),
+        ),
+    )
+
+    class Meta:
+        model = Segment
+        fields = (
+            "comments",
+            "tags",
+        )
 
 
 class SegmentFilterForm(NetBoxModelFilterSetForm):

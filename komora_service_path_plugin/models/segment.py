@@ -102,6 +102,7 @@ class Segment(NetBoxModel):
 
     # Circuit
     circuits = models.ManyToManyField(Circuit, through="SegmentCircuitMapping")
+    comments = models.TextField(verbose_name="Comments", blank=True)
 
     class Meta:
         ordering = ("name",)

@@ -5,6 +5,8 @@ from netbox.views.generic import ObjectChangeLogView
 urlpatterns = (
     path("segments/", views.SegmentListView.as_view(), name="segment_list"),
     path("segments/<int:pk>/", views.SegmentView.as_view(), name="segment"),
+    path("segments/<int:pk>/edit",
+         views.SegmentEditView.as_view(), name="segment_edit"),
     path(
         "segments/<int:pk>/changelog/",
         ObjectChangeLogView.as_view(),
@@ -16,6 +18,9 @@ urlpatterns = (
     ),
     path(
         "service-paths/<int:pk>/", views.ServicePathView.as_view(), name="servicepath"
+    ),
+    path(
+        "service-paths/<int:pk>/edit", views.ServicePathEditView.as_view(), name="servicepath_edit"
     ),
     path(
         "service-paths/<int:pk>/changelog/",

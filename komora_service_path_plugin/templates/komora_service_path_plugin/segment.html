@@ -1,6 +1,33 @@
 {% extends 'generic/object.html' %}
+{% load buttons %}
+{% load custom_links %}
+{% load helpers %}
+{% load plugins %}
+{% load tabs %}
+{% load i18n %}
+{% load perms %}
 {% load render_table from django_tables2 %}
 {% block controls %}
+  <div class="btn-list justify-content-end mb-2">
+    {% plugin_buttons object %}
+    {# Add/edit/delete/etc. buttons #}
+    {% block control-buttons %}
+      {# Extra buttons #}
+      {% block extra_controls %}{% endblock %}
+      {# Default buttons #}
+      {% if request.user|can_change:object %}
+        {% edit_button object %}
+      {% endif %}
+    {% endblock control-buttons %}
+  </div>
+  {# Custom links #}
+  <div class="d-flex justify-content-end">
+    <div class="btn-list">
+      {% block custom-links %}
+        {% custom_links object %}
+      {% endblock custom-links %}
+    </div>
+  </div>
 {% endblock controls %}
 {% block content %}
   <div class="row mb-3">
