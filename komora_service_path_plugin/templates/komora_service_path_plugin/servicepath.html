@@ -37,7 +37,7 @@
       {% load render_table from django_tables2 %}
       <div class="card">
         <h5 class="card-header">Segments</h5>
-        {% render_table segment_mapping_table 'inc/table.html' %}
+        {% htmx_table 'plugins:komora_service_path_plugin:servicepathsegmentmapping_list' service_path_id=object.pk %}
       </div>
     </div>
   </div>
