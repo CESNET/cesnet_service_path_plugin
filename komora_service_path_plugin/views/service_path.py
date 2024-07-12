@@ -12,10 +12,10 @@ from circuits.tables import CircuitTable
 class ServicePathView(generic.ObjectView):
     queryset = ServicePath.objects.all()
 
-    def get_extra_context(self, request, instance):
-        circuits = instance.circuits.all()
-        circuits_table = CircuitTable(circuits, exclude=())
-        return {"circuits_table": circuits_table}
+    #def get_extra_context(self, request, instance):
+    #    circuits = instance.circuits.all()
+    #    circuits_table = CircuitTable(circuits, exclude=())
+    #    return {"circuits_table": circuits_table}
 
 
 class ServicePathListView(generic.ObjectListView):
