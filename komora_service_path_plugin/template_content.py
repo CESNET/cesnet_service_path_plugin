@@ -1,16 +1,19 @@
-from circuits.models import Circuit
 from django.conf import settings
-from komora_service_path_plugin.models import (
-    SegmentCircuitMapping,
-    ServicePathSegmentMapping,
-)
-from komora_service_path_plugin.tables import (
-    SegmentCircuitMappingTable,
-    ServicePathSegmentMappingTable,
-)
+from circuits.models import Circuit
+from komora_service_path_plugin.filtersets import SegmentFilterSet
 from netbox.plugins import PluginTemplateExtension
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
+
+from komora_service_path_plugin.models import (
+    SegmentCircuitMapping,
+    ServicePathSegmentMapping,
+    Segment,
+)
+from komora_service_path_plugin.tables import (
+    ServicePathSegmentMappingTable,
+    SegmentTable,
+)
 
 plugin_settings = settings.PLUGINS_CONFIG.get("komora_service_path_plugin", {})
 
@@ -42,11 +45,14 @@ template_extensions = [
 ]
 
 
-@register_model_view(Circuit, name='circuit-komora-service-path', path='circuit-komora-service-path')
-class CircuitKomoraServicePathView(generic.ObjectView):
-    template_name = "komora_service_path_plugin/circuit_komora_segments_tab.html"
+@register_model_view(Circuit, name='circuit-komora-segment', path='circuit-komora-segment')
+class CircuitKomoraSegmentView(generic.ObjectChildrenView):
     queryset = Circuit.objects.all()
+    child_model = Segment
+    table = SegmentTable
+    filterset = SegmentFilterSet
 
+    template_name = "komora_service_path_plugin/circuit_komora_segments_tab.html"
     tab = ViewTab(
         label='Segments',
         badge=lambda obj: SegmentCircuitMapping.objects.filter(
@@ -54,10 +60,14 @@ class CircuitKomoraServicePathView(generic.ObjectView):
         # permission='myplugin.view_stuff'
     )
 
-    def get_extra_context(self, request, instance):
+    def get_children(self, request, instance):
         segment_mapping = SegmentCircuitMapping.objects.filter(
-            circuit=instance.id)
-        segment_mapping_table = SegmentCircuitMappingTable(
-            segment_mapping, exclude=())
+            circuit=instance.id).values_list('segment_id', flat=True)
+        childrens = Segment.objects.filter(id__in=segment_mapping)
+        return childrens
 
-        return {"segment_mapping_table": segment_mapping_table}
+    def get_extra_context(self, request, instance):
+        data = {
+            "base_template_name": "generic/object.html",
+        }
+        return data
