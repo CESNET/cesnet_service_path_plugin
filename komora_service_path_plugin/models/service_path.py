@@ -21,6 +21,8 @@ class ServicePath(NetBoxModel):
     komora_id = models.BigIntegerField(
         null=True, blank=True)  # TODO: change to False
 
+    comments = models.TextField(verbose_name="Comments", blank=True)
+
     class Meta:
         ordering = ("name", "state", "kind")
 

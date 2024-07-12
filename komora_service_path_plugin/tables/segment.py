@@ -4,6 +4,7 @@ from komora_service_path_plugin.models import Segment
 
 
 class SegmentTable(NetBoxTable):
+    tags = columns.TagColumn()
     name = tables.Column(linkify=True)
     supplier = tables.Column(linkify=True)
     site_a = tables.Column(linkify=True)
@@ -14,7 +15,7 @@ class SegmentTable(NetBoxTable):
     location_b = tables.Column(linkify=True)
     device_b = tables.Column(linkify=True)
     port_b = tables.Column(linkify=True)
-    actions = columns.ActionsColumn(actions=("changelog",),)
+    actions = columns.ActionsColumn(actions=("edit","changelog"),)
 
     class Meta(NetBoxTable.Meta):
         model = Segment
@@ -37,6 +38,7 @@ class SegmentTable(NetBoxTable):
                   "location_b",
                   "device_b",
                   "port_b",
+                  "tags",
                   "actions",
                   )
 
