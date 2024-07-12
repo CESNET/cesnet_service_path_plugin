@@ -33,19 +33,15 @@
     </div>
   </div>
   <div class="row">
-    <div class="col col-md-12">{% plugin_full_width_page object %}</div>
-  </div>
-  
-  {% if False %}
-    <div class="row">
-      <div class="col col-12">
-        {% load render_table from django_tables2 %}
-        <div class="card">
-          <h5 class="card-header">Related Circuits</h5>
-          {% render_table circuits_table 'inc/table.html' %}
-        </div>
+    <div class="col col-12">
+      {% load render_table from django_tables2 %}
+      <div class="card">
+        <h5 class="card-header">Segments</h5>
+        {% render_table segment_mapping_table 'inc/table.html' %}
       </div>
     </div>
-  {% endif %}
-  
+  </div>
+  <div class="row">
+    <div class="col col-md-12">{% plugin_full_width_page object %}</div>
+  </div>
 {% endblock content %}
