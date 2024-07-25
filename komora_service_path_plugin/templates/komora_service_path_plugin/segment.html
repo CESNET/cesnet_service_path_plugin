@@ -55,26 +55,26 @@
               <td>{{ object.termination_date|placeholder }}</td>
             </tr>
             <tr>
-              <th scope="row">Supplier</th>
+              <th scope="row">Provider</th>
               <td>
-                {% if object.supplier %}
-                  <a href="{{ object.supplier.get_absolute_url }}">{{ object.supplier }}</a>
+                {% if object.provider %}
+                  <a href="{{ object.provider.get_absolute_url }}">{{ object.provider }}</a>
                 {% else %}
                   {{ ''|placeholder }}
                 {% endif %}
               </td>
             </tr>
             <tr>
-              <th scope="row">Supplier Name</th>
-              <td>{{ object.supplier_segment_name|placeholder }}</td>
+              <th scope="row">Provider Name</th>
+              <td>{{ object.provider_segment_name|placeholder }}</td>
             </tr>
             <tr>
-              <th scope="row">Supplier ID</th>
-              <td>{{ object.supplier_segment_id|placeholder }}</td>
+              <th scope="row">Provider ID</th>
+              <td>{{ object.provider_segment_id|placeholder }}</td>
             </tr>
             <tr>
-              <th scope="row">Supplier Contract</th>
-              <td>{{ object.supplier_segment_contract|placeholder }}</td>
+              <th scope="row">Provider Contract</th>
+              <td>{{ object.provider_segment_contract|placeholder }}</td>
             </tr>
           </table>
         </div>

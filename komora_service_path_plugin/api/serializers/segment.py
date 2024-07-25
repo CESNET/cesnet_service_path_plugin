@@ -1,13 +1,12 @@
-from rest_framework import serializers
-from tenancy.api.serializers import TenantSerializer
+from circuits.api.serializers import CircuitSerializer, ProviderSerializer
 from dcim.api.serializers import (
-    SiteSerializer,
-    LocationSerializer,
     DeviceSerializer,
     InterfaceSerializer,
+    LocationSerializer,
+    SiteSerializer,
 )
-from circuits.api.serializers import CircuitSerializer
 from netbox.api.serializers import NetBoxModelSerializer
+from rest_framework import serializers
 
 from komora_service_path_plugin.models.segment import Segment
 
@@ -16,7 +15,7 @@ class SegmentSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="plugins-api:komora_service_path_plugin-api:segment-detail"
     )
-    supplier = TenantSerializer(required=True, nested=True)
+    provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
     location_a = LocationSerializer(required=True, nested=True)
     device_a = DeviceSerializer(required=False, allow_null=True, nested=True)
@@ -37,10 +36,10 @@ class SegmentSerializer(NetBoxModelSerializer):
             "network_label",
             "install_date",
             "termination_date",
-            "supplier",
-            "supplier_segment_id",
-            "supplier_segment_name",
-            "supplier_segment_contract",
+            "provider",
+            "provider_segment_id",
+            "provider_segment_name",
+            "provider_segment_contract",
             "site_a",
             "location_a",
             "device_a",

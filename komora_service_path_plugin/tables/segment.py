@@ -6,7 +6,7 @@ from komora_service_path_plugin.models import Segment
 class SegmentTable(NetBoxTable):
     tags = columns.TagColumn()
     name = tables.Column(linkify=True)
-    supplier = tables.Column(linkify=True)
+    provider = tables.Column(linkify=True)
     site_a = tables.Column(linkify=True)
     location_a = tables.Column(linkify=True)
     device_a = tables.Column(linkify=True)
@@ -26,10 +26,10 @@ class SegmentTable(NetBoxTable):
                   "network_label",
                   "install_date",
                   "termination_date",
-                  "supplier",
-                  "supplier_segment_id",
-                  "supplier_segment_name",
-                  "supplier_segment_contract",
+                  "provider",
+                  "provider_segment_id",
+                  "provider_segment_name",
+                  "provider_segment_contract",
                   "site_a",
                   "location_a",
                   "device_a",
@@ -44,7 +44,7 @@ class SegmentTable(NetBoxTable):
 
         default_columns = ("name",
                            "network_label",
-                           "supplier",
+                           "provider",
                            "site_a",
                            "location_a",
                            "site_b",

@@ -11,18 +11,26 @@ class Segment(NetBoxModel):
     install_date = models.DateField(null=True, blank=True)
     termination_date = models.DateField(null=True, blank=True)
 
+    provider = models.ForeignKey(
+        "circuits.provider",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     supplier = models.ForeignKey(
         "tenancy.tenant",
         on_delete=models.PROTECT,
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
         related_name="+",
     )
-    supplier_segment_id = models.CharField(
+    provider_segment_id = models.CharField(
         max_length=255, null=True, blank=True)
-    supplier_segment_name = models.CharField(
+    provider_segment_name = models.CharField(
         max_length=255, null=True, blank=True)
-    supplier_segment_contract = models.CharField(
+    provider_segment_contract = models.CharField(
         max_length=255, null=True, blank=True)
 
     site_a = models.ForeignKey(
