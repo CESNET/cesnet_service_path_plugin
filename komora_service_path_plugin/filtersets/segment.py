@@ -3,7 +3,7 @@ from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 from komora_service_path_plugin.models import Segment
 from dcim.models import Site, Device, Interface, Location
-from tenancy.models import Tenant
+from circuits.models import Provider
 from django.db.models import Q
 
 
@@ -31,15 +31,15 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         field_name='termination_date',
         lookup_expr='lte'
     )
-    supplier_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='supplier__id',
-        queryset=Tenant.objects.all(),
+    provider_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='provider__id',
+        queryset=Provider.objects.all(),
         to_field_name='id',
-        label='Supplier (ID)',
+        label='Provider (ID)',
     )
-    supplier_segment_id = django_filters.CharFilter(lookup_expr="icontains")
-    supplier_segment_name = django_filters.CharFilter(lookup_expr="icontains")
-    supplier_segment_contract = django_filters.CharFilter(
+    provider_segment_id = django_filters.CharFilter(lookup_expr="icontains")
+    provider_segment_name = django_filters.CharFilter(lookup_expr="icontains")
+    provider_segment_contract = django_filters.CharFilter(
         lookup_expr="icontains")
 
     site_a_id = django_filters.ModelMultipleChoiceFilter(
@@ -101,10 +101,10 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "network_label",
             "install_date",
             "termination_date",
-            "supplier",
-            "supplier_segment_id",
-            "supplier_segment_name",
-            "supplier_segment_contract",
+            "provider",
+            "provider_segment_id",
+            "provider_segment_name",
+            "provider_segment_contract",
             "site_a",
             "location_a",
             "device_a",
@@ -122,6 +122,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         location_b = Q(location_b__name__icontains=value)
         segment_name = Q(name__icontains=value)
         network_label = Q(network_label__icontains=value)
-        supplier_segment_id = Q(supplier_segment_id__icontains=value)
+        provider_segment_id = Q(provider_segment_id__icontains=value)
 
-        return queryset.filter(site_a | site_b | location_a | location_b | segment_name | network_label | supplier_segment_id)
+        return queryset.filter(site_a | site_b | location_a | location_b | segment_name | network_label | provider_segment_id)
