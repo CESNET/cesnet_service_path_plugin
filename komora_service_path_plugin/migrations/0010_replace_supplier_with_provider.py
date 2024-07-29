@@ -8,7 +8,6 @@ def copy_supplier_to_provider(apps, schema_editor):
     segments = apps.get_model("komora_service_path_plugin", "Segment")
 
     for segment in segments.objects.all():
-        segment.snapshot()
         tenant = segment.supplier
         try:
             provider = providers.objects.get(custom_field_data__tenant=tenant.id)
