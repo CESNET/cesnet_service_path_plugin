@@ -1,14 +1,13 @@
 from django import forms
-from ipam.models import Prefix
-from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
+from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms.fields import CommentField
+from utilities.forms.rendering import FieldSet
 
 from komora_service_path_plugin.models import ServicePath
 
 
 class ServicePathForm(NetBoxModelForm):
-    comments = CommentField(
-        required=False, label="Comments", help_text="Comments")
+    comments = CommentField(required=False, label="Comments", help_text="Comments")
 
     fieldsets = (
         (
@@ -30,10 +29,26 @@ class ServicePathForm(NetBoxModelForm):
 
 class ServicePathFilterForm(NetBoxModelFilterSetForm):
     model = ServicePath
+    STATE_CHOICES = [("", "----")] + [
+        (state, state)
+        for state in ServicePath.objects.order_by("state")
+        .values_list("state", flat=True)
+        .distinct()
+    ]
+    KIND_CHOICES = [("", "----")] + [
+        (kind, kind)
+        for kind in ServicePath.objects.order_by("kind")
+        .values_list("kind", flat=True)
+        .distinct()
+    ]
+
+    print(STATE_CHOICES)
 
     name = forms.CharField(required=False)
-    # TODO:
+    state = forms.ChoiceField(required=False, choices=STATE_CHOICES, initial=None)
+    kind = forms.ChoiceField(required=False, choices=KIND_CHOICES, initial=None)
+
     fieldsets = (
-        # (None, ("filter_id", "q")),
-        ("Related Objects", ("name", )),
+        FieldSet("q", "tag", "filter_id", name="Misc"),
+        FieldSet("name", "state", "kind", name="Service Path"),
     )
