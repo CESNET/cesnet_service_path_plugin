@@ -40,6 +40,6 @@ class SegmentCircuitMappingFilterSet(NetBoxModelFilterSet):
         segment_site_b = Q(segment__site_b__name__icontains=value)
         segment_location_a = Q(segment__location_a__name__icontains=value)
         segment_location_b = Q(segment__location_b__name__icontains=value)
-        circuit_name = Q(circuit__name__icontains=value)
+        circuit_cid = Q(circuit__cid__icontains=value)
 
-        return queryset.filter(segment_name | segment_site_a | segment_site_b | segment_location_a | segment_location_b | circuit_name)
+        return queryset.filter(segment_name | segment_site_a | segment_site_b | segment_location_a | segment_location_b | circuit_cid)
