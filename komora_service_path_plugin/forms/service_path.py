@@ -29,6 +29,7 @@ class ServicePathForm(NetBoxModelForm):
 
 class ServicePathFilterForm(NetBoxModelFilterSetForm):
     model = ServicePath
+    # TODO: make choices configurable (seperate model maybe)
     STATE_CHOICES = [("", "----")] + [
         (state, state)
         for state in ServicePath.objects.order_by("state")
@@ -41,8 +42,6 @@ class ServicePathFilterForm(NetBoxModelFilterSetForm):
         .values_list("kind", flat=True)
         .distinct()
     ]
-
-    print(STATE_CHOICES)
 
     name = forms.CharField(required=False)
     state = forms.ChoiceField(required=False, choices=STATE_CHOICES, initial=None)
