@@ -3,7 +3,7 @@ from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms.fields import CommentField
 from utilities.forms.rendering import FieldSet
 
-from komora_service_path_plugin.models import ServicePath
+from komora_service_path_plugin.models import ServicePath, SyncStatusChoices
 
 
 class ServicePathForm(NetBoxModelForm):
@@ -44,10 +44,14 @@ class ServicePathFilterForm(NetBoxModelFilterSetForm):
     ]
 
     name = forms.CharField(required=False)
+    sync_status = forms.MultipleChoiceField(
+        required=False,
+        choices=SyncStatusChoices,
+    )
     state = forms.ChoiceField(required=False, choices=STATE_CHOICES, initial=None)
     kind = forms.ChoiceField(required=False, choices=KIND_CHOICES, initial=None)
 
     fieldsets = (
-        FieldSet("q", "tag", "filter_id", name="Misc"),
+        FieldSet("q", "tag", "filter_id", "sync_status", name="Misc"),
         FieldSet("name", "state", "kind", name="Service Path"),
     )

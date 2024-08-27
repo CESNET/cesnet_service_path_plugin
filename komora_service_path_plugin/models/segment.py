@@ -4,12 +4,20 @@ from django.db import models
 from django.urls import reverse
 from netbox.models import NetBoxModel
 
+from komora_service_path_plugin.models.sync_status_choices import SyncStatusChoices
+
 
 class Segment(NetBoxModel):
     name = models.CharField(max_length=255)
     network_label = models.CharField(max_length=255, null=True, blank=True)
     install_date = models.DateField(null=True, blank=True)
     termination_date = models.DateField(null=True, blank=True)
+    sync_status = models.CharField(
+        max_length=30,
+        choices=SyncStatusChoices,
+        blank=False,
+        default="active",
+    )
 
     provider = models.ForeignKey(
         "circuits.provider",
@@ -128,3 +136,6 @@ class Segment(NetBoxModel):
 
         # TODO:
         # validate if device is located on site or location?
+
+    def get_sync_status_color(self):
+        return SyncStatusChoices.colors.get(self.sync_status)
