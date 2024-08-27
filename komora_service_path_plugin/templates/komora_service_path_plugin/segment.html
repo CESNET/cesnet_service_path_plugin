@@ -77,6 +77,12 @@
               <th scope="row">Provider Contract</th>
               <td>{{ object.provider_segment_contract|placeholder }}</td>
             </tr>
+            <tr>
+              <th scope="row">Synchronization Status</th>
+              <td>
+                <span class="badge text-bg-{{ object.get_sync_status_color }}">{{ object.get_sync_status_display }}</span>
+              </td>
+            </tr>
           </table>
         </div>
       </div>

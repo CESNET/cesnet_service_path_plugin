@@ -33,6 +33,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
+            "sync_status",
             "network_label",
             "install_date",
             "termination_date",

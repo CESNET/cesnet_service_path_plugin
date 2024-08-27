@@ -11,7 +11,7 @@ from utilities.forms.fields import (
 from utilities.forms.rendering import FieldSet
 from utilities.forms.widgets.datetime import DatePicker
 
-from komora_service_path_plugin.models import Segment
+from komora_service_path_plugin.models import Segment, SyncStatusChoices
 
 
 class SegmentForm(NetBoxModelForm):
@@ -39,6 +39,10 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     model = Segment
 
     name = forms.CharField(required=False)
+    sync_status = forms.MultipleChoiceField(
+        required=False,
+        choices=SyncStatusChoices,
+    )
     network_label = forms.CharField(required=False)
     komora_id = forms.IntegerField(required=False, label=_("Komora ID"))
 
@@ -117,7 +121,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     )
 
     fieldsets = (
-        FieldSet("q", "tag", "filter_id", name="Misc"),
+        FieldSet("q", "tag", "filter_id", "sync_status", name="Misc"),
         FieldSet("name", "network_label", "komora_id", name="Basic"),
         FieldSet(
             "provider_id",

@@ -47,6 +47,12 @@
             <th scope="row">Kind</th>
             <td>{{ object.kind }}</td>
           </tr>
+          <tr>
+            <th scope="row">Synchronization Status</th>
+            <td>
+              <span class="badge text-bg-{{ object.get_sync_status_color }}">{{ object.get_sync_status_display }}</span>
+            </td>
+          </tr>
         </table>
       </div>
       {% include 'inc/panels/custom_fields.html' %}

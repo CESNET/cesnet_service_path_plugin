@@ -19,6 +19,7 @@ class ServicePathSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
+            "sync_status",
             "state",
             "kind",
             "segments",
