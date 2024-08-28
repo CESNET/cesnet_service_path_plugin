@@ -31,6 +31,11 @@ urlpatterns = (
         name="servicepath_edit",
     ),
     path(
+        "service-paths/<int:pk>/delete/",
+        views.ServicePathDeleteView.as_view(),
+        name="servicepath_delete",
+    ),
+    path(
         "service-paths/<int:pk>/changelog/",
         ObjectChangeLogView.as_view(),
         name="servicepath_changelog",

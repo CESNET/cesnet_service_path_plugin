@@ -30,3 +30,7 @@ class ServicePathListView(generic.ObjectListView):
 class ServicePathEditView(generic.ObjectEditView):
     queryset = ServicePath.objects.all()
     form = ServicePathForm
+
+
+class ServicePathDeleteView(generic.ObjectDeleteView):
+    queryset = ServicePath.objects.all()

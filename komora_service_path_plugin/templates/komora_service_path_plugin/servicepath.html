@@ -15,8 +15,14 @@
       {# Extra buttons #}
       {% block extra_controls %}{% endblock %}
       {# Default buttons #}
+      {% if perms.extras.add_bookmark and object.bookmarks %}
+        {% bookmark_button object %}
+      {% endif %}
       {% if request.user|can_change:object %}
         {% edit_button object %}
+      {% endif %}
+      {% if request.user|can_delete:object and object.sync_status == 'deleted' %}
+        {% delete_button object %}
       {% endif %}
     {% endblock control-buttons %}
   </div>
