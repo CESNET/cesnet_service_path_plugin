@@ -24,9 +24,3 @@ class ServicePathSegmentMapping(NetBoxModel):
 
     def __str__(self):
         return f"{self.service_path} - {self.segment} - {self.index}"
-
-    def get_absolute_url(self):
-        return reverse(
-            "plugins:komora_service_path_plugin:servicepathsegmentmapping",
-            args=[self.pk],
-        )
