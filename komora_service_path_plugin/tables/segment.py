@@ -2,6 +2,7 @@ import django_tables2 as tables
 from netbox.tables import ChoiceFieldColumn, NetBoxTable, columns
 
 from komora_service_path_plugin.models import Segment
+from komora_service_path_plugin.models.sync_status_choices import DELETE_BUTTON
 
 
 class SegmentTable(NetBoxTable):
@@ -19,6 +20,7 @@ class SegmentTable(NetBoxTable):
     port_b = tables.Column(linkify=True)
     actions = columns.ActionsColumn(
         actions=("edit", "changelog"),
+        extra_buttons=DELETE_BUTTON,
     )
 
     class Meta(NetBoxTable.Meta):
