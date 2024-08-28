@@ -5,8 +5,14 @@ from netbox.views.generic import ObjectChangeLogView
 urlpatterns = (
     path("segments/", views.SegmentListView.as_view(), name="segment_list"),
     path("segments/<int:pk>/", views.SegmentView.as_view(), name="segment"),
-    path("segments/<int:pk>/edit",
-         views.SegmentEditView.as_view(), name="segment_edit"),
+    path(
+        "segments/<int:pk>/edit", views.SegmentEditView.as_view(), name="segment_edit"
+    ),
+    path(
+        "segments/<int:pk>/delete/",
+        views.SegmentDeleteView.as_view(),
+        name="segment_delete",
+    ),
     path(
         "segments/<int:pk>/changelog/",
         ObjectChangeLogView.as_view(),
@@ -20,7 +26,14 @@ urlpatterns = (
         "service-paths/<int:pk>/", views.ServicePathView.as_view(), name="servicepath"
     ),
     path(
-        "service-paths/<int:pk>/edit", views.ServicePathEditView.as_view(), name="servicepath_edit"
+        "service-paths/<int:pk>/edit",
+        views.ServicePathEditView.as_view(),
+        name="servicepath_edit",
+    ),
+    path(
+        "service-paths/<int:pk>/delete/",
+        views.ServicePathDeleteView.as_view(),
+        name="servicepath_delete",
     ),
     path(
         "service-paths/<int:pk>/changelog/",
@@ -33,12 +46,19 @@ urlpatterns = (
         views.ServicePathSegmentMappingListView.as_view(),
         name="servicepathsegmentmapping_list",
     ),
-
-    path("segment-circuit-mappings/", views.SegmentCircuitMappingListView.as_view(),
-         name="segmentcircuitmapping_list"),
-    path("segment-circuit-mappings/add/",
-         views.SegmentCircuitMappingEditView.as_view(), name="segmentcircuitmapping_add"),
-    path("segment-circuit-mappings/<int:pk>/delete/",
-         views.SegmentCircuitMappingDeleteView.as_view(), name="segmentcircuitmapping_delete"),
-
+    path(
+        "segment-circuit-mappings/",
+        views.SegmentCircuitMappingListView.as_view(),
+        name="segmentcircuitmapping_list",
+    ),
+    path(
+        "segment-circuit-mappings/add/",
+        views.SegmentCircuitMappingEditView.as_view(),
+        name="segmentcircuitmapping_add",
+    ),
+    path(
+        "segment-circuit-mappings/<int:pk>/delete/",
+        views.SegmentCircuitMappingDeleteView.as_view(),
+        name="segmentcircuitmapping_delete",
+    ),
 )

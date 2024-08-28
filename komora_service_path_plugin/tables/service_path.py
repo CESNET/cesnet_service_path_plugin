@@ -1,7 +1,8 @@
 import django_tables2 as tables
 from netbox.tables import ChoiceFieldColumn, NetBoxTable, columns
 
-from ..models import ServicePath
+from komora_service_path_plugin.models import ServicePath
+from komora_service_path_plugin.models.sync_status_choices import DELETE_BUTTON
 
 
 class ServicePathTable(NetBoxTable):
@@ -10,6 +11,7 @@ class ServicePathTable(NetBoxTable):
     sync_status = ChoiceFieldColumn()
     actions = columns.ActionsColumn(
         actions=("edit", "changelog"),
+        extra_buttons=DELETE_BUTTON,
     )
 
     class Meta(NetBoxTable.Meta):
