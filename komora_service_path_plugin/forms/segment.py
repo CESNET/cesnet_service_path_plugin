@@ -6,7 +6,6 @@ from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms.fields import (
     CommentField,
     DynamicModelMultipleChoiceField,
-    DynamicModelChoiceField,
     TagFilterField,
 )
 from utilities.forms.rendering import FieldSet
@@ -121,7 +120,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         required=False, label=_("Provider Segment Contract")
     )
 
-    at_any_site = DynamicModelChoiceField(
+    at_any_site = DynamicModelMultipleChoiceField(
         queryset=Site.objects.all(),
         required=False,
         label=_("At any site"),
