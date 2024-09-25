@@ -6,6 +6,7 @@ from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms.fields import (
     CommentField,
     DynamicModelMultipleChoiceField,
+    DynamicModelChoiceField,
     TagFilterField,
 )
 from utilities.forms.rendering import FieldSet
@@ -120,6 +121,12 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         required=False, label=_("Provider Segment Contract")
     )
 
+    at_any_site = DynamicModelChoiceField(
+        queryset=Site.objects.all(),
+        required=False,
+        label=_("At any site"),
+    )
+
     fieldsets = (
         FieldSet("q", "tag", "filter_id", "sync_status", name="Misc"),
         FieldSet("name", "network_label", "komora_id", name="Basic"),
@@ -137,6 +144,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
             "termination_date__lte",
             name="Dates",
         ),
+        FieldSet("at_any_site", name="Extra"),
         FieldSet(
             "site_a_id", "location_a_id", "device_a_id", "port_a_id", name="Side A"
         ),

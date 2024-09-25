@@ -87,6 +87,10 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Port B (ID)",
     )
 
+    at_any_site = django_filters.ModelChoiceFilter(
+        method="_at_any_site", label="At any Site", queryset=Site.objects.all()
+    )
+
     class Meta:
         model = Segment
         fields = [
@@ -110,6 +114,11 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "device_b",
             "port_b",
         ]
+
+    def _at_any_site(self, queryset, name, value):
+        site_a = Q(site_a=value)
+        site_b = Q(site_b=value)
+        return queryset.filter(site_a | site_b)
 
     def search(self, queryset, name, value):
         site_a = Q(site_a__name__icontains=value)
