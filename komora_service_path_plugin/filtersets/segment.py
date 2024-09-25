@@ -3,7 +3,7 @@ from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 from komora_service_path_plugin.models import Segment
 from dcim.models import Site, Device, Interface, Location
-from circuits.models import Provider
+from circuits.models import Provider, Circuit
 from django.db.models import Q
 
 
@@ -95,6 +95,13 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         method="_at_any_location",
         label="At any Location",
         queryset=Location.objects.all(),
+    )
+
+    circuits = django_filters.ModelMultipleChoiceFilter(
+        field_name="circuits",
+        queryset=Circuit.objects.all(),
+        to_field_name="id",
+        label="Circuit (ID)",
     )
 
     class Meta:
