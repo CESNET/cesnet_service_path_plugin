@@ -25,6 +25,15 @@ class ProviderSegmentExtension(PluginTemplateExtension):
         )
 
 
+class SiteSegmentExtension(PluginTemplateExtension):
+    model = "dcim.site"
+
+    def full_width_page(self):
+        return self.render(
+            "komora_service_path_plugin/site_segments_extension.html",
+        )
+
+
 class TenantProviderExtension(PluginTemplateExtension):
     model = "tenancy.tenant"
 
@@ -54,4 +63,5 @@ template_extensions = [
     CircuitKomoraSegmentExtension,
     TenantProviderExtension,
     ProviderSegmentExtension,
+    SiteSegmentExtension,
 ]
