@@ -1,10 +1,16 @@
+import django_tables2
 from circuits.models import Provider
+from circuits.tables import CircuitTable
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from netbox.plugins import PluginTemplateExtension
+from utilities.tables import register_table_column
 
 from komora_service_path_plugin.models import Segment
 
 plugin_settings = settings.PLUGINS_CONFIG.get("komora_service_path_plugin", {})
+
+# Extra Views
 
 
 class CircuitKomoraSegmentExtension(PluginTemplateExtension):
@@ -22,6 +28,24 @@ class ProviderSegmentExtension(PluginTemplateExtension):
     def full_width_page(self):
         return self.render(
             "komora_service_path_plugin/provider_segments_extension.html",
+        )
+
+
+class SiteSegmentExtension(PluginTemplateExtension):
+    model = "dcim.site"
+
+    def full_width_page(self):
+        return self.render(
+            "komora_service_path_plugin/site_segments_extension.html",
+        )
+
+
+class LocationSegmentExtension(PluginTemplateExtension):
+    model = "dcim.location"
+
+    def full_width_page(self):
+        return self.render(
+            "komora_service_path_plugin/location_segments_extension.html",
         )
 
 
@@ -54,4 +78,17 @@ template_extensions = [
     CircuitKomoraSegmentExtension,
     TenantProviderExtension,
     ProviderSegmentExtension,
+    SiteSegmentExtension,
+    LocationSegmentExtension,
 ]
+
+# Extra Columns
+
+circuit_segments = django_tables2.TemplateColumn(
+    verbose_name=_("Segments"),
+    template_name="komora_service_path_plugin/circuit_segments_template_column.html",
+    orderable=False,
+    linkify=False,
+)
+
+register_table_column(circuit_segments, "circuit_segments", CircuitTable)

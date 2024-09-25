@@ -1,4 +1,4 @@
-from circuits.models import Provider
+from circuits.models import Provider, Circuit
 from dcim.models import Device, Interface, Location, Site
 from django import forms
 from django.utils.translation import gettext as _
@@ -120,6 +120,24 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         required=False, label=_("Provider Segment Contract")
     )
 
+    at_any_site = DynamicModelMultipleChoiceField(
+        queryset=Site.objects.all(),
+        required=False,
+        label=_("At any Site"),
+    )
+
+    at_any_location = DynamicModelMultipleChoiceField(
+        queryset=Location.objects.all(),
+        required=False,
+        label=_("At any Location"),
+    )
+
+    circuits = DynamicModelMultipleChoiceField(
+        queryset=Circuit.objects.all(),
+        required=False,
+        label=_("Circuits"),
+    )
+
     fieldsets = (
         FieldSet("q", "tag", "filter_id", "sync_status", name="Misc"),
         FieldSet("name", "network_label", "komora_id", name="Basic"),
@@ -137,6 +155,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
             "termination_date__lte",
             name="Dates",
         ),
+        FieldSet("circuits", "at_any_site", "at_any_location", name="Extra"),
         FieldSet(
             "site_a_id", "location_a_id", "device_a_id", "port_a_id", name="Side A"
         ),

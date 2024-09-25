@@ -3,7 +3,7 @@ from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 from komora_service_path_plugin.models import Segment
 from dcim.models import Site, Device, Interface, Location
-from circuits.models import Provider
+from circuits.models import Provider, Circuit
 from django.db.models import Q
 
 
@@ -87,6 +87,23 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Port B (ID)",
     )
 
+    at_any_site = django_filters.ModelMultipleChoiceFilter(
+        method="_at_any_site", label="At any Site", queryset=Site.objects.all()
+    )
+
+    at_any_location = django_filters.ModelMultipleChoiceFilter(
+        method="_at_any_location",
+        label="At any Location",
+        queryset=Location.objects.all(),
+    )
+
+    circuits = django_filters.ModelMultipleChoiceFilter(
+        field_name="circuits",
+        queryset=Circuit.objects.all(),
+        to_field_name="id",
+        label="Circuit (ID)",
+    )
+
     class Meta:
         model = Segment
         fields = [
@@ -110,6 +127,22 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "device_b",
             "port_b",
         ]
+
+    def _at_any_site(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        site_a = Q(site_a__in=value)
+        site_b = Q(site_b__in=value)
+        return queryset.filter(site_a | site_b)
+
+    def _at_any_location(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        location_a = Q(location_a__in=value)
+        location_b = Q(location_b__in=value)
+        return queryset.filter(location_a | location_b)
 
     def search(self, queryset, name, value):
         site_a = Q(site_a__name__icontains=value)

@@ -1,7 +1,6 @@
 from .segment import Segment
 from .service_path import ServicePath
 from django.db import models
-from django.urls import reverse
 from netbox.models import NetBoxModel
 
 
