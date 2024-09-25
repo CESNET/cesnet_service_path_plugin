@@ -123,7 +123,13 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     at_any_site = DynamicModelMultipleChoiceField(
         queryset=Site.objects.all(),
         required=False,
-        label=_("At any site"),
+        label=_("At any Site"),
+    )
+
+    at_any_location = DynamicModelMultipleChoiceField(
+        queryset=Location.objects.all(),
+        required=False,
+        label=_("At any Location"),
     )
 
     fieldsets = (
@@ -143,7 +149,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
             "termination_date__lte",
             name="Dates",
         ),
-        FieldSet("at_any_site", name="Extra"),
+        FieldSet("at_any_site", "at_any_location", name="Extra"),
         FieldSet(
             "site_a_id", "location_a_id", "device_a_id", "port_a_id", name="Side A"
         ),

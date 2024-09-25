@@ -91,6 +91,12 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         method="_at_any_site", label="At any Site", queryset=Site.objects.all()
     )
 
+    at_any_location = django_filters.ModelMultipleChoiceFilter(
+        method="_at_any_location",
+        label="At any Location",
+        queryset=Location.objects.all(),
+    )
+
     class Meta:
         model = Segment
         fields = [
@@ -122,6 +128,14 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         site_a = Q(site_a__in=value)
         site_b = Q(site_b__in=value)
         return queryset.filter(site_a | site_b)
+
+    def _at_any_location(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        location_a = Q(location_a__in=value)
+        location_b = Q(location_b__in=value)
+        return queryset.filter(location_a | location_b)
 
     def search(self, queryset, name, value):
         site_a = Q(site_a__name__icontains=value)
