@@ -9,15 +9,7 @@ from komora_service_path_plugin.models import ServicePath, SyncStatusChoices
 class ServicePathForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
 
-    fieldsets = (
-        (
-            "Misc",
-            (
-                "role",
-                "tags",
-            ),
-        ),
-    )
+    fieldsets = (FieldSet("tags", name="Misc"), )
 
     class Meta:
         model = ServicePath
