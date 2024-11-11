@@ -54,6 +54,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "imported_data",
             "komora_id",
             "circuits",
+            "tags",
         )
         brief_fields = (
             "id",
@@ -61,6 +62,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "display",
             "name",
             "komora_id",
+            "tags",
         )
 
     def validate(self, data):
