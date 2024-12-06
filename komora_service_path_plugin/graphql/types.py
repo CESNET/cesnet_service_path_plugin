@@ -6,9 +6,10 @@ from circuits.graphql.types import CircuitType, ProviderType
 from netbox.graphql.types import NetBoxObjectType
 
 from komora_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping, SegmentCircuitMapping
+from .filters import SegmentFilter  # , ServicePathFilter
 
 
-@strawberry_django_type(Segment)
+@strawberry_django_type(Segment, filters=SegmentFilter)
 class SegmentType(NetBoxObjectType):
     id: auto
     name: auto

@@ -15,6 +15,9 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     tag = TagFilter()
     name = django_filters.CharFilter(lookup_expr="icontains")
     network_label = django_filters.CharFilter(lookup_expr="icontains")
+    install_date = django_filters.DateFilter()
+    termination_date = django_filters.DateFilter()
+    """
     install_date__gte = django_filters.DateTimeFilter(
         field_name="install_date", lookup_expr="gte"
     )
@@ -27,6 +30,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     termination_date__lte = django_filters.DateTimeFilter(
         field_name="termination_date", lookup_expr="lte"
     )
+    """
     provider_id = django_filters.ModelMultipleChoiceFilter(
         field_name="provider__id",
         queryset=Provider.objects.all(),
@@ -154,11 +158,5 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         provider_segment_id = Q(provider_segment_id__icontains=value)
 
         return queryset.filter(
-            site_a
-            | site_b
-            | location_a
-            | location_b
-            | segment_name
-            | network_label
-            | provider_segment_id
+            site_a | site_b | location_a | location_b | segment_name | network_label | provider_segment_id
         )
