@@ -1,5 +1,4 @@
 from django import forms
-from django.db.utils import OperationalError
 from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms.fields import CommentField
 from utilities.forms.rendering import FieldSet
@@ -23,23 +22,18 @@ class ServicePathForm(NetBoxModelForm):
 class ServicePathFilterForm(NetBoxModelFilterSetForm):
     model = ServicePath
     # TODO: make choices configurable (seperate model maybe)
-    # WORKAROUND + TODO: Remove try/except 
-
-    try:
-        STATE_CHOICES = [("", "----")] + [
-            (state, state)
-            for state in ServicePath.objects.order_by("state")
-            .values_list("state", flat=True)
-            .distinct()
-        ]
-        KIND_CHOICES = [("", "----")] + [
-            (kind, kind)
-            for kind in ServicePath.objects.order_by("kind")
-            .values_list("kind", flat=True)
-            .distinct()
-        ]
-    except OperationalError as e:
-        pass
+    STATE_CHOICES = [("", "----")] + [
+        (state, state)
+        for state in ServicePath.objects.order_by("state")
+        .values_list("state", flat=True)
+        .distinct()
+    ]
+    KIND_CHOICES = [("", "----")] + [
+        (kind, kind)
+        for kind in ServicePath.objects.order_by("kind")
+        .values_list("kind", flat=True)
+        .distinct()
+    ]
 
     name = forms.CharField(required=False)
     sync_status = forms.MultipleChoiceField(
