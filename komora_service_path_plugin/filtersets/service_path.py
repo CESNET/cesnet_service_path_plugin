@@ -15,12 +15,8 @@ class ServicePathFilterSet(NetBoxModelFilterSet):
     )
     tag = TagFilter()
     name = django_filters.CharFilter(label=_("Name"))
-    state = django_filters.ChoiceFilter(
-        choices=ServicePathFilterForm.STATE_CHOICES, empty_label=None
-    )
-    kind = django_filters.ChoiceFilter(
-        choices=ServicePathFilterForm.KIND_CHOICES, empty_label=None
-    )
+    state = django_filters.MultipleChoiceFilter(choices=ServicePathFilterForm.STATE_CHOICES, null_value=None)
+    kind = django_filters.MultipleChoiceFilter(choices=ServicePathFilterForm.KIND_CHOICES, null_value=None)
 
     class Meta:
         model = ServicePath

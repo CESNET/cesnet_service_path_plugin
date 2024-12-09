@@ -1,10 +1,11 @@
 import django_filters
+from circuits.models import Circuit, Provider
+from dcim.models import Device, Interface, Location, Site
+from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
+
 from komora_service_path_plugin.models import Segment
-from dcim.models import Site, Device, Interface, Location
-from circuits.models import Provider, Circuit
-from django.db.models import Q
 
 
 class SegmentFilterSet(NetBoxModelFilterSet):
@@ -15,18 +16,11 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     tag = TagFilter()
     name = django_filters.CharFilter(lookup_expr="icontains")
     network_label = django_filters.CharFilter(lookup_expr="icontains")
-    install_date__gte = django_filters.DateTimeFilter(
-        field_name="install_date", lookup_expr="gte"
-    )
-    install_date__lte = django_filters.DateTimeFilter(
-        field_name="install_date", lookup_expr="lte"
-    )
-    termination_date__gte = django_filters.DateTimeFilter(
-        field_name="termination_date", lookup_expr="gte"
-    )
-    termination_date__lte = django_filters.DateTimeFilter(
-        field_name="termination_date", lookup_expr="lte"
-    )
+
+    # @NOTE: Keep commented -> automatically enables date filtering (supports __empty, __lt, __gt, __lte, __gte, __n, ...)
+    # install_date = django_filters.DateFilter()
+    # termination_date = django_filters.DateFilter()
+
     provider_id = django_filters.ModelMultipleChoiceFilter(
         field_name="provider__id",
         queryset=Provider.objects.all(),
@@ -154,11 +148,5 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         provider_segment_id = Q(provider_segment_id__icontains=value)
 
         return queryset.filter(
-            site_a
-            | site_b
-            | location_a
-            | location_b
-            | segment_name
-            | network_label
-            | provider_segment_id
+            site_a | site_b | location_a | location_b | segment_name | network_label | provider_segment_id
         )
