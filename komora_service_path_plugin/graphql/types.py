@@ -6,7 +6,7 @@ from circuits.graphql.types import CircuitType, ProviderType
 from netbox.graphql.types import NetBoxObjectType
 
 from komora_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping, SegmentCircuitMapping
-from .filters import SegmentFilter  # , ServicePathFilter
+from .filters import SegmentFilter, ServicePathFilter, SegmentCircuitMappingFilter, ServicePathSegmentMappingFilter
 
 
 @strawberry_django_type(Segment, filters=SegmentFilter)
@@ -38,14 +38,14 @@ class SegmentType(NetBoxObjectType):
     circuits: List[Annotated["CircuitType", lazy("circuits.graphql.types")]]
 
 
-@strawberry_django_type(SegmentCircuitMapping)
+@strawberry_django_type(SegmentCircuitMapping, filters=SegmentCircuitMappingFilter)
 class SegmentCircuitMappingType(NetBoxObjectType):
     id: auto
     segment: Annotated["SegmentType", lazy(".types")]
     circuit: Annotated["CircuitType", lazy("circuits.graphql.types")]
 
 
-@strawberry_django_type(ServicePath)
+@strawberry_django_type(ServicePath, filters=ServicePathFilter)
 class ServicePathType(NetBoxObjectType):
     id: auto
     name: auto
@@ -58,7 +58,7 @@ class ServicePathType(NetBoxObjectType):
     comments: auto
 
 
-@strawberry_django_type(ServicePathSegmentMapping)
+@strawberry_django_type(ServicePathSegmentMapping, filters=ServicePathSegmentMappingFilter)
 class ServicePathSegmentMappingType(NetBoxObjectType):
     id: auto
     service_path: Annotated["ServicePathType", lazy(".types")]
