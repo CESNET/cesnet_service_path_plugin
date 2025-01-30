@@ -5,7 +5,6 @@ from komora_service_path_plugin.models import ServicePathSegmentMapping
 
 
 class ServicePathSegmentMappingTable(NetBoxTable):
-    id = tables.Column(verbose_name="ID", linkify=False)
     segment = tables.Column(linkify=True, verbose_name="Segment")
     service_path = tables.Column(linkify=True, verbose_name="Service Path")
     segment__site_a = tables.Column(linkify=True, verbose_name="Site A")
