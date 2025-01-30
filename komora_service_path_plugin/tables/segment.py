@@ -18,10 +18,6 @@ class SegmentTable(NetBoxTable):
     location_b = tables.Column(linkify=True)
     device_b = tables.Column(linkify=True)
     port_b = tables.Column(linkify=True)
-    actions = columns.ActionsColumn(
-        actions=("edit", "changelog"),
-        extra_buttons=DELETE_BUTTON,
-    )
 
     class Meta(NetBoxTable.Meta):
         model = Segment

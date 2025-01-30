@@ -9,10 +9,6 @@ class ServicePathTable(NetBoxTable):
     tags = columns.TagColumn()
     name = tables.Column(linkify=True)
     sync_status = ChoiceFieldColumn()
-    actions = columns.ActionsColumn(
-        actions=("edit", "changelog"),
-        extra_buttons=DELETE_BUTTON,
-    )
 
     class Meta(NetBoxTable.Meta):
         model = ServicePath

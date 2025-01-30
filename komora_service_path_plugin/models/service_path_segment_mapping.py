@@ -1,16 +1,14 @@
+from django.db import models
+from django.urls import reverse
+from netbox.models import NetBoxModel
+
 from .segment import Segment
 from .service_path import ServicePath
-from django.db import models
-from netbox.models import NetBoxModel
 
 
 class ServicePathSegmentMapping(NetBoxModel):
-    service_path = models.ForeignKey(
-        ServicePath, on_delete=models.CASCADE, null=False, blank=False
-    )
-    segment = models.ForeignKey(
-        Segment, on_delete=models.CASCADE, null=False, blank=False
-    )
+    service_path = models.ForeignKey(ServicePath, on_delete=models.CASCADE, null=False, blank=False)
+    segment = models.ForeignKey(Segment, on_delete=models.CASCADE, null=False, blank=False)
     index = models.IntegerField(null=False, blank=False, default=0)
 
     # Komora fields
@@ -23,3 +21,6 @@ class ServicePathSegmentMapping(NetBoxModel):
 
     def __str__(self):
         return f"{self.service_path} - {self.segment} - {self.index}"
+
+    def get_absolute_url(self):
+        return reverse("plugins:komora_service_path_plugin:servicepathsegmentmapping", args=[self.pk])

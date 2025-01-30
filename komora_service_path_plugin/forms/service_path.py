@@ -1,20 +1,23 @@
 from django import forms
-from django.db.utils import OperationalError
 from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms.fields import CommentField
 from utilities.forms.rendering import FieldSet
 
 from komora_service_path_plugin.models import ServicePath, SyncStatusChoices
+from komora_service_path_plugin.models.service_path import KIND_CHOICES, STATE_CHOICES
 
 
 class ServicePathForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
-
-    fieldsets = (FieldSet("tags", name="Misc"), )
+    state = forms.ChoiceField(required=True, choices=STATE_CHOICES, initial=None)
+    kind = forms.ChoiceField(required=True, choices=KIND_CHOICES, initial=None)
 
     class Meta:
         model = ServicePath
         fields = (
+            "name",
+            "state",
+            "kind",
             "comments",
             "tags",
         )
@@ -23,27 +26,6 @@ class ServicePathForm(NetBoxModelForm):
 class ServicePathFilterForm(NetBoxModelFilterSetForm):
     model = ServicePath
     # TODO: make choices configurable (seperate model maybe)
-
-    STATE_CHOICES = [("", "----")]
-    KIND_CHOICES = [("", "----")]
-
-    try:
-        STATE_CHOICES = STATE_CHOICES + [
-            (state, state)
-            for state in ServicePath.objects.order_by("state")
-            .values_list("state", flat=True)
-            .distinct()
-        ]
-        KIND_CHOICES = KIND_CHOICES + [
-            (kind, kind)
-            for kind in ServicePath.objects.order_by("kind")
-            .values_list("kind", flat=True)
-            .distinct()
-        ]
-    except OperationalError as e:
-        pass
-
-
 
     name = forms.CharField(required=False)
     sync_status = forms.MultipleChoiceField(

@@ -4,8 +4,8 @@ from django.utils.translation import gettext as _
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
-from komora_service_path_plugin.forms import ServicePathFilterForm
 from komora_service_path_plugin.models import ServicePath
+from komora_service_path_plugin.models.service_path import KIND_CHOICES, STATE_CHOICES
 
 
 class ServicePathFilterSet(NetBoxModelFilterSet):
@@ -15,8 +15,8 @@ class ServicePathFilterSet(NetBoxModelFilterSet):
     )
     tag = TagFilter()
     name = django_filters.CharFilter(label=_("Name"))
-    state = django_filters.MultipleChoiceFilter(choices=ServicePathFilterForm.STATE_CHOICES, null_value=None)
-    kind = django_filters.MultipleChoiceFilter(choices=ServicePathFilterForm.KIND_CHOICES, null_value=None)
+    state = django_filters.MultipleChoiceFilter(choices=STATE_CHOICES, null_value=None)
+    kind = django_filters.MultipleChoiceFilter(choices=KIND_CHOICES, null_value=None)
 
     class Meta:
         model = ServicePath

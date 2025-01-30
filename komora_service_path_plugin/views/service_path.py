@@ -13,16 +13,6 @@ class ServicePathView(generic.ObjectView):
 class ServicePathListView(generic.ObjectListView):
     queryset = ServicePath.objects.all()
     table = ServicePathTable
-
-    actions = {
-        "add": {},
-        "edit": {"add"},
-        "import": {},
-        "export": set(),
-        "bulk_edit": {},
-        "bulk_delete": {},
-    }
-
     filterset = ServicePathFilterSet
     filterset_form = ServicePathFilterForm
 

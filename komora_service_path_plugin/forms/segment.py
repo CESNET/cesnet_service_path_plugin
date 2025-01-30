@@ -1,4 +1,4 @@
-from circuits.models import Provider, Circuit
+from circuits.models import Circuit, Provider
 from dcim.models import Device, Interface, Location, Site
 from django import forms
 from django.utils.translation import gettext as _
@@ -17,14 +17,29 @@ from komora_service_path_plugin.models import Segment, SyncStatusChoices
 class SegmentForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
 
-    fieldsets = (FieldSet("tags", name="Misc"), )
-
     class Meta:
         model = Segment
-        fields = (
-            "comments",
+        fields = [
+            "name",
+            "network_label",
+            "komora_id",
+            "install_date",
+            "termination_date",
+            "provider",
+            "provider_segment_id",
+            "provider_segment_name",
+            "provider_segment_contract",
+            "site_a",
+            "location_a",
+            "device_a",
+            "port_a",
+            "site_b",
+            "location_b",
+            "device_b",
+            "port_b",
             "tags",
-        )
+            "comments",
+        ]
 
 
 class SegmentFilterForm(NetBoxModelFilterSetForm):
@@ -40,9 +55,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     tag = TagFilterField(model)
 
-    site_a_id = DynamicModelMultipleChoiceField(
-        queryset=Site.objects.all(), required=False, label=_("Site A")
-    )
+    site_a_id = DynamicModelMultipleChoiceField(queryset=Site.objects.all(), required=False, label=_("Site A"))
     location_a_id = DynamicModelMultipleChoiceField(
         queryset=Location.objects.all(),
         required=False,
@@ -51,9 +64,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         },
         label=_("Location A"),
     )
-    device_a_id = DynamicModelMultipleChoiceField(
-        queryset=Device.objects.all(), required=False, label=_("Device A")
-    )
+    device_a_id = DynamicModelMultipleChoiceField(queryset=Device.objects.all(), required=False, label=_("Device A"))
     port_a_id = DynamicModelMultipleChoiceField(
         queryset=Interface.objects.all(),
         required=False,
@@ -63,9 +74,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         label=_("Port A"),
     )
 
-    site_b_id = DynamicModelMultipleChoiceField(
-        queryset=Site.objects.all(), required=False, label=_("Site B")
-    )
+    site_b_id = DynamicModelMultipleChoiceField(queryset=Site.objects.all(), required=False, label=_("Site B"))
     location_b_id = DynamicModelMultipleChoiceField(
         queryset=Location.objects.all(),
         required=False,
@@ -74,9 +83,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         },
         label=_("Location B"),
     )
-    device_b_id = DynamicModelMultipleChoiceField(
-        queryset=Device.objects.all(), required=False, label=_("Device B")
-    )
+    device_b_id = DynamicModelMultipleChoiceField(queryset=Device.objects.all(), required=False, label=_("Device B"))
     port_b_id = DynamicModelMultipleChoiceField(
         queryset=Interface.objects.all(),
         required=False,
@@ -86,31 +93,15 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         label=_("Port B"),
     )
 
-    install_date__gte = forms.DateTimeField(
-        required=False, label=("Install Date From"), widget=DatePicker()
-    )
-    install_date__lte = forms.DateTimeField(
-        required=False, label=("Install Date Till"), widget=DatePicker()
-    )
-    termination_date__gte = forms.DateTimeField(
-        required=False, label=("Termination Date From"), widget=DatePicker()
-    )
-    termination_date__lte = forms.DateTimeField(
-        required=False, label=("Termination Date Till"), widget=DatePicker()
-    )
+    install_date__gte = forms.DateTimeField(required=False, label=("Install Date From"), widget=DatePicker())
+    install_date__lte = forms.DateTimeField(required=False, label=("Install Date Till"), widget=DatePicker())
+    termination_date__gte = forms.DateTimeField(required=False, label=("Termination Date From"), widget=DatePicker())
+    termination_date__lte = forms.DateTimeField(required=False, label=("Termination Date Till"), widget=DatePicker())
 
-    provider_id = DynamicModelMultipleChoiceField(
-        queryset=Provider.objects.all(), required=False, label=_("Provider")
-    )
-    provider_segment_id = forms.CharField(
-        required=False, label=_("Provider Segment ID")
-    )
-    provider_segment_name = forms.CharField(
-        required=False, label=_("Provider Segment Name")
-    )
-    provider_segment_contract = forms.CharField(
-        required=False, label=_("Provider Segment Contract")
-    )
+    provider_id = DynamicModelMultipleChoiceField(queryset=Provider.objects.all(), required=False, label=_("Provider"))
+    provider_segment_id = forms.CharField(required=False, label=_("Provider Segment ID"))
+    provider_segment_name = forms.CharField(required=False, label=_("Provider Segment Name"))
+    provider_segment_contract = forms.CharField(required=False, label=_("Provider Segment Contract"))
 
     at_any_site = DynamicModelMultipleChoiceField(
         queryset=Site.objects.all(),
@@ -148,10 +139,6 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
             name="Dates",
         ),
         FieldSet("circuits", "at_any_site", "at_any_location", name="Extra"),
-        FieldSet(
-            "site_a_id", "location_a_id", "device_a_id", "port_a_id", name="Side A"
-        ),
-        FieldSet(
-            "site_b_id", "location_b_id", "device_b_id", "port_b_id", name="Side B"
-        ),
+        FieldSet("site_a_id", "location_a_id", "device_a_id", "port_a_id", name="Side A"),
+        FieldSet("site_b_id", "location_b_id", "device_b_id", "port_b_id", name="Side B"),
     )

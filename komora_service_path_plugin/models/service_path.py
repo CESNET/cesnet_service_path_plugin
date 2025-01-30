@@ -5,15 +5,14 @@ from netbox.models import NetBoxModel
 from komora_service_path_plugin.models import Segment
 from komora_service_path_plugin.models.sync_status_choices import SyncStatusChoices
 
+STATE_CHOICES = [("active", "Aktivní"), ("planned", "Plánovaný"), ("decommissioned", "Decommissioned")]
+KIND_CHOICES = [("experimental", "Experimentální"), ("core", "Páteřní"), ("customer", "Zákaznická")]
+
 
 class ServicePath(NetBoxModel):
     name = models.CharField(max_length=225)
-    state = models.CharField(
-        max_length=225
-    )  # TODO: maybe choice field? Or extra table? (I don't like extra table)
-    kind = models.CharField(
-        max_length=225
-    )  # TODO: maybe choice field? Or extra table? (I don't like extra table)
+    state = models.CharField(max_length=225)  # TODO: maybe choice field? Or extra table? (I don't like extra table)
+    kind = models.CharField(max_length=225)  # TODO: maybe choice field? Or extra table? (I don't like extra table)
     sync_status = models.CharField(
         max_length=30,
         choices=SyncStatusChoices,
