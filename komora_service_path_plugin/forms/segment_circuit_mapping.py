@@ -5,23 +5,10 @@ from utilities.forms.fields import DynamicModelChoiceField
 from komora_service_path_plugin.models import Segment, SegmentCircuitMapping
 
 
-# From Circuit to Segment
+# In segment_circuit_mapping.py
 class SegmentCircuitMappingForm(NetBoxModelForm):
-    segment = DynamicModelChoiceField(
-        queryset=Segment.objects.all(),
-        required=True,
-        selector=True,
-        disabled_indicator="segment_id",
-        # disabled=True
-    )
-
-    circuit = DynamicModelChoiceField(
-        queryset=Circuit.objects.all(),
-        required=True,
-        disabled_indicator="circuit_id",
-        selector=True,
-        # disabled=True
-    )
+    segment = DynamicModelChoiceField(queryset=Segment.objects.all(), required=True, selector=True)
+    circuit = DynamicModelChoiceField(queryset=Circuit.objects.all(), required=True, selector=True)
 
     class Meta:
         model = SegmentCircuitMapping

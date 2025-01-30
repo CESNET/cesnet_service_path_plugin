@@ -1,5 +1,5 @@
 import django_tables2 as tables
-from netbox.tables import NetBoxTable, columns
+from netbox.tables import NetBoxTable
 
 from komora_service_path_plugin.models import SegmentCircuitMapping
 

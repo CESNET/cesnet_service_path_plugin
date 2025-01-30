@@ -13,17 +13,11 @@ class SegmentCircuitMappingListView(generic.ObjectListView):
 
 
 # From Circuit to Segment
+# Create/Edit View
 class SegmentCircuitMappingEditView(generic.ObjectEditView):
     queryset = SegmentCircuitMapping.objects.all()
     form = SegmentCircuitMappingForm
-
-    def alter_object(self, instance, request, args, kwargs):
-        instance.circuit_id = request.GET.get("circuit_id")
-        instance.segment_id = request.GET.get("segment_id")
-        return instance
-
-    def get_extra_addanother_params(self, request):
-        return {"circuit_id": request.GET.get("circuit_id"), "segment_id": request.GET.get("segment_id")}
+    # template_name = 'komora_service_path_plugin/servicepathsegmentmapping_edit.html'
 
 
 class SegmentCircuitMappingDeleteView(generic.ObjectDeleteView):
