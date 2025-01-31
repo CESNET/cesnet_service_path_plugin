@@ -17,7 +17,6 @@ class SegmentCircuitMappingListView(generic.ObjectListView):
 class SegmentCircuitMappingEditView(generic.ObjectEditView):
     queryset = SegmentCircuitMapping.objects.all()
     form = SegmentCircuitMappingForm
-    # template_name = 'komora_service_path_plugin/servicepathsegmentmapping_edit.html'
 
 
 class SegmentCircuitMappingDeleteView(generic.ObjectDeleteView):
@@ -27,6 +26,3 @@ class SegmentCircuitMappingDeleteView(generic.ObjectDeleteView):
 class SegmentCircuitMappingView(generic.ObjectView):
     queryset = SegmentCircuitMapping.objects.all()
     template_name = "komora_service_path_plugin/segmentcircuitmapping.html"
-
-    def get_extra_context(self, request, instance):
-        return {"circuit": instance.circuit, "segment": instance.segment}
