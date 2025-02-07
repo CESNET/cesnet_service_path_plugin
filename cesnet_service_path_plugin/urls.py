@@ -1,12 +1,6 @@
-from django.urls import path
-from netbox.views.generic import ObjectChangeLogView, ObjectJournalView
+from django.urls import include, path
+from utilities.urls import get_model_urls
 
-from cesnet_service_path_plugin.models import (
-    Segment,
-    SegmentCircuitMapping,
-    ServicePath,
-    ServicePathSegmentMapping,
-)
 from cesnet_service_path_plugin.views import (
     SegmentCircuitMappingDeleteView,
     SegmentCircuitMappingEditView,
@@ -35,17 +29,10 @@ urlpatterns = (
     path(
         "segments/<int:pk>/delete/", SegmentDeleteView.as_view(), name="segment_delete"
     ),
+    # Adds Changelog, Journal, and Attachment tabs to the Segment view
     path(
-        "segments/<int:pk>/changelog/",
-        ObjectChangeLogView.as_view(),
-        name="segment_changelog",
-        kwargs={"model": Segment},
-    ),
-    path(
-        "segments/<int:pk>/journal/",
-        ObjectJournalView.as_view(),
-        name="segment_journal",
-        kwargs={"model": Segment},  # Add this line to specify the model
+        "segments/<int:pk>/",
+        include(get_model_urls("cesnet_service_path_plugin", "segment")),
     ),
     # ServicePath paths
     path("service-paths/", ServicePathListView.as_view(), name="servicepath_list"),
@@ -62,16 +49,8 @@ urlpatterns = (
         name="servicepath_delete",
     ),
     path(
-        "service-paths/<int:pk>/changelog/",
-        ObjectChangeLogView.as_view(),
-        name="servicepath_changelog",
-        kwargs={"model": ServicePath},
-    ),
-    path(
-        "service-paths/<int:pk>/journal/",
-        ObjectJournalView.as_view(),
-        name="servicepath_journal",
-        kwargs={"model": ServicePath},  # Add this line to specify the model
+        "service_paths/<int:pk>/",
+        include(get_model_urls("cesnet_service_path_plugin", "servicepath")),
     ),
     # ServicePathSegmentMapping paths
     path(
@@ -100,18 +79,10 @@ urlpatterns = (
         name="servicepathsegmentmapping_delete",
     ),
     path(
-        "service-path-segment-mappings/<int:pk>/changelog/",
-        ObjectChangeLogView.as_view(),
-        name="servicepathsegmentmapping_changelog",
-        kwargs={"model": ServicePathSegmentMapping},
-    ),
-    path(
-        "service-path-segment-mappings/<int:pk>/journal/",
-        ObjectJournalView.as_view(),
-        name="servicepathsegmentmapping_journal",
-        kwargs={
-            "model": ServicePathSegmentMapping
-        },  # Add this line to specify the model
+        "service-path-segment-mappings/<int:pk>/",
+        include(
+            get_model_urls("cesnet_service_path_plugin", "servicepathsegmentmapping")
+        ),
     ),
     # SegmentCircuitMapping paths
     path(
@@ -140,15 +111,7 @@ urlpatterns = (
         name="segmentcircuitmapping_delete",
     ),
     path(
-        "segment-circuit-mappings/<int:pk>/changelog/",
-        ObjectChangeLogView.as_view(),
-        name="segmentcircuitmapping_changelog",
-        kwargs={"model": SegmentCircuitMapping},
-    ),
-    path(
-        "segment-circuit-mappings/<int:pk>/journal/",
-        ObjectJournalView.as_view(),
-        name="segmentcircuitmapping_journal",
-        kwargs={"model": SegmentCircuitMapping},  # Add this line to specify the model
+        "segment-circuit-mappings/<int:pk>/",
+        include(get_model_urls("cesnet_service_path_plugin", "segmentcircuitmapping")),
     ),
 )
