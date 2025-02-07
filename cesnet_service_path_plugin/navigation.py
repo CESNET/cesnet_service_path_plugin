@@ -23,7 +23,7 @@ _mappings_menu_items = (
 )
 
 menu = PluginMenu(
-    label="Komora Service Paths",
-    groups=(("Komora", _menu_items), ("Mappings", _mappings_menu_items)),
+    label="Cesnet Service Paths",
+    groups=(("Cesnet", _menu_items), ("Mappings", _mappings_menu_items)),
     icon_class="mdi mdi-map",
 )

@@ -51,7 +51,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         choices=SyncStatusChoices,
     )
     network_label = forms.CharField(required=False)
-    komora_id = forms.IntegerField(required=False, label=_("Komora ID"))
+    komora_id = forms.IntegerField(required=False, label=_("Cesnet ID"))
 
     tag = TagFilterField(model)
 

@@ -43,8 +43,8 @@ and "help wanted" is open to whoever wants to implement it.
 
 ### Write Documentation
 
-Komora ServicePath Plugin could always use more documentation, whether as part of the
-official Komora ServicePath Plugin docs, in docstrings, or even on the web in blog posts,
+Cesnet ServicePath Plugin could always use more documentation, whether as part of the
+official Cesnet ServicePath Plugin docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 ### Submit Feedback

@@ -11,7 +11,7 @@ class ServicePathSegmentMapping(NetBoxModel):
     segment = models.ForeignKey(Segment, on_delete=models.CASCADE, null=False, blank=False)
     index = models.IntegerField(null=False, blank=False, default=0)
 
-    # Komora fields
+    # Cesnet fields
     imported_data = models.JSONField(null=True, blank=True)
     komora_id = models.BigIntegerField(null=True, blank=True)  # TODO: change to False
 

@@ -1,4 +1,4 @@
-"""Top-level package for Komora ServicePath Plugin."""
+"""Top-level package for Cesnet ServicePath Plugin."""
 
 from netbox.plugins import PluginConfig
 from .version import __version__, __author__, __email__, __description__, __name__
