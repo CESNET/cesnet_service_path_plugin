@@ -18,7 +18,6 @@ class ServicePathSegmentMapping(NetBoxModel):
     class Meta:
         ordering = ("service_path", "segment", "index")
         unique_together = ("service_path", "segment", "index")
-        db_table = 'cesnet_service_path_plugin_servicepathsegmentmapping'
 
     def __str__(self):
         return f"{self.service_path} - {self.segment} - {self.index}"

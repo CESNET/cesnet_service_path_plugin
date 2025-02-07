@@ -13,7 +13,6 @@ class SegmentCircuitMapping(NetBoxModel):
     class Meta:
         ordering = ("segment", "circuit")
         unique_together = ("segment", "circuit")
-        db_table = 'cesnet_service_path_plugin_segmentcircuitmapping'
 
     def __str__(self):
         return f"{self.segment} - {self.circuit}"
