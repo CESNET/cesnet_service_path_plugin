@@ -7,16 +7,22 @@ from .service_path import ServicePath
 
 
 class ServicePathSegmentMapping(NetBoxModel):
-    service_path = models.ForeignKey(ServicePath, on_delete=models.CASCADE, null=False, blank=False)
-    segment = models.ForeignKey(Segment, on_delete=models.CASCADE, null=False, blank=False)
-    index = models.IntegerField(null=False, blank=False, default=0)
+    service_path = models.ForeignKey(
+        ServicePath, on_delete=models.CASCADE, null=False, blank=False
+    )
+    segment = models.ForeignKey(
+        Segment, on_delete=models.CASCADE, null=False, blank=False
+    )
 
     class Meta:
-        ordering = ("service_path", "segment", "index")
-        unique_together = ("service_path", "segment", "index")
+        ordering = ("service_path", "segment")
+        unique_together = ("service_path", "segment")
 
     def __str__(self):
-        return f"{self.service_path} - {self.segment} - {self.index}"
+        return f"{self.service_path} - {self.segment}"
 
     def get_absolute_url(self):
-        return reverse("plugins:cesnet_service_path_plugin:servicepathsegmentmapping", args=[self.pk])
+        return reverse(
+            "plugins:cesnet_service_path_plugin:servicepathsegmentmapping",
+            args=[self.pk],
+        )

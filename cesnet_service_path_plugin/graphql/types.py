@@ -1,20 +1,22 @@
 from typing import Annotated, List
+
+from circuits.graphql.types import CircuitType, ProviderType
+from dcim.graphql.types import DeviceType, InterfaceType, LocationType, SiteType
+from netbox.graphql.types import NetBoxObjectType
 from strawberry import auto, lazy
 from strawberry_django import type as strawberry_django_type
-from dcim.graphql.types import DeviceType, InterfaceType, LocationType, SiteType
-from circuits.graphql.types import CircuitType, ProviderType
-from netbox.graphql.types import NetBoxObjectType
 
 from cesnet_service_path_plugin.models import (
     Segment,
+    SegmentCircuitMapping,
     ServicePath,
     ServicePathSegmentMapping,
-    SegmentCircuitMapping,
 )
+
 from .filters import (
+    SegmentCircuitMappingFilter,
     SegmentFilter,
     ServicePathFilter,
-    SegmentCircuitMappingFilter,
     ServicePathSegmentMappingFilter,
 )
 
@@ -26,7 +28,7 @@ class SegmentType(NetBoxObjectType):
     network_label: auto
     install_date: auto
     termination_date: auto
-    #sync_status: auto
+    # sync_status: auto
     provider: Annotated["ProviderType", lazy("circuits.graphql.types")] | None
     provider_segment_id: auto
     provider_segment_name: auto
@@ -64,4 +66,3 @@ class ServicePathSegmentMappingType(NetBoxObjectType):
     id: auto
     service_path: Annotated["ServicePathType", lazy(".types")]
     segment: Annotated["SegmentType", lazy(".types")]
-    index: auto

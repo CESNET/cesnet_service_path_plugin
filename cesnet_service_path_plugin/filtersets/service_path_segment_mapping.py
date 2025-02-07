@@ -1,30 +1,32 @@
-from netbox.filtersets import NetBoxModelFilterSet
-from cesnet_service_path_plugin.models import ServicePathSegmentMapping, ServicePath, Segment
 import django_filters
+from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
-from cesnet_service_path_plugin.models import Segment
-from dcim.models import Site, Device, Interface, Location
-from django.db.models import Q
+
+from cesnet_service_path_plugin.models import (
+    Segment,
+    ServicePath,
+    ServicePathSegmentMapping,
+)
 
 
 class ServicePathSegmentMappingFilterSet(NetBoxModelFilterSet):
     q = django_filters.CharFilter(
-        method='search',
-        label='Search',
+        method="search",
+        label="Search",
     )
     tag = TagFilter()
     service_path_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='service_path__id',
+        field_name="service_path__id",
         queryset=ServicePath.objects.all(),
-        to_field_name='id',
-        label='Service Path (ID)',
+        to_field_name="id",
+        label="Service Path (ID)",
     )
     segment_id = django_filters.ModelMultipleChoiceFilter(
-        field_name='segment__id',
+        field_name="segment__id",
         queryset=Segment.objects.all(),
-        to_field_name='id',
-        label='Segment (ID)',
+        to_field_name="id",
+        label="Segment (ID)",
     )
 
     class Meta:
@@ -33,7 +35,6 @@ class ServicePathSegmentMappingFilterSet(NetBoxModelFilterSet):
             "id",
             "service_path",
             "segment",
-            "index",
         ]
 
     def search(self, queryset, name, value):
@@ -45,4 +46,11 @@ class ServicePathSegmentMappingFilterSet(NetBoxModelFilterSet):
 
         service_path_name = Q(service_path__name__icontains=value)
 
-        return queryset.filter(segment_name | segment_site_a | segment_site_b | segment_location_a | segment_location_b | service_path_name)
+        return queryset.filter(
+            segment_name
+            | segment_site_a
+            | segment_site_b
+            | segment_location_a
+            | segment_location_b
+            | service_path_name
+        )

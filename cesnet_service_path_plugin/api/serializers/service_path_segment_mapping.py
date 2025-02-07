@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from netbox.api.serializers import NetBoxModelSerializer
 from cesnet_service_path_plugin.api.serializers.segment import SegmentSerializer
-from cesnet_service_path_plugin.api.serializers.service_path import ServicePathSerializer
+from cesnet_service_path_plugin.api.serializers.service_path import (
+    ServicePathSerializer,
+)
 from cesnet_service_path_plugin.models import ServicePathSegmentMapping
 
 
@@ -24,7 +26,6 @@ class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
             "display",
             "service_path",
             "segment",
-            "index",
         ]
         brief_fields = [
             "id",
@@ -32,7 +33,6 @@ class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
             "display",
             "service_path",
             "segment",
-            "index",
         ]
 
     def validate(self, data):
