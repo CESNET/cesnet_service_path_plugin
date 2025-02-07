@@ -30,6 +30,7 @@ class ServicePath(NetBoxModel):
 
     class Meta:
         ordering = ("name", "state", "kind")
+        db_table = "komora_service_path_plugin_servicepath"
 
     def __str__(self):
         return self.name

@@ -13,6 +13,7 @@ class SegmentCircuitMapping(NetBoxModel):
     class Meta:
         ordering = ("segment", "circuit")
         unique_together = ("segment", "circuit")
+        db_table = 'komora_service_path_plugin_segmentcircuitmapping'
 
     def __str__(self):
         return f"{self.segment} - {self.circuit}"
