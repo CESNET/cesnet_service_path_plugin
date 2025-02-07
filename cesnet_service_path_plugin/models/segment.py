@@ -44,20 +44,6 @@ class Segment(NetBoxModel):
         null=False,
         blank=False,
     )
-    device_a = models.ForeignKey(
-        "dcim.device",
-        on_delete=models.SET_NULL,
-        related_name="+",
-        null=True,
-        blank=True,
-    )
-    port_a = models.ForeignKey(
-        "dcim.interface",
-        on_delete=models.SET_NULL,
-        related_name="+",
-        null=True,
-        blank=True,
-    )
 
     site_b = models.ForeignKey(
         "dcim.site",
@@ -72,20 +58,6 @@ class Segment(NetBoxModel):
         related_name="+",
         null=False,
         blank=False,
-    )
-    device_b = models.ForeignKey(
-        "dcim.device",
-        on_delete=models.SET_NULL,
-        related_name="+",
-        null=True,
-        blank=True,
-    )
-    port_b = models.ForeignKey(
-        "dcim.interface",
-        on_delete=models.SET_NULL,
-        related_name="+",
-        null=True,
-        blank=True,
     )
 
     # Circuit
@@ -105,21 +77,11 @@ class Segment(NetBoxModel):
         if location and location.site != site:
             raise ValidationError({field_name: f"Location must be in Site: {site}"})
 
-    def validate_port_in_device(self, port, device, field_name):
-        if port and port.device != device:
-            raise ValidationError({field_name: f"Port must be in Device: {device}"})
-
     def clean(self):
         super().clean()
 
         self.validate_location_in_site(self.location_a, self.site_a, "location_a")
         self.validate_location_in_site(self.location_b, self.site_b, "location_b")
-
-        self.validate_port_in_device(self.port_a, self.device_a, "port_a")
-        self.validate_port_in_device(self.port_b, self.device_b, "port_b")
-
-        # TODO:
-        # validate if device is located on site or location?
 
     def get_sync_status_color(self):
         return SyncStatusChoices.colors.get(self.sync_status)

@@ -43,18 +43,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         to_field_name="id",
         label="Location A (ID)",
     )
-    device_a_id = django_filters.ModelMultipleChoiceFilter(
-        field_name="device_a__id",
-        queryset=Device.objects.all(),
-        to_field_name="id",
-        label="Device A (ID)",
-    )
-    port_a_id = django_filters.ModelMultipleChoiceFilter(
-        field_name="port_a__id",
-        queryset=Interface.objects.all(),
-        to_field_name="id",
-        label="Port A (ID)",
-    )
 
     site_b_id = django_filters.ModelMultipleChoiceFilter(
         field_name="site_b__id",
@@ -67,18 +55,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         queryset=Location.objects.all(),
         to_field_name="id",
         label="Location B (ID)",
-    )
-    device_b_id = django_filters.ModelMultipleChoiceFilter(
-        field_name="device_b__id",
-        queryset=Device.objects.all(),
-        to_field_name="id",
-        label="Device B (ID)",
-    )
-    port_b_id = django_filters.ModelMultipleChoiceFilter(
-        field_name="port_b__id",
-        queryset=Interface.objects.all(),
-        to_field_name="id",
-        label="Port B (ID)",
     )
 
     at_any_site = django_filters.ModelMultipleChoiceFilter(
@@ -113,12 +89,8 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "provider_segment_contract",
             "site_a",
             "location_a",
-            "device_a",
-            "port_a",
             "site_b",
             "location_b",
-            "device_b",
-            "port_b",
         ]
 
     def _at_any_site(self, queryset, name, value):
@@ -147,5 +119,11 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         provider_segment_id = Q(provider_segment_id__icontains=value)
 
         return queryset.filter(
-            site_a | site_b | location_a | location_b | segment_name | network_label | provider_segment_id
+            site_a
+            | site_b
+            | location_a
+            | location_b
+            | segment_name
+            | network_label
+            | provider_segment_id
         )

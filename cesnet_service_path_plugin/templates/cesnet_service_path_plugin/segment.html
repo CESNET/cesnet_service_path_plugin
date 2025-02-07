@@ -9,180 +9,140 @@
 {% load plugins %}
 {% load render_table from django_tables2 %}
 {% block content %}
-  <div class="row mb-3">
-    <div class="col col-md-6">
-      <!-- Segment, A, B cards -->
-      <div class="card">
-        <h5 class="card-header">Segment</h5>
-        <div class="card-body">
-          <!-- Segment card content -->
-          <table class="table table-hover attr-table">
-            <tr>
-              <th scope="row">Name</th>
-              <td>{{ object.name|placeholder }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Network Label</th>
-              <td>{{ object.network_label|placeholder }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Install Date</th>
-              <td>{{ object.install_date|placeholder }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Termination Date</th>
-              <td>{{ object.termination_date|placeholder }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Provider</th>
-              <td>
-                {% if object.provider %}
-                  <a href="{{ object.provider.get_absolute_url }}">{{ object.provider }}</a>
-                {% else %}
-                  {{ ''|placeholder }}
-                {% endif %}
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Provider Name</th>
-              <td>{{ object.provider_segment_name|placeholder }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Provider ID</th>
-              <td>{{ object.provider_segment_id|placeholder }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Provider Contract</th>
-              <td>{{ object.provider_segment_contract|placeholder }}</td>
-            </tr>
-            <tr>
-              <th scope="row">Synchronization Status</th>
-              <td>
-                <span class="badge text-bg-{{ object.get_sync_status_color }}">{{ object.get_sync_status_display }}</span>
-              </td>
-            </tr>
-          </table>
+    <div class="row mb-3">
+        <div class="col col-md-6">
+            <!-- Segment, A, B cards -->
+            <div class="card">
+                <h5 class="card-header">Segment</h5>
+                <div class="card-body">
+                    <!-- Segment card content -->
+                    <table class="table table-hover attr-table">
+                        <tr>
+                            <th scope="row">Name</th>
+                            <td>{{ object.name|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Network Label</th>
+                            <td>{{ object.network_label|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Install Date</th>
+                            <td>{{ object.install_date|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Termination Date</th>
+                            <td>{{ object.termination_date|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Provider</th>
+                            <td>
+                                {% if object.provider %}
+                                    <a href="{{ object.provider.get_absolute_url }}">{{ object.provider }}</a>
+                                {% else %}
+                                    {{ ''|placeholder }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Provider Name</th>
+                            <td>{{ object.provider_segment_name|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Provider ID</th>
+                            <td>{{ object.provider_segment_id|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Provider Contract</th>
+                            <td>{{ object.provider_segment_contract|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Synchronization Status</th>
+                            <td>
+                                <span class="badge text-bg-{{ object.get_sync_status_color }}">{{ object.get_sync_status_display }}</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <h5 class="card-header">A</h5>
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Site A</th>
+                        <td>
+                            {% if object.site_a %}
+                                <a href="{{ object.site_a.get_absolute_url }}">{{ object.site_a }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Location A</th>
+                        <td>
+                            {% if object.location_a %}
+                                <a href="{{ object.location_a.get_absolute_url }}">{{ object.location_a }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card">
+                <h5 class="card-header">B</h5>
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Site B</th>
+                        <td>
+                            {% if object.site_b %}
+                                <a href="{{ object.site_b.get_absolute_url }}">{{ object.site_b }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Location B</th>
+                        <td>
+                            {% if object.location_b %}
+                                <a href="{{ object.location_b.get_absolute_url }}">{{ object.location_b }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            {% plugin_left_page object %}
         </div>
-      </div>
-      <div class="card">
-        <h5 class="card-header">A</h5>
-        <table class="table table-hover attr-table">
-          <tr>
-            <th scope="row">Site A</th>
-            <td>
-              {% if object.site_a %}
-                <a href="{{ object.site_a.get_absolute_url }}">{{ object.site_a }}</a>
-              {% else %}
-                {{ ''|placeholder }}
-              {% endif %}
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Location A</th>
-            <td>
-              {% if object.location_a %}
-                <a href="{{ object.location_a.get_absolute_url }}">{{ object.location_a }}</a>
-              {% else %}
-                {{ ''|placeholder }}
-              {% endif %}
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Device A</th>
-            <td>
-              {% if object.device_a %}
-                <a href="{{ object.device_a.get_absolute_url }}">{{ object.device_a }}</a>
-              {% else %}
-                {{ ''|placeholder }}
-              {% endif %}
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Port A</th>
-            <td>
-              {% if object.port_a %}
-                <a href="{{ object.port_a.get_absolute_url }}">{{ object.port_a }}</a>
-              {% else %}
-                {{ ''|placeholder }}
-              {% endif %}
-            </td>
-          </tr>
-        </table>
-      </div>
-      <div class="card">
-        <h5 class="card-header">B</h5>
-        <table class="table table-hover attr-table">
-          <tr>
-            <th scope="row">Site B</th>
-            <td>
-              {% if object.site_b %}
-                <a href="{{ object.site_b.get_absolute_url }}">{{ object.site_b }}</a>
-              {% else %}
-                {{ ''|placeholder }}
-              {% endif %}
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Location B</th>
-            <td>
-              {% if object.location_b %}
-                <a href="{{ object.location_b.get_absolute_url }}">{{ object.location_b }}</a>
-              {% else %}
-                {{ ''|placeholder }}
-              {% endif %}
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Device B</th>
-            <td>
-              {% if object.device_b %}
-                <a href="{{ object.device_b.get_absolute_url }}">{{ object.device_b }}</a>
-              {% else %}
-                {{ ''|placeholder }}
-              {% endif %}
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Port B</th>
-            <td>
-              {% if object.port_b %}
-                <a href="{{ object.port_b.get_absolute_url }}">{{ object.port_b }}</a>
-              {% else %}
-                {{ ''|placeholder }}
-              {% endif %}
-            </td>
-          </tr>
-        </table>
-      </div>
-      {% plugin_left_page object %}
+        <div class="col col-md-6">
+            <!-- Tags, Comments, Imported Data cards -->
+            {% include 'inc/panels/custom_fields.html' %}
+            {% include 'inc/panels/tags.html' %}
+            {% include 'inc/panels/comments.html' %}
+            {% plugin_right_page object %}
+        </div>
     </div>
-    <div class="col col-md-6">
-      <!-- Tags, Comments, Imported Data cards -->
-      {% include 'inc/panels/custom_fields.html' %}
-      {% include 'inc/panels/tags.html' %}
-      {% include 'inc/panels/comments.html' %}
-      {% plugin_right_page object %}
+    <div class="row">
+        <div class="col col-12">
+            {% load render_table from django_tables2 %}
+            <div class="card">
+                <h5 class="card-header">Related Circuits</h5>
+                {% render_table circuits_table 'inc/table.html' %}
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="row">
-    <div class="col col-12">
-      {% load render_table from django_tables2 %}
-      <div class="card">
-        <h5 class="card-header">Related Circuits</h5>
-        {% render_table circuits_table 'inc/table.html' %}
-      </div>
+    <div class="row">
+        <div class="col col-12">
+            {% load render_table from django_tables2 %}
+            <div class="card">
+                <h5 class="card-header">Related ServicePaths</h5>
+                {% render_table sevice_paths_table 'inc/table.html' %}
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="row">
-    <div class="col col-12">
-      {% load render_table from django_tables2 %}
-      <div class="card">
-        <h5 class="card-header">Related ServicePaths</h5>
-        {% render_table sevice_paths_table 'inc/table.html' %}
-      </div>
+    <div class="row">
+        <div class="col col-md-12">{% plugin_full_width_page object %}</div>
     </div>
-  </div>
-  <div class="row">
-    <div class="col col-md-12">{% plugin_full_width_page object %}</div>
-  </div>
 {% endblock content %}

@@ -12,12 +12,8 @@ class SegmentTable(NetBoxTable):
     provider = tables.Column(linkify=True)
     site_a = tables.Column(linkify=True)
     location_a = tables.Column(linkify=True)
-    device_a = tables.Column(linkify=True)
-    port_a = tables.Column(linkify=True)
     site_b = tables.Column(linkify=True)
     location_b = tables.Column(linkify=True)
-    device_b = tables.Column(linkify=True)
-    port_b = tables.Column(linkify=True)
 
     class Meta(NetBoxTable.Meta):
         model = Segment
@@ -34,12 +30,8 @@ class SegmentTable(NetBoxTable):
             "provider_segment_contract",
             "site_a",
             "location_a",
-            "device_a",
-            "port_a",
             "site_b",
             "location_b",
-            "device_b",
-            "port_b",
             "tags",
             "actions",
             "sync_status",

@@ -18,12 +18,8 @@ class SegmentSerializer(NetBoxModelSerializer):
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
     location_a = LocationSerializer(required=True, nested=True)
-    device_a = DeviceSerializer(required=False, allow_null=True, nested=True)
-    port_a = InterfaceSerializer(required=False, allow_null=True, nested=True)
     site_b = SiteSerializer(required=True, nested=True)
     location_b = LocationSerializer(required=True, nested=True)
-    device_b = DeviceSerializer(required=False, allow_null=True, nested=True)
-    port_b = InterfaceSerializer(required=False, allow_null=True, nested=True)
     circuits = CircuitSerializer(required=False, many=True, nested=True)
 
     class Meta:
@@ -43,12 +39,8 @@ class SegmentSerializer(NetBoxModelSerializer):
             "provider_segment_contract",
             "site_a",
             "location_a",
-            "device_a",
-            "port_a",
             "site_b",
             "location_b",
-            "device_b",
-            "port_b",
             "circuits",
             "tags",
         )

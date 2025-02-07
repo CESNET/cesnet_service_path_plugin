@@ -33,12 +33,8 @@ class SegmentType(NetBoxObjectType):
     provider_segment_contract: auto
     site_a: Annotated["SiteType", lazy("dcim.graphql.types")] | None
     location_a: Annotated["LocationType", lazy("dcim.graphql.types")] | None
-    device_a: Annotated["DeviceType", lazy("dcim.graphql.types")] | None
-    port_a: Annotated["InterfaceType", lazy("dcim.graphql.types")] | None
     site_b: Annotated["SiteType", lazy("dcim.graphql.types")] | None
     location_b: Annotated["LocationType", lazy("dcim.graphql.types")] | None
-    device_b: Annotated["DeviceType", lazy("dcim.graphql.types")] | None
-    port_b: Annotated["InterfaceType", lazy("dcim.graphql.types")] | None
     comments: auto
     # Circuit
     circuits: List[Annotated["CircuitType", lazy("circuits.graphql.types")]]
