@@ -11,11 +11,10 @@
 {% block content %}
     <div class="row mb-3">
         <div class="col col-md-6">
-            <!-- Segment, A, B cards -->
+            <!-- Segment card -->
             <div class="card">
                 <h5 class="card-header">Segment</h5>
                 <div class="card-body">
-                    <!-- Segment card content -->
                     <table class="table table-hover attr-table">
                         <tr>
                             <th scope="row">Name</th>
@@ -57,63 +56,13 @@
                         </tr>
                         <!-- Synchronization Status -->
                         <!-- tr -->
-                            <!-- th scope="row">Synchronization Status</th -->
-                            <!-- td !-->
-                                <!-- span class="badge text-bg-{{ object.get_sync_status_color }}">{{ object.get_sync_status_display }}</span -->
-                            <!-- /td -->
+                        <!-- th scope="row">Synchronization Status</th -->
+                        <!-- td !-->
+                        <!-- span class="badge text-bg-{{ object.get_sync_status_color }}">{{ object.get_sync_status_display }}</span -->
+                        <!-- /td -->
                         <!-- /tr -->
                     </table>
                 </div>
-            </div>
-            <div class="card">
-                <h5 class="card-header">A</h5>
-                <table class="table table-hover attr-table">
-                    <tr>
-                        <th scope="row">Site A</th>
-                        <td>
-                            {% if object.site_a %}
-                                <a href="{{ object.site_a.get_absolute_url }}">{{ object.site_a }}</a>
-                            {% else %}
-                                {{ ''|placeholder }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Location A</th>
-                        <td>
-                            {% if object.location_a %}
-                                <a href="{{ object.location_a.get_absolute_url }}">{{ object.location_a }}</a>
-                            {% else %}
-                                {{ ''|placeholder }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div class="card">
-                <h5 class="card-header">B</h5>
-                <table class="table table-hover attr-table">
-                    <tr>
-                        <th scope="row">Site B</th>
-                        <td>
-                            {% if object.site_b %}
-                                <a href="{{ object.site_b.get_absolute_url }}">{{ object.site_b }}</a>
-                            {% else %}
-                                {{ ''|placeholder }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Location B</th>
-                        <td>
-                            {% if object.location_b %}
-                                <a href="{{ object.location_b.get_absolute_url }}">{{ object.location_b }}</a>
-                            {% else %}
-                                {{ ''|placeholder }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                </table>
             </div>
             {% plugin_left_page object %}
         </div>
@@ -125,6 +74,65 @@
             {% plugin_right_page object %}
         </div>
     </div>
+
+    <!-- A and B cards in full width row -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card">
+                <h5 class="card-header">Side A</h5>
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Site</th>
+                        <td>
+                            {% if object.site_a %}
+                                <a href="{{ object.site_a.get_absolute_url }}">{{ object.site_a }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Location</th>
+                        <td>
+                            {% if object.location_a %}
+                                <a href="{{ object.location_a.get_absolute_url }}">{{ object.location_a }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <h5 class="card-header">Side B</h5>
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Site</th>
+                        <td>
+                            {% if object.site_b %}
+                                <a href="{{ object.site_b.get_absolute_url }}">{{ object.site_b }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Location</th>
+                        <td>
+                            {% if object.location_b %}
+                                <a href="{{ object.location_b.get_absolute_url }}">{{ object.location_b }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col col-12">
             {% load render_table from django_tables2 %}
