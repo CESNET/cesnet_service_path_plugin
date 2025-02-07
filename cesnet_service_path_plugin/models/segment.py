@@ -110,7 +110,7 @@ class Segment(NetBoxModel):
 
     class Meta:
         ordering = ("name",)
-        db_table = "komora_service_path_plugin_segment"
+        db_table = "cesnet_service_path_plugin_segment"
 
     def __str__(self):
         return self.name
