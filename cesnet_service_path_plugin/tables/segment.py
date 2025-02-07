@@ -25,7 +25,6 @@ class SegmentTable(NetBoxTable):
             "pk",
             "id",
             "name",
-            "komora_id",
             "network_label",
             "install_date",
             "termination_date",

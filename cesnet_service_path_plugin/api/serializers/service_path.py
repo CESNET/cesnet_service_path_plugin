@@ -24,7 +24,6 @@ class ServicePathSerializer(NetBoxModelSerializer):
             "kind",
             "segments",
             "circuits",
-            "komora_id",
             "tags",
         ]
         brief_fields = [
@@ -32,7 +31,6 @@ class ServicePathSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
-            "komora_id",
             "tags",
         ]
 

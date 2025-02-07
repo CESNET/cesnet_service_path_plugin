@@ -22,10 +22,6 @@ class ServicePath(NetBoxModel):
 
     segments = models.ManyToManyField(Segment, through="ServicePathSegmentMapping")
 
-    # Cesnet fields
-    imported_data = models.JSONField(null=True, blank=True)
-    komora_id = models.BigIntegerField(null=True, blank=True)  # TODO: change to False
-
     comments = models.TextField(verbose_name="Comments", blank=True)
 
     class Meta:

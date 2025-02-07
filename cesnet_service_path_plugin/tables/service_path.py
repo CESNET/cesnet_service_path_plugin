@@ -17,7 +17,6 @@ class ServicePathTable(NetBoxTable):
             "name",
             "state",
             "kind",
-            "komora_id",
             "tags",
             "actions",
             "sync_status",

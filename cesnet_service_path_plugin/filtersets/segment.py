@@ -104,7 +104,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "id",
             "name",
             "sync_status",
-            "komora_id",
             "network_label",
             "install_date",
             "termination_date",

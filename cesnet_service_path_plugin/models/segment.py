@@ -90,20 +90,6 @@ class Segment(NetBoxModel):
     )
     note_b = models.TextField(null=True, blank=True)
 
-    # Cesnet fields
-    imported_data = models.JSONField(null=True, blank=True)
-    komora_id = models.BigIntegerField(null=True, blank=True)  # TODO: change to False
-
-    # TODO:
-    # technology
-    # SLA
-
-    # TODO:
-    # Contacts
-    # Notes
-    # Documents
-    # Attachments
-
     # Circuit
     circuits = models.ManyToManyField(Circuit, through="SegmentCircuitMapping")
     comments = models.TextField(verbose_name="Comments", blank=True)

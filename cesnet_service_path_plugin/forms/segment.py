@@ -22,7 +22,6 @@ class SegmentForm(NetBoxModelForm):
         fields = [
             "name",
             "network_label",
-            "komora_id",
             "install_date",
             "termination_date",
             "provider",
@@ -51,7 +50,6 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         choices=SyncStatusChoices,
     )
     network_label = forms.CharField(required=False)
-    komora_id = forms.IntegerField(required=False, label=_("Cesnet ID"))
 
     tag = TagFilterField(model)
 
@@ -123,7 +121,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     fieldsets = (
         FieldSet("q", "tag", "filter_id", "sync_status", name="Misc"),
-        FieldSet("name", "network_label", "komora_id", name="Basic"),
+        FieldSet("name", "network_label", name="Basic"),
         FieldSet(
             "provider_id",
             "provider_segment_id",

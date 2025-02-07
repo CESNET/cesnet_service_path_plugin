@@ -31,8 +31,6 @@ class SegmentType(NetBoxObjectType):
     device_b: Annotated["DeviceType", lazy("dcim.graphql.types")] | None
     port_b: Annotated["InterfaceType", lazy("dcim.graphql.types")] | None
     note_b: auto
-    imported_data: auto
-    komora_id: auto
     comments: auto
     # Circuit
     circuits: List[Annotated["CircuitType", lazy("circuits.graphql.types")]]
@@ -53,8 +51,6 @@ class ServicePathType(NetBoxObjectType):
     kind: auto
     sync_status: auto
     segments: List[Annotated["SegmentType", lazy(".types")]]
-    imported_data: auto
-    komora_id: auto
     comments: auto
 
 
@@ -64,5 +60,3 @@ class ServicePathSegmentMappingType(NetBoxObjectType):
     service_path: Annotated["ServicePathType", lazy(".types")]
     segment: Annotated["SegmentType", lazy(".types")]
     index: auto
-    imported_data: auto
-    komora_id: auto

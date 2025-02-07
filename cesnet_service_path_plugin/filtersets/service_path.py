@@ -20,7 +20,7 @@ class ServicePathFilterSet(NetBoxModelFilterSet):
 
     class Meta:
         model = ServicePath
-        fields = ["id", "name", "sync_status", "komora_id", "state", "kind", "tag"]
+        fields = ["id", "name", "sync_status", "state", "kind", "tag"]
 
     def search(self, queryset, name, value):
         name = Q(name__icontains=value)

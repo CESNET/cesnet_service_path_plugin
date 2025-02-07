@@ -24,7 +24,6 @@ class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
             "display",
             "service_path",
             "segment",
-            "komora_id",
             "index",
         ]
         brief_fields = [
@@ -33,7 +32,6 @@ class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
             "display",
             "service_path",
             "segment",
-            "komora_id",
             "index",
         ]
 

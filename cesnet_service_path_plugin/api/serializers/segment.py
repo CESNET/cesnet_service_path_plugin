@@ -51,8 +51,6 @@ class SegmentSerializer(NetBoxModelSerializer):
             "device_b",
             "port_b",
             "note_b",
-            "imported_data",
-            "komora_id",
             "circuits",
             "tags",
         )
@@ -61,7 +59,6 @@ class SegmentSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
-            "komora_id",
             "tags",
         )
 

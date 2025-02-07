@@ -170,34 +170,6 @@
       {% include 'inc/panels/tags.html' %}
       {% include 'inc/panels/comments.html' %}
       {% plugin_right_page object %}
-      <tr>
-        <td colspan="2">
-          <div class="card">
-            <div class="accordion accordion-flush" id="importedData">
-              <div class="card-body">
-                <div class="accordion-item">
-                  <h2 class="accordion-header" id="importedDataHeading">
-                    <button class="accordion-button collapsed"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapsedImportedData"
-                            aria-expanded="false"
-                            aria-controls="collapsedRenderConfig">Imported data</button>
-                  </h2>
-                  <div id="collapsedImportedData"
-                       class="accordion-collapse collapse"
-                       aria-labelledby="importedDataHeading"
-                       data-bs-parent="#importedData">
-                    <div class="accordion-body">
-                      <pre class="card-body">{{ object.imported_data|pprint }}</pre>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </td>
-      </tr>
     </div>
   </div>
   <div class="row">

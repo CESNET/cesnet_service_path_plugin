@@ -18,7 +18,7 @@ class ServicePathSegmentMappingFilterForm(NetBoxModelFilterSetForm):
 
     fieldsets = (
         FieldSet("q", "tag", "filter_id", name="Misc"),
-        FieldSet("segment_id", "service_path_id", "komora_id", name="Basic"),
+        FieldSet("segment_id", "service_path_id", name="Basic"),
     )
 
 
