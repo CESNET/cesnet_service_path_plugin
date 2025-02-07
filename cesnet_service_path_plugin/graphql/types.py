@@ -5,8 +5,18 @@ from dcim.graphql.types import DeviceType, InterfaceType, LocationType, SiteType
 from circuits.graphql.types import CircuitType, ProviderType
 from netbox.graphql.types import NetBoxObjectType
 
-from cesnet_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping, SegmentCircuitMapping
-from .filters import SegmentFilter, ServicePathFilter, SegmentCircuitMappingFilter, ServicePathSegmentMappingFilter
+from cesnet_service_path_plugin.models import (
+    Segment,
+    ServicePath,
+    ServicePathSegmentMapping,
+    SegmentCircuitMapping,
+)
+from .filters import (
+    SegmentFilter,
+    ServicePathFilter,
+    SegmentCircuitMappingFilter,
+    ServicePathSegmentMappingFilter,
+)
 
 
 @strawberry_django_type(Segment, filters=SegmentFilter)
@@ -25,12 +35,10 @@ class SegmentType(NetBoxObjectType):
     location_a: Annotated["LocationType", lazy("dcim.graphql.types")] | None
     device_a: Annotated["DeviceType", lazy("dcim.graphql.types")] | None
     port_a: Annotated["InterfaceType", lazy("dcim.graphql.types")] | None
-    note_a: auto
     site_b: Annotated["SiteType", lazy("dcim.graphql.types")] | None
     location_b: Annotated["LocationType", lazy("dcim.graphql.types")] | None
     device_b: Annotated["DeviceType", lazy("dcim.graphql.types")] | None
     port_b: Annotated["InterfaceType", lazy("dcim.graphql.types")] | None
-    note_b: auto
     comments: auto
     # Circuit
     circuits: List[Annotated["CircuitType", lazy("circuits.graphql.types")]]
@@ -54,7 +62,9 @@ class ServicePathType(NetBoxObjectType):
     comments: auto
 
 
-@strawberry_django_type(ServicePathSegmentMapping, filters=ServicePathSegmentMappingFilter)
+@strawberry_django_type(
+    ServicePathSegmentMapping, filters=ServicePathSegmentMappingFilter
+)
 class ServicePathSegmentMappingType(NetBoxObjectType):
     id: auto
     service_path: Annotated["ServicePathType", lazy(".types")]

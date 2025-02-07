@@ -58,7 +58,6 @@ class Segment(NetBoxModel):
         null=True,
         blank=True,
     )
-    note_a = models.TextField(null=True, blank=True)
 
     site_b = models.ForeignKey(
         "dcim.site",
@@ -88,7 +87,6 @@ class Segment(NetBoxModel):
         null=True,
         blank=True,
     )
-    note_b = models.TextField(null=True, blank=True)
 
     # Circuit
     circuits = models.ManyToManyField(Circuit, through="SegmentCircuitMapping")

@@ -45,12 +45,10 @@ class SegmentSerializer(NetBoxModelSerializer):
             "location_a",
             "device_a",
             "port_a",
-            "note_a",
             "site_b",
             "location_b",
             "device_b",
             "port_b",
-            "note_b",
             "circuits",
             "tags",
         )
