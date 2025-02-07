@@ -1,7 +1,5 @@
 from circuits.api.serializers import CircuitSerializer, ProviderSerializer
 from dcim.api.serializers import (
-    DeviceSerializer,
-    InterfaceSerializer,
     LocationSerializer,
     SiteSerializer,
 )
@@ -29,7 +27,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
-            "sync_status",
+            #"sync_status",
             "network_label",
             "install_date",
             "termination_date",

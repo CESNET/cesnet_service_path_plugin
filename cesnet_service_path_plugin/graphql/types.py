@@ -26,7 +26,7 @@ class SegmentType(NetBoxObjectType):
     network_label: auto
     install_date: auto
     termination_date: auto
-    sync_status: auto
+    #sync_status: auto
     provider: Annotated["ProviderType", lazy("circuits.graphql.types")] | None
     provider_segment_id: auto
     provider_segment_name: auto
@@ -53,7 +53,6 @@ class ServicePathType(NetBoxObjectType):
     name: auto
     state: auto
     kind: auto
-    sync_status: auto
     segments: List[Annotated["SegmentType", lazy(".types")]]
     comments: auto
 

@@ -2,13 +2,11 @@ import django_tables2 as tables
 from netbox.tables import ChoiceFieldColumn, NetBoxTable, columns
 
 from cesnet_service_path_plugin.models import ServicePath
-from cesnet_service_path_plugin.models.sync_status_choices import DELETE_BUTTON
 
 
 class ServicePathTable(NetBoxTable):
     tags = columns.TagColumn()
     name = tables.Column(linkify=True)
-    sync_status = ChoiceFieldColumn()
 
     class Meta(NetBoxTable.Meta):
         model = ServicePath
@@ -19,6 +17,5 @@ class ServicePathTable(NetBoxTable):
             "kind",
             "tags",
             "actions",
-            "sync_status",
         )
         default_columns = ("name", "state", "kind", "tags")

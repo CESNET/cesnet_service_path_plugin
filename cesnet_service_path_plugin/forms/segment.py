@@ -1,5 +1,5 @@
 from circuits.models import Circuit, Provider
-from dcim.models import Device, Interface, Location, Site
+from dcim.models import Location, Site
 from django import forms
 from django.utils.translation import gettext as _
 from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
@@ -11,7 +11,7 @@ from utilities.forms.fields import (
 from utilities.forms.rendering import FieldSet
 from utilities.forms.widgets.datetime import DatePicker
 
-from cesnet_service_path_plugin.models import Segment, SyncStatusChoices
+from cesnet_service_path_plugin.models import Segment
 
 
 class SegmentForm(NetBoxModelForm):
@@ -41,10 +41,10 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     model = Segment
 
     name = forms.CharField(required=False)
-    sync_status = forms.MultipleChoiceField(
-        required=False,
-        choices=SyncStatusChoices,
-    )
+    # sync_status = forms.MultipleChoiceField(
+    #    required=False,
+    #    choices=SyncStatusChoices,
+    # )
     network_label = forms.CharField(required=False)
 
     tag = TagFilterField(model)
@@ -118,7 +118,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     )
 
     fieldsets = (
-        FieldSet("q", "tag", "filter_id", "sync_status", name="Misc"),
+        FieldSet("q", "tag", "filter_id", name="Misc"),
         FieldSet("name", "network_label", name="Basic"),
         FieldSet(
             "provider_id",

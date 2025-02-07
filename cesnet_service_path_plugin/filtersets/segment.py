@@ -79,7 +79,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         fields = [
             "id",
             "name",
-            "sync_status",
             "network_label",
             "install_date",
             "termination_date",
