@@ -5,7 +5,7 @@ from django.db import migrations
 
 def copy_supplier_to_provider(apps, schema_editor):
     providers = apps.get_model("circuits", "Provider")
-    segments = apps.get_model("komora_service_path_plugin", "Segment")
+    segments = apps.get_model("cesnet_service_path_plugin", "Segment")
 
     for segment in segments.objects.all():
         tenant = segment.supplier
@@ -22,7 +22,7 @@ def copy_supplier_to_provider(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         (
-            "komora_service_path_plugin",
+            "cesnet_service_path_plugin",
             "0009_rename_supplier_segment_contract_segment_provider_segment_contract_and_more",
         ),
     ]

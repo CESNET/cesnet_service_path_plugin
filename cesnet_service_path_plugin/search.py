@@ -1,6 +1,6 @@
 from netbox.search import SearchIndex, register_search
 
-from komora_service_path_plugin.models import Segment, ServicePath
+from cesnet_service_path_plugin.models import Segment, ServicePath
 
 
 @register_search

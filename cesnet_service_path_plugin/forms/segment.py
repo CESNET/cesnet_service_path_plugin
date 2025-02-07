@@ -11,7 +11,7 @@ from utilities.forms.fields import (
 from utilities.forms.rendering import FieldSet
 from utilities.forms.widgets.datetime import DatePicker
 
-from komora_service_path_plugin.models import Segment, SyncStatusChoices
+from cesnet_service_path_plugin.models import Segment, SyncStatusChoices
 
 
 class SegmentForm(NetBoxModelForm):

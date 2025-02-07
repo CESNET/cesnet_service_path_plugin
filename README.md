@@ -1,10 +1,9 @@
-# Komora ServicePath Plugin
+# CESNET ServicePath Plugin
 
-Synchronize data between Komora and NetBox. Copies Segment and Service Paths from Komora.
+Adds ability to create Service Paths and Segments in NetBox.
 
 
 * Free software: Apache-2.0
-* Documentation: https://Jan.Krupa.github.io/komora-service-path-plugin/
 
 
 ## Features
@@ -16,6 +15,7 @@ The features the plugin provides should be listed here.
 | NetBox Version | Plugin Version |
 |----------------|----------------|
 |     3.7        |      0.1.0     |
+|     4.2        |      1.0.0     |
 
 ## Installing
 
@@ -25,13 +25,13 @@ For adding to a NetBox Docker setup see
 While this is still in development and not yet on pypi you can install with pip:
 
 ```bash
-pip install git+https://github.com/Jan.Krupa/komora-service-path-plugin
+pip install git+https://gitlab.cesnet.cz/701/netbox/cesnet_service_path_plugin.git
 ```
 
 or by adding to your `local_requirements.txt` or `plugin_requirements.txt` (netbox-docker):
 
 ```bash
-git+https://github.com/Jan.Krupa/komora-service-path-plugin
+cesnet_service_path_plugin
 ```
 
 Enable the plugin in `/opt/netbox/netbox/netbox/configuration.py`,
@@ -39,11 +39,11 @@ Enable the plugin in `/opt/netbox/netbox/netbox/configuration.py`,
 
 ```python
 PLUGINS = [
-    'komora_service_path_plugin'
+    'cesnet_service_path_plugin'
 ]
 
 PLUGINS_CONFIG = {
-    "komora-service-path-plugin": {},
+    "cesnet_service_path_plugin": {},
 }
 ```
 

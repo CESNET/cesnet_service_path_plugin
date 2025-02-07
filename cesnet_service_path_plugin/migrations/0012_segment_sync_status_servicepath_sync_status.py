@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         (
-            "komora_service_path_plugin",
+            "cesnet_service_path_plugin",
             "0011_remove_segment_supplier_alter_segment_provider",
         ),
     ]

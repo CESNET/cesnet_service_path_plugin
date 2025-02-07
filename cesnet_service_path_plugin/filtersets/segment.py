@@ -5,7 +5,7 @@ from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
-from komora_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models import Segment
 
 
 class SegmentFilterSet(NetBoxModelFilterSet):

@@ -3,7 +3,7 @@ from django.db import models
 from django.urls import reverse
 from netbox.models import NetBoxModel
 
-from komora_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models import Segment
 
 
 class SegmentCircuitMapping(NetBoxModel):
@@ -18,4 +18,4 @@ class SegmentCircuitMapping(NetBoxModel):
         return f"{self.segment} - {self.circuit}"
 
     def get_absolute_url(self):
-        return reverse("plugins:komora_service_path_plugin:segmentcircuitmapping", args=[self.pk])
+        return reverse("plugins:cesnet_service_path_plugin:segmentcircuitmapping", args=[self.pk])

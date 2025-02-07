@@ -2,7 +2,7 @@ from circuits.models import Circuit
 from netbox.forms import NetBoxModelForm
 from utilities.forms.fields import DynamicModelChoiceField
 
-from komora_service_path_plugin.models import Segment, SegmentCircuitMapping
+from cesnet_service_path_plugin.models import Segment, SegmentCircuitMapping
 
 
 # In segment_circuit_mapping.py

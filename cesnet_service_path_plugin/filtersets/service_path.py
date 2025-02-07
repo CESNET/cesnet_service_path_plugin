@@ -4,8 +4,8 @@ from django.utils.translation import gettext as _
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
-from komora_service_path_plugin.models import ServicePath
-from komora_service_path_plugin.models.service_path import KIND_CHOICES, STATE_CHOICES
+from cesnet_service_path_plugin.models import ServicePath
+from cesnet_service_path_plugin.models.service_path import KIND_CHOICES, STATE_CHOICES
 
 
 class ServicePathFilterSet(NetBoxModelFilterSet):

@@ -1,9 +1,9 @@
 from netbox.api.metadata import ContentTypeMetadata
 from netbox.api.viewsets import NetBoxModelViewSet
 
-from komora_service_path_plugin.models import Segment
-from komora_service_path_plugin.filtersets import SegmentFilterSet
-from komora_service_path_plugin.api.serializers import SegmentSerializer
+from cesnet_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.filtersets import SegmentFilterSet
+from cesnet_service_path_plugin.api.serializers import SegmentSerializer
 
 
 class SegmentViewSet(NetBoxModelViewSet):

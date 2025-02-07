@@ -8,12 +8,12 @@ from dcim.api.serializers import (
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 
-from komora_service_path_plugin.models.segment import Segment
+from cesnet_service_path_plugin.models.segment import Segment
 
 
 class SegmentSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:komora_service_path_plugin-api:segment-detail"
+        view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail"
     )
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)

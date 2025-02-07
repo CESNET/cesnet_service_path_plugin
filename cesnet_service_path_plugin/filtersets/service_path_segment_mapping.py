@@ -1,9 +1,9 @@
 from netbox.filtersets import NetBoxModelFilterSet
-from komora_service_path_plugin.models import ServicePathSegmentMapping, ServicePath, Segment
+from cesnet_service_path_plugin.models import ServicePathSegmentMapping, ServicePath, Segment
 import django_filters
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
-from komora_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models import Segment
 from dcim.models import Site, Device, Interface, Location
 from django.db.models import Q
 

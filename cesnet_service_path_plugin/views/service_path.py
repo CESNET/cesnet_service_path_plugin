@@ -1,9 +1,9 @@
 from netbox.views import generic
 
-from komora_service_path_plugin.filtersets import ServicePathFilterSet
-from komora_service_path_plugin.forms import ServicePathFilterForm, ServicePathForm
-from komora_service_path_plugin.models import ServicePath
-from komora_service_path_plugin.tables import ServicePathTable
+from cesnet_service_path_plugin.filtersets import ServicePathFilterSet
+from cesnet_service_path_plugin.forms import ServicePathFilterForm, ServicePathForm
+from cesnet_service_path_plugin.models import ServicePath
+from cesnet_service_path_plugin.tables import ServicePathTable
 
 
 class ServicePathView(generic.ObjectView):

@@ -1,7 +1,7 @@
 import django_tables2 as tables
 from netbox.tables import NetBoxTable, columns
 
-from komora_service_path_plugin.models import ServicePathSegmentMapping
+from cesnet_service_path_plugin.models import ServicePathSegmentMapping
 
 
 class ServicePathSegmentMappingTable(NetBoxTable):

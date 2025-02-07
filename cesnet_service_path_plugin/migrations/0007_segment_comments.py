@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("komora_service_path_plugin", "0006_remove_servicepath_circuits_and_more"),
+        ("cesnet_service_path_plugin", "0006_remove_servicepath_circuits_and_more"),
     ]
 
     operations = [

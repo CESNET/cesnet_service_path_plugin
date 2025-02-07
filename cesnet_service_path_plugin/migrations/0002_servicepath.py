@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("extras", "0106_bookmark_user_cascade_deletion"),
-        ("komora_service_path_plugin", "0001_segment"),
+        ("cesnet_service_path_plugin", "0001_segment"),
     ]
 
     operations = [

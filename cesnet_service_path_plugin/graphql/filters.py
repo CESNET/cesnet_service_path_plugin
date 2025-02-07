@@ -1,8 +1,8 @@
 import strawberry_django
 from netbox.graphql.filter_mixins import autotype_decorator, BaseFilterMixin
 
-from komora_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping, SegmentCircuitMapping
-from komora_service_path_plugin.filtersets import (
+from cesnet_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping, SegmentCircuitMapping
+from cesnet_service_path_plugin.filtersets import (
     SegmentFilterSet,
     ServicePathFilterSet,
     SegmentCircuitMappingFilterSet,

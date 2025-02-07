@@ -2,7 +2,7 @@ import django_filters
 from circuits.models import Circuit
 from django.db.models import Q
 from extras.filters import TagFilter
-from komora_service_path_plugin.models import Segment, SegmentCircuitMapping
+from cesnet_service_path_plugin.models import Segment, SegmentCircuitMapping
 from netbox.filtersets import NetBoxModelFilterSet
 
 

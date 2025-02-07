@@ -4,7 +4,7 @@ from django.db import models
 from django.urls import reverse
 from netbox.models import NetBoxModel
 
-from komora_service_path_plugin.models.sync_status_choices import SyncStatusChoices
+from cesnet_service_path_plugin.models.sync_status_choices import SyncStatusChoices
 
 
 class Segment(NetBoxModel):
@@ -115,7 +115,7 @@ class Segment(NetBoxModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("plugins:komora_service_path_plugin:segment", args=[self.pk])
+        return reverse("plugins:cesnet_service_path_plugin:segment", args=[self.pk])
 
     def validate_location_in_site(self, location, site, field_name):
         if location and location.site != site:

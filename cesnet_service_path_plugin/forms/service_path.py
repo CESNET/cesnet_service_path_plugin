@@ -3,8 +3,8 @@ from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms.fields import CommentField
 from utilities.forms.rendering import FieldSet
 
-from komora_service_path_plugin.models import ServicePath, SyncStatusChoices
-from komora_service_path_plugin.models.service_path import KIND_CHOICES, STATE_CHOICES
+from cesnet_service_path_plugin.models import ServicePath, SyncStatusChoices
+from cesnet_service_path_plugin.models.service_path import KIND_CHOICES, STATE_CHOICES
 
 
 class ServicePathForm(NetBoxModelForm):

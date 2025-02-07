@@ -3,7 +3,7 @@ from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField, TagFilterField
 from utilities.forms.rendering import FieldSet
 
-from komora_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping
+from cesnet_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping
 
 
 class ServicePathSegmentMappingFilterForm(NetBoxModelFilterSetForm):

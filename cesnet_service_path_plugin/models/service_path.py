@@ -2,8 +2,8 @@ from django.db import models
 from django.urls import reverse
 from netbox.models import NetBoxModel
 
-from komora_service_path_plugin.models import Segment
-from komora_service_path_plugin.models.sync_status_choices import SyncStatusChoices
+from cesnet_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models.sync_status_choices import SyncStatusChoices
 
 STATE_CHOICES = [("active", "Aktivní"), ("planned", "Plánovaný"), ("decommissioned", "Decommissioned")]
 KIND_CHOICES = [("experimental", "Experimentální"), ("core", "Páteřní"), ("customer", "Zákaznická")]
@@ -35,7 +35,7 @@ class ServicePath(NetBoxModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("plugins:komora_service_path_plugin:servicepath", args=[self.pk])
+        return reverse("plugins:cesnet_service_path_plugin:servicepath", args=[self.pk])
 
     def get_sync_status_color(self):
         return SyncStatusChoices.colors.get(self.sync_status)

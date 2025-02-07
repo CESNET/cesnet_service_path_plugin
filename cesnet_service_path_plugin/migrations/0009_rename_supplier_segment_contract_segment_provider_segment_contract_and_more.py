@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("circuits", "0043_circuittype_color"),
-        ("komora_service_path_plugin", "0008_servicepath_comments"),
+        ("cesnet_service_path_plugin", "0008_servicepath_comments"),
         ("tenancy", "0015_contactassignment_rename_content_type"),
     ]
 

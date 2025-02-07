@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
         ("circuits", "0043_circuittype_color"),
         ("extras", "0115_convert_dashboard_widgets"),
         (
-            "komora_service_path_plugin",
+            "cesnet_service_path_plugin",
             "0004_add_komora_id_and_imported_data_to_models",
         ),
     ]
@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
                     "segment",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="komora_service_path_plugin.segment",
+                        to="cesnet_service_path_plugin.segment",
                     ),
                 ),
                 (
@@ -67,7 +67,7 @@ class Migration(migrations.Migration):
             model_name="segment",
             name="circuits",
             field=models.ManyToManyField(
-                through="komora_service_path_plugin.SegmentCircuitMapping",
+                through="cesnet_service_path_plugin.SegmentCircuitMapping",
                 to="circuits.circuit",
             ),
         ),
@@ -101,7 +101,7 @@ class Migration(migrations.Migration):
                     "service_path",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="komora_service_path_plugin.servicepath",
+                        to="cesnet_service_path_plugin.servicepath",
                     ),
                 ),
                 (
@@ -120,7 +120,7 @@ class Migration(migrations.Migration):
             model_name="servicepath",
             name="circuits",
             field=models.ManyToManyField(
-                through="komora_service_path_plugin.ServicePathCircuitMapping",
+                through="cesnet_service_path_plugin.ServicePathCircuitMapping",
                 to="circuits.circuit",
             ),
         ),

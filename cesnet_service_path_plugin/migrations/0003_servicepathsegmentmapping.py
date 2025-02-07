@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("extras", "0106_bookmark_user_cascade_deletion"),
-        ("komora_service_path_plugin", "0002_servicepath"),
+        ("cesnet_service_path_plugin", "0002_servicepath"),
     ]
 
     operations = [
@@ -38,14 +38,14 @@ class Migration(migrations.Migration):
                     "segment",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="komora_service_path_plugin.segment",
+                        to="cesnet_service_path_plugin.segment",
                     ),
                 ),
                 (
                     "service_path",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="komora_service_path_plugin.servicepath",
+                        to="cesnet_service_path_plugin.servicepath",
                     ),
                 ),
                 (
@@ -64,8 +64,8 @@ class Migration(migrations.Migration):
             model_name="servicepath",
             name="segments",
             field=models.ManyToManyField(
-                through="komora_service_path_plugin.ServicePathSegmentMapping",
-                to="komora_service_path_plugin.segment",
+                through="cesnet_service_path_plugin.ServicePathSegmentMapping",
+                to="cesnet_service_path_plugin.segment",
             ),
         ),
     ]

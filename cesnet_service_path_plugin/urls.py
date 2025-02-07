@@ -1,13 +1,13 @@
 from django.urls import path
 from netbox.views.generic import ObjectChangeLogView
 
-from komora_service_path_plugin.models import (
+from cesnet_service_path_plugin.models import (
     Segment,
     SegmentCircuitMapping,
     ServicePath,
     ServicePathSegmentMapping,
 )
-from komora_service_path_plugin.views import (
+from cesnet_service_path_plugin.views import (
     SegmentCircuitMappingDeleteView,
     SegmentCircuitMappingEditView,
     SegmentCircuitMappingListView,

@@ -3,7 +3,7 @@ include LICENSE
 include README.md
 
 recursive-include tests *
-recursive-include komora_service_path_plugin/templates *
+recursive-include cesnet_service_path_plugin/templates *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 

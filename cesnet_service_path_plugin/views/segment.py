@@ -1,14 +1,14 @@
 from circuits.tables import CircuitTable
 from netbox.views import generic
 
-from komora_service_path_plugin.filtersets import SegmentFilterSet
-from komora_service_path_plugin.forms import SegmentFilterForm, SegmentForm
-from komora_service_path_plugin.models import (
+from cesnet_service_path_plugin.filtersets import SegmentFilterSet
+from cesnet_service_path_plugin.forms import SegmentFilterForm, SegmentForm
+from cesnet_service_path_plugin.models import (
     Segment,
     ServicePath,
     ServicePathSegmentMapping,
 )
-from komora_service_path_plugin.tables import SegmentTable, ServicePathTable
+from cesnet_service_path_plugin.tables import SegmentTable, ServicePathTable
 
 
 class SegmentView(generic.ObjectView):

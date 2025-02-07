@@ -5,7 +5,7 @@ from dcim.graphql.types import DeviceType, InterfaceType, LocationType, SiteType
 from circuits.graphql.types import CircuitType, ProviderType
 from netbox.graphql.types import NetBoxObjectType
 
-from komora_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping, SegmentCircuitMapping
+from cesnet_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping, SegmentCircuitMapping
 from .filters import SegmentFilter, ServicePathFilter, SegmentCircuitMappingFilter, ServicePathSegmentMappingFilter
 
 

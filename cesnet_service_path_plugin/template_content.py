@@ -6,9 +6,9 @@ from django.utils.translation import gettext_lazy as _
 from netbox.plugins import PluginTemplateExtension
 from utilities.tables import register_table_column
 
-from komora_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models import Segment
 
-plugin_settings = settings.PLUGINS_CONFIG.get("komora_service_path_plugin", {})
+plugin_settings = settings.PLUGINS_CONFIG.get("cesnet_service_path_plugin", {})
 
 # Extra Views
 
@@ -18,7 +18,7 @@ class CircuitKomoraSegmentExtension(PluginTemplateExtension):
 
     def full_width_page(self):
         return self.render(
-            "komora_service_path_plugin/circuit_segments_extension.html",
+            "cesnet_service_path_plugin/circuit_segments_extension.html",
         )
 
 
@@ -27,7 +27,7 @@ class ProviderSegmentExtension(PluginTemplateExtension):
 
     def full_width_page(self):
         return self.render(
-            "komora_service_path_plugin/provider_segments_extension.html",
+            "cesnet_service_path_plugin/provider_segments_extension.html",
         )
 
 
@@ -36,7 +36,7 @@ class SiteSegmentExtension(PluginTemplateExtension):
 
     def full_width_page(self):
         return self.render(
-            "komora_service_path_plugin/site_segments_extension.html",
+            "cesnet_service_path_plugin/site_segments_extension.html",
         )
 
 
@@ -45,7 +45,7 @@ class LocationSegmentExtension(PluginTemplateExtension):
 
     def full_width_page(self):
         return self.render(
-            "komora_service_path_plugin/location_segments_extension.html",
+            "cesnet_service_path_plugin/location_segments_extension.html",
         )
 
 
@@ -65,7 +65,7 @@ class TenantProviderExtension(PluginTemplateExtension):
         )
 
         return self.render(
-            "komora_service_path_plugin/tenant_provider_extension.html",
+            "cesnet_service_path_plugin/tenant_provider_extension.html",
             extra_context={
                 "provider": provider,
                 "provider_circuits_count": provider_circuits_count,
@@ -86,7 +86,7 @@ template_extensions = [
 
 circuit_segments = django_tables2.TemplateColumn(
     verbose_name=_("Segments"),
-    template_name="komora_service_path_plugin/circuit_segments_template_column.html",
+    template_name="cesnet_service_path_plugin/circuit_segments_template_column.html",
     orderable=False,
     linkify=False,
 )
