@@ -5,10 +5,11 @@ from django.utils.translation import gettext as _
 from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
 from utilities.forms.fields import (
     CommentField,
+    DynamicModelChoiceField,
     DynamicModelMultipleChoiceField,
     TagFilterField,
 )
-from utilities.forms.rendering import FieldSet
+from utilities.forms.rendering import FieldSet, InlineFields
 from utilities.forms.widgets.datetime import DatePicker
 
 from cesnet_service_path_plugin.models import Segment
@@ -18,6 +19,48 @@ from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 class SegmentForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
     status = forms.ChoiceField(required=True, choices=StatusChoices, initial=None)
+    provider_segment_contract = forms.CharField(
+        label=" Contract", required=False, help_text="Provider Segment Contract"
+    )
+    provider_segment_id = forms.CharField(
+        label=" ID", required=False, help_text="Provider Segment ID"
+    )
+    provider_segment_name = forms.CharField(
+        label="Name", required=False, help_text="Provider Segment Name"
+    )
+    provider = DynamicModelChoiceField(
+        queryset=Provider.objects.all(),
+        required=False,
+        label=_("Provider"),
+        selector=True,
+    )
+    install_date = forms.DateField(widget=DatePicker(), required=False)
+    termination_date = forms.DateField(widget=DatePicker(), required=False)
+
+    site_a = DynamicModelChoiceField(
+        queryset=Site.objects.all(),
+        label=_("Site A"),
+        selector=True,
+    )
+    location_a = DynamicModelChoiceField(
+        queryset=Location.objects.all(),
+        query_params={
+            "site_id": "$site_a",
+        },
+        label=_("Location A"),
+    )
+    site_b = DynamicModelChoiceField(
+        queryset=Site.objects.all(),
+        label=_("Site B"),
+        selector=True,
+    )
+    location_b = DynamicModelChoiceField(
+        queryset=Location.objects.all(),
+        query_params={
+            "site_id": "$site_b",
+        },
+        label=_("Location B"),
+    )
 
     class Meta:
         model = Segment
@@ -38,6 +81,44 @@ class SegmentForm(NetBoxModelForm):
             "tags",
             "comments",
         ]
+
+    fieldsets = (
+        FieldSet(
+            "name",
+            "network_label",
+            "status",
+            InlineFields("install_date", "termination_date", label="Dates"),
+            name="Basic Information",
+        ),
+        FieldSet(
+            "provider",
+            "provider_segment_id",
+            "provider_segment_name",
+            "provider_segment_contract",
+            name="Provider",
+        ),
+        # FieldSet(
+        #   # NOTE: WARNING: InlineFields does not display REQUIRED asterisk (*) in the form!!
+        #   InlineFields("site_a", "location_a", label="Side A"),
+        #   InlineFields("site_b", "location_b", label="Side B"),
+        #   name="Endpoints",
+        # ),
+        FieldSet(
+            "site_a",
+            "location_a",
+            name="Side A",
+        ),
+        FieldSet(
+            "site_b",
+            "location_b",
+            name="Side B",
+        ),
+        FieldSet(
+            "tags",
+            # "comments", # Comment Is always rendered! If uncommented, it will be rendered twice
+            name="Miscellaneous",
+        ),
+    )
 
 
 class SegmentFilterForm(NetBoxModelFilterSetForm):
