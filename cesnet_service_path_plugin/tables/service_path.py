@@ -7,15 +7,17 @@ from cesnet_service_path_plugin.models import ServicePath
 class ServicePathTable(NetBoxTable):
     tags = columns.TagColumn()
     name = tables.Column(linkify=True)
+    status = ChoiceFieldColumn()
+    kind = tables.Column()
 
     class Meta(NetBoxTable.Meta):
         model = ServicePath
         fields = (
             "pk",
             "name",
-            "state",
+            "status",
             "kind",
             "tags",
             "actions",
         )
-        default_columns = ("name", "state", "kind", "tags")
+        default_columns = ("name", "status", "kind", "tags")

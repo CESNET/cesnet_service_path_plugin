@@ -18,17 +18,13 @@
                         <td>{{ object.name }}</td>
                     </tr>
                     <tr>
-                        <th scope="row">State</th>
-                        <td>{{ object.state }}</td>
-                    </tr>
-                    <tr>
                         <th scope="row">Kind</th>
                         <td>{{ object.kind }}</td>
                     </tr>
                     <tr>
-                        <th scope="row">Synchronization Status</th>
+                        <th scope="row">Status</th>
                         <td>
-                            <span class="badge text-bg-{{ object.get_sync_status_color }}">{{ object.get_sync_status_display }}</span>
+                            <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span>
                         </td>
                     </tr>
                 </table>

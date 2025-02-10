@@ -12,15 +12,18 @@ from utilities.forms.rendering import FieldSet
 from utilities.forms.widgets.datetime import DatePicker
 
 from cesnet_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 
 
 class SegmentForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
+    status = forms.ChoiceField(required=True, choices=StatusChoices, initial=None)
 
     class Meta:
         model = Segment
         fields = [
             "name",
+            "status",
             "network_label",
             "install_date",
             "termination_date",
@@ -41,10 +44,9 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     model = Segment
 
     name = forms.CharField(required=False)
-    # sync_status = forms.MultipleChoiceField(
-    #    required=False,
-    #    choices=SyncStatusChoices,
-    # )
+    status = forms.MultipleChoiceField(
+        required=False, choices=StatusChoices, initial=None
+    )
     network_label = forms.CharField(required=False)
 
     tag = TagFilterField(model)
@@ -119,7 +121,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     fieldsets = (
         FieldSet("q", "tag", "filter_id", name="Misc"),
-        FieldSet("name", "network_label", name="Basic"),
+        FieldSet("name", "status", "network_label", name="Basic"),
         FieldSet(
             "provider_id",
             "provider_segment_id",

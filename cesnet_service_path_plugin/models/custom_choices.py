@@ -1,9 +1,15 @@
 from utilities.choices import ChoiceSet
 
 
-class ExampleChoices(ChoiceSet):
-    key = "KomoraServicePath.example_model_field"
+class StatusChoices(ChoiceSet):
+    key = "cesnet_service_path_plugin.choices.status"
+
+    ACTIVE = "active"
+    PLANNED = "planned"
+    OFFLINE = "offline"
+
     CHOICES = [
-        ("active", "Active", "green"),
-        ("deleted", "Deleted", "red"),
+        (ACTIVE, "Active", "green"),
+        (PLANNED, "Planned", "orange"),
+        (OFFLINE, "Offline", "red"),
     ]

@@ -1,7 +1,7 @@
 from typing import Annotated, List
 
 from circuits.graphql.types import CircuitType, ProviderType
-from dcim.graphql.types import DeviceType, InterfaceType, LocationType, SiteType
+from dcim.graphql.types import LocationType, SiteType
 from netbox.graphql.types import NetBoxObjectType
 from strawberry import auto, lazy
 from strawberry_django import type as strawberry_django_type
@@ -28,7 +28,7 @@ class SegmentType(NetBoxObjectType):
     network_label: auto
     install_date: auto
     termination_date: auto
-    # sync_status: auto
+    status: auto
     provider: Annotated["ProviderType", lazy("circuits.graphql.types")] | None
     provider_segment_id: auto
     provider_segment_name: auto
@@ -53,7 +53,7 @@ class SegmentCircuitMappingType(NetBoxObjectType):
 class ServicePathType(NetBoxObjectType):
     id: auto
     name: auto
-    state: auto
+    status: auto
     kind: auto
     segments: List[Annotated["SegmentType", lazy(".types")]]
     comments: auto

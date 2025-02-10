@@ -1,42 +1,31 @@
-# CESNET ServicePath Plugin
+# CESNET ServicePath Plugin for NetBox
 
-Adds ability to create Service Paths and Segments in NetBox.
+A NetBox plugin that enables the creation and management of Service Paths and Segments, allowing you to model and track service routing in your network infrastructure.
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-* Free software: Apache-2.0
+## Overview
 
+The CESNET ServicePath Plugin extends NetBox's capabilities by:
+- Managing service paths across your network
+- Creating and tracking service segments
+- Visualizing service routing
 
-## Features
-
-The features the plugin provides should be listed here.
-
-## Compatibility
+## Compatibility Matrix
 
 | NetBox Version | Plugin Version |
 |----------------|----------------|
-|     3.7        |      0.1.0     |
 |     4.2        |      4.0.0     |
+|     3.7        |      0.1.0     |
 
-## Installing
+## Quick Start
 
-For adding to a NetBox Docker setup see
-[the general instructions for using netbox-docker with plugins](https://github.com/netbox-community/netbox-docker/wiki/Using-Netbox-Plugins).
-
-While this is still in development and not yet on pypi you can install with pip:
-
+1. Install the plugin:
 ```bash
-pip install git+https://gitlab.cesnet.cz/701/netbox/cesnet_service_path_plugin.git
+pip install cesnet_service_path_plugin
 ```
 
-or by adding to your `local_requirements.txt` or `plugin_requirements.txt` (netbox-docker):
-
-```bash
-cesnet_service_path_plugin
-```
-
-Enable the plugin in `/opt/netbox/netbox/netbox/configuration.py`,
- or if you use netbox-docker, your `/configuration/plugins.py` file :
-
+2. Enable the plugin in your NetBox configuration:
 ```python
 PLUGINS = [
     'cesnet_service_path_plugin'
@@ -47,11 +36,76 @@ PLUGINS_CONFIG = {
 }
 ```
 
+3. Run NetBox migrations:
+```bash
+python manage.py migrate
+```
+
+## Installation
+
+### Using pip
+```bash
+pip install git+https://gitlab.cesnet.cz/701/netbox/cesnet_service_path_plugin.git
+```
+
+### Using Docker
+For NetBox Docker installations, add to your `plugin_requirements.txt`:
+```bash
+cesnet_service_path_plugin
+```
+
+For detailed Docker setup instructions, see [using netbox-docker with plugins](https://github.com/netbox-community/netbox-docker/wiki/Using-Netbox-Plugins).
+
+## Configuration
+
+### Custom Status Choices
+
+Extend or override default status choices in your `configuration.py`:
+
+```python
+FIELD_CHOICES = {
+    'cesnet_service_path_plugin.choices.status': (
+        ('custom_status', 'Custom Status', 'blue'),
+        # ('status_value', 'Display Name', 'color'),
+    )
+}
+```
+
+Status choice format:
+- Value: Internal database value
+- Name: UI display name
+- Color: Badge color (blue, green, red, orange, yellow, purple, gray)
+
+Default statuses (Active, Planned, Offline) will be merged with custom choices.
+
+## Development
+
+### Setting Up Development Environment
+
+1. Clone the repository:
+```bash
+git clone https://gitlab.cesnet.cz/701/netbox/cesnet_service_path_plugin.git
+cd cesnet_service_path_plugin
+```
+
+2. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+.\venv\Scripts\activate  # Windows
+```
+
+3. Install development dependencies:
+```bash
+pip install -e ".[dev]"
+```
+
 ## Credits
 
-Based on the NetBox plugin tutorial:
+- Created using [Cookiecutter](https://github.com/audreyr/cookiecutter) and [`netbox-community/cookiecutter-netbox-plugin`](https://github.com/netbox-community/cookiecutter-netbox-plugin)
+- Based on the [NetBox plugin tutorial](https://github.com/netbox-community/netbox-plugin-tutorial)
 
-- [demo repository](https://github.com/netbox-community/netbox-plugin-demo)
-- [tutorial](https://github.com/netbox-community/netbox-plugin-tutorial)
+## License
 
-This package was created with [Cookiecutter](https://github.com/audreyr/cookiecutter) and the [`netbox-community/cookiecutter-netbox-plugin`](https://github.com/netbox-community/cookiecutter-netbox-plugin) project template.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

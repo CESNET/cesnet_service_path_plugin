@@ -4,7 +4,7 @@ from django.db import models
 from django.urls import reverse
 from netbox.models import NetBoxModel
 
-# from cesnet_service_path_plugin.models.custom_choices import ExampleChoices
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 
 
 class Segment(NetBoxModel):
@@ -12,6 +12,13 @@ class Segment(NetBoxModel):
     network_label = models.CharField(max_length=255, null=True, blank=True)
     install_date = models.DateField(null=True, blank=True)
     termination_date = models.DateField(null=True, blank=True)
+    status = models.CharField(
+        max_length=30,
+        choices=StatusChoices,
+        default=StatusChoices.ACTIVE,
+        blank=False,
+        null=False,
+    )
 
     provider = models.ForeignKey(
         "circuits.provider",
@@ -77,5 +84,5 @@ class Segment(NetBoxModel):
         self.validate_location_in_site(self.location_a, self.site_a, "location_a")
         self.validate_location_in_site(self.location_b, self.site_b, "location_b")
 
-    # def get_example_color(self):
-    #    return ExampleChoices.colors.get(self.example_model_field, "gray")
+    def get_status_color(self):
+        return StatusChoices.colors.get(self.status, "gray")

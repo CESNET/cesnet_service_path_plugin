@@ -5,7 +5,8 @@ from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
 from cesnet_service_path_plugin.models import ServicePath
-from cesnet_service_path_plugin.models.service_path import KIND_CHOICES, STATE_CHOICES
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices
+from cesnet_service_path_plugin.models.service_path import KIND_CHOICES
 
 
 class ServicePathFilterSet(NetBoxModelFilterSet):
@@ -15,12 +16,12 @@ class ServicePathFilterSet(NetBoxModelFilterSet):
     )
     tag = TagFilter()
     name = django_filters.CharFilter(label=_("Name"))
-    state = django_filters.MultipleChoiceFilter(choices=STATE_CHOICES, null_value=None)
+    status = django_filters.MultipleChoiceFilter(choices=StatusChoices, null_value=None)
     kind = django_filters.MultipleChoiceFilter(choices=KIND_CHOICES, null_value=None)
 
     class Meta:
         model = ServicePath
-        fields = ["id", "name", "state", "kind", "tag"]
+        fields = ["id", "name", "status", "kind", "tag"]
 
     def search(self, queryset, name, value):
         name = Q(name__icontains=value)

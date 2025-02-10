@@ -6,6 +6,7 @@ from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
 from cesnet_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 
 
 class SegmentFilterSet(NetBoxModelFilterSet):
@@ -16,6 +17,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     tag = TagFilter()
     name = django_filters.CharFilter(lookup_expr="icontains")
     network_label = django_filters.CharFilter(lookup_expr="icontains")
+    status = django_filters.MultipleChoiceFilter(choices=StatusChoices, null_value=None)
 
     # @NOTE: Keep commented -> automatically enables date filtering (supports __empty, __lt, __gt, __lte, __gte, __n, ...)
     # install_date = django_filters.DateFilter()
@@ -116,6 +118,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         segment_name = Q(name__icontains=value)
         network_label = Q(network_label__icontains=value)
         provider_segment_id = Q(provider_segment_id__icontains=value)
+        status = Q(status__iexact=value)
 
         return queryset.filter(
             site_a
@@ -125,4 +128,5 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             | segment_name
             | network_label
             | provider_segment_id
+            | status
         )

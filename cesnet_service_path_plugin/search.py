@@ -22,4 +22,4 @@ class ServicePathIndex(SearchIndex):
     model = ServicePath
 
     fields = (("name", 100),)
-    display_attrs = ("state", "kind")
+    display_attrs = ("status", "kind")

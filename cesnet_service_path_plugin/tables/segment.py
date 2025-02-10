@@ -7,7 +7,7 @@ from cesnet_service_path_plugin.models import Segment
 class SegmentTable(NetBoxTable):
     tags = columns.TagColumn()
     name = tables.Column(linkify=True)
-    #sync_status = ChoiceFieldColumn()
+    status = ChoiceFieldColumn()
     provider = tables.Column(linkify=True)
     site_a = tables.Column(linkify=True)
     location_a = tables.Column(linkify=True)
@@ -33,7 +33,7 @@ class SegmentTable(NetBoxTable):
             "location_b",
             "tags",
             "actions",
-            #"sync_status",
+            "status",
         )
 
         default_columns = (
@@ -44,4 +44,5 @@ class SegmentTable(NetBoxTable):
             "location_a",
             "site_b",
             "location_b",
+            "status",
         )

@@ -54,13 +54,12 @@
                             <th scope="row">Provider Contract</th>
                             <td>{{ object.provider_segment_contract|placeholder }}</td>
                         </tr>
-                        <!-- Synchronization Status -->
-                        <!-- tr -->
-                        <!-- th scope="row">Synchronization Status</th -->
-                        <!-- td !-->
-                        <!-- span class="badge text-bg-{{ object.get_sync_status_color }}">{{ object.get_sync_status_display }}</span -->
-                        <!-- /td -->
-                        <!-- /tr -->
+                        <tr>
+                            <th scope="row">Status</th>
+                            <td>
+                                <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span>
+                            </td>
+                        </tr>
                     </table>
                 </div>
             </div>
@@ -74,7 +73,6 @@
             {% plugin_right_page object %}
         </div>
     </div>
-
     <!-- A and B cards in full width row -->
     <div class="row mb-3">
         <div class="col-md-6">
@@ -132,7 +130,6 @@
             </div>
         </div>
     </div>
-
     <div class="row">
         <div class="col col-12">
             {% load render_table from django_tables2 %}

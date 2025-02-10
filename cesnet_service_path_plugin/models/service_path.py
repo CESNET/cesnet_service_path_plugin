@@ -3,12 +3,8 @@ from django.urls import reverse
 from netbox.models import NetBoxModel
 
 from cesnet_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 
-STATE_CHOICES = [
-    ("active", "Aktivní"),
-    ("planned", "Plánovaný"),
-    ("decommissioned", "Decommissioned"),
-]
 KIND_CHOICES = [
     ("experimental", "Experimentální"),
     ("core", "Páteřní"),
@@ -18,9 +14,14 @@ KIND_CHOICES = [
 
 class ServicePath(NetBoxModel):
     name = models.CharField(max_length=225)
-    state = models.CharField(
-        max_length=225
-    )  # TODO: maybe choice field? Or extra table? (I don't like extra table)
+    status = models.CharField(
+        max_length=30,
+        choices=StatusChoices,
+        default=StatusChoices.ACTIVE,
+        blank=False,
+        null=False,
+    )
+
     kind = models.CharField(
         max_length=225
     )  # TODO: maybe choice field? Or extra table? (I don't like extra table)
@@ -29,10 +30,13 @@ class ServicePath(NetBoxModel):
     comments = models.TextField(verbose_name="Comments", blank=True)
 
     class Meta:
-        ordering = ("name", "state", "kind")
+        ordering = ("name", "status", "kind")
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
         return reverse("plugins:cesnet_service_path_plugin:servicepath", args=[self.pk])
+
+    def get_status_color(self):
+        return StatusChoices.colors.get(self.status, "gray")

@@ -4,19 +4,20 @@ from utilities.forms.fields import CommentField
 from utilities.forms.rendering import FieldSet
 
 from cesnet_service_path_plugin.models import ServicePath
-from cesnet_service_path_plugin.models.service_path import KIND_CHOICES, STATE_CHOICES
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices
+from cesnet_service_path_plugin.models.service_path import KIND_CHOICES
 
 
 class ServicePathForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
-    state = forms.ChoiceField(required=True, choices=STATE_CHOICES, initial=None)
+    status = forms.ChoiceField(required=True, choices=StatusChoices, initial=None)
     kind = forms.ChoiceField(required=True, choices=KIND_CHOICES, initial=None)
 
     class Meta:
         model = ServicePath
         fields = (
             "name",
-            "state",
+            "status",
             "kind",
             "comments",
             "tags",
@@ -28,10 +29,12 @@ class ServicePathFilterForm(NetBoxModelFilterSetForm):
     # TODO: make choices configurable (seperate model maybe)
 
     name = forms.CharField(required=False)
-    state = forms.ChoiceField(required=False, choices=STATE_CHOICES, initial=None)
+    status = forms.MultipleChoiceField(
+        required=False, choices=StatusChoices, initial=None
+    )
     kind = forms.ChoiceField(required=False, choices=KIND_CHOICES, initial=None)
 
     fieldsets = (
         FieldSet("q", "tag", "filter_id", name="Misc"),
-        FieldSet("name", "state", "kind", name="Service Path"),
+        FieldSet("name", "status", "kind", name="Service Path"),
     )

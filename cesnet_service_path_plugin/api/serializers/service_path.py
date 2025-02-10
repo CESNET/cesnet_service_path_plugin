@@ -1,8 +1,9 @@
-from rest_framework import serializers
+from circuits.api.serializers import CircuitSerializer
 from netbox.api.serializers import NetBoxModelSerializer
+from rest_framework import serializers
+
 from cesnet_service_path_plugin.api.serializers.segment import SegmentSerializer
 from cesnet_service_path_plugin.models import ServicePath
-from circuits.api.serializers import CircuitSerializer
 
 
 class ServicePathSerializer(NetBoxModelSerializer):
@@ -19,7 +20,7 @@ class ServicePathSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "name",
-            "state",
+            "status",
             "kind",
             "segments",
             "circuits",
