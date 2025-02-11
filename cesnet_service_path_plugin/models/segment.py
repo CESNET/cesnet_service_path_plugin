@@ -2,6 +2,7 @@ from circuits.models import Circuit
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from netbox.models import NetBoxModel
 
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
@@ -86,3 +87,74 @@ class Segment(NetBoxModel):
 
     def get_status_color(self):
         return StatusChoices.colors.get(self.status, "gray")
+
+    def get_date_status(self):
+        """Returns the date status and color for progress bar"""
+        today = timezone.now().date()
+        warning_days = 14
+
+        def format_days_message(days, message_type=None):
+            if message_type is None:
+                message_type = "ago" if days < 0 else "in"
+            days = abs(days)
+            day_text = "day" if days == 1 else "days"
+            return f"{message_type} {days} {day_text}"
+
+        def get_termination_status(days_until):
+            if days_until <= 0:
+                return {
+                    "color": "danger",
+                    "message": f"Terminated {format_days_message(days_until)}",
+                }
+            if days_until <= warning_days:
+                return {
+                    "color": "warning",
+                    "message": f"Terminates {format_days_message(days_until)}",
+                }
+            return {
+                "color": "success",
+                "message": f"Active until {self.termination_date.strftime('%Y-%m-%d')}",
+            }
+
+        # No dates set
+        if not self.install_date and not self.termination_date:
+            return None
+
+        # Only termination date set
+        if not self.install_date and self.termination_date:
+            days_until = (self.termination_date - today).days
+            return get_termination_status(days_until)
+
+        # Future installation
+        if self.install_date and today < self.install_date:
+            days_until = (self.install_date - today).days
+            return {
+                "color": "info",
+                "message": f"Starts {format_days_message(days_until)}",
+            }
+
+        # Both dates set
+        if self.install_date and self.termination_date:
+            total_duration = (self.termination_date - self.install_date).days
+            days_until_termination = (self.termination_date - today).days
+
+            # Simple logic for very short durations (2 days or less)
+            if total_duration <= 2:
+                if days_until_termination <= 0:
+                    return {
+                        "color": "danger",
+                        "message": f"Terminated {format_days_message(days_until_termination)}",
+                    }
+                return {
+                    "color": "warning",
+                    "message": f"Terminates {format_days_message(days_until_termination)}",
+                }
+
+            # Normal duration segment
+            return get_termination_status(days_until_termination)
+
+        # Active without termination date
+        return {
+            "color": "success",
+            "message": "Active",
+        }

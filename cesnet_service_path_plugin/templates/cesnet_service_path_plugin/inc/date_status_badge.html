@@ -1,0 +1,9 @@
+{% with record.get_date_status as ds %}
+    {% if ds %}
+        <div class="progress" role="progressbar">
+            <div class="progress-bar progress-bar-striped text-bg-{{ ds.color }} w-100">{{ ds.message }}</div>
+        </div>
+    {% else %}
+        {{ ''|placeholder }}
+    {% endif %}
+{% endwith %}

@@ -14,6 +14,14 @@ class SegmentTable(NetBoxTable):
     site_b = tables.Column(linkify=True)
     location_b = tables.Column(linkify=True)
 
+    date_status = tables.TemplateColumn(
+        template_code="""
+            {% include 'cesnet_service_path_plugin/inc/date_status_badge.html' %}
+        """,
+        verbose_name="Date Status",
+        orderable=False,
+    )
+
     class Meta(NetBoxTable.Meta):
         model = Segment
         fields = (
@@ -34,6 +42,7 @@ class SegmentTable(NetBoxTable):
             "tags",
             "actions",
             "status",
+            "date_status",
         )
 
         default_columns = (
@@ -45,4 +54,5 @@ class SegmentTable(NetBoxTable):
             "site_b",
             "location_b",
             "status",
+            "date_status",
         )

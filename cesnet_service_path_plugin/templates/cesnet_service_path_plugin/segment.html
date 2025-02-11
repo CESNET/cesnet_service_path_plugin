@@ -60,6 +60,10 @@
                                 <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span>
                             </td>
                         </tr>
+                        <tr>
+                            <th scope="row">Date Status</th>
+                            <td>{% include 'cesnet_service_path_plugin/inc/date_status_badge.html' with record=object %}</td>
+                        </tr>
                     </table>
                 </div>
             </div>
