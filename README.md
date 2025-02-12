@@ -1,6 +1,6 @@
 # CESNET ServicePath Plugin for NetBox
 
-A NetBox plugin that enables the creation and management of Service Paths and Segments, allowing you to model and track service routing in your network infrastructure.
+A NetBox plugin for managing service paths and segments in network infrastructure.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
@@ -17,6 +17,33 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by:
 |----------------|----------------|
 |     4.2        |      4.0.0     |
 |     3.7        |      0.1.0     |
+
+## Features
+
+- Service Path Management
+  - Define experimental, core, and customer service paths
+  - Track service path status and metadata
+  - Link multiple segments to create complete paths
+
+- Segment Management
+  - Track network segments between locations
+  - Monitor installation and termination dates
+  - Manage provider relationships and contracts
+  - Link circuits to segments
+  - Automatic status tracking based on dates
+
+## Data Model
+
+### Service Path
+- Name and status tracking
+- Service type classification (experimental/core/customer)
+- Multiple segment support through mappings
+
+### Segment
+- Provider and location tracking
+- Date-based lifecycle management
+- Circuit associations
+- Automated status monitoring
 
 ## Quick Start
 
@@ -77,6 +104,10 @@ Status choice format:
 - Color: Badge color (blue, green, red, orange, yellow, purple, gray)
 
 Default statuses (Active, Planned, Offline) will be merged with custom choices.
+
+## API Usage
+
+The plugin provides a REST API for managing service paths and segments:
 
 ## Development
 
