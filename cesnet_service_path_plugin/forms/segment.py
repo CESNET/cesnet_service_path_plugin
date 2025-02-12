@@ -62,6 +62,33 @@ class SegmentForm(NetBoxModelForm):
         label=_("Location B"),
     )
 
+    def _validate_dates(self, install_date, termination_date):
+        """
+        WARN: Workaround InlineFields does not display ValidationError messages in the field.
+        It has to be raise as popup.
+
+        Validate that install_date is not later than termination_date.
+        """
+        if install_date and termination_date:
+            if install_date > termination_date:
+                self.add_error(
+                    field=None,  # 'install_date', 'termination_date', # CANNOT BE DEFINED
+                    error=[
+                        _("Install date cannot be later than termination date."),
+                        _("Termination date cannot be earlier than install date."),
+                    ],
+                )
+
+    def clean(self):
+        super().clean()
+
+        install_date = self.cleaned_data.get("install_date")
+        termination_date = self.cleaned_data.get("termination_date")
+
+        self._validate_dates(install_date, termination_date)
+
+        return self.cleaned_data
+
     class Meta:
         model = Segment
         fields = [

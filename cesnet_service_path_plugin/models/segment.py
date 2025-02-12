@@ -85,6 +85,14 @@ class Segment(NetBoxModel):
         self.validate_location_in_site(self.location_a, self.site_a, "location_a")
         self.validate_location_in_site(self.location_b, self.site_b, "location_b")
 
+        # Validate install_date is not greater than termination_date
+        if self.install_date and self.termination_date:
+            if self.install_date > self.termination_date:
+                raise ValidationError({
+                    "install_date": "Install date cannot be later than termination date",
+                    "termination_date": "Termination date cannot be earlier than install date"
+                })
+
     def get_status_color(self):
         return StatusChoices.colors.get(self.status, "gray")
 
