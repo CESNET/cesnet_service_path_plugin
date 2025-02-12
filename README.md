@@ -105,6 +105,31 @@ Status choice format:
 
 Default statuses (Active, Planned, Offline) will be merged with custom choices.
 
+### Custom Kind Choices
+
+Extend or override default kind choices in your `configuration.py`:
+
+```python
+FIELD_CHOICES = {
+    'cesnet_service_path_plugin.choices.kind': (
+        ('custom_kind', 'Custom Kind Name', 'purple'),
+        # ('kind_value', 'Display Name', 'color'),
+    )
+}
+```
+
+Kind choice format:
+- Value: Internal database value
+- Name: UI display name
+- Color: Badge color (blue, green, red, orange, yellow, purple, gray)
+
+Default kinds:
+- experimental: Experimentální (cyan)
+- core: Páteřní (blue)
+- customer: Zákaznická (green)
+
+Custom kinds will be merged with the default choices.
+
 ## API Usage
 
 The plugin provides a REST API for managing service paths and segments:

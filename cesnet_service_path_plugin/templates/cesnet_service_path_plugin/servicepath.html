@@ -19,7 +19,9 @@
                     </tr>
                     <tr>
                         <th scope="row">Kind</th>
-                        <td>{{ object.kind }}</td>
+                        <td>
+                            <span class="badge text-bg-{{ object.get_kind_color }}">{{ object.get_kind_display }}</span>
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row">Status</th>

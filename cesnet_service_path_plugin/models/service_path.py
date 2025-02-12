@@ -3,13 +3,7 @@ from django.urls import reverse
 from netbox.models import NetBoxModel
 
 from cesnet_service_path_plugin.models import Segment
-from cesnet_service_path_plugin.models.custom_choices import StatusChoices
-
-KIND_CHOICES = [
-    ("experimental", "Experimentální"),
-    ("core", "Páteřní"),
-    ("customer", "Zákaznická"),
-]
+from cesnet_service_path_plugin.models.custom_choices import KindChoices, StatusChoices
 
 
 class ServicePath(NetBoxModel):
@@ -23,10 +17,14 @@ class ServicePath(NetBoxModel):
     )
 
     kind = models.CharField(
-        max_length=225
-    )  # TODO: maybe choice field? Or extra table? (I don't like extra table)
-    segments = models.ManyToManyField(Segment, through="ServicePathSegmentMapping")
+        max_length=30,
+        choices=KindChoices,
+        default=KindChoices.CORE,
+        blank=False,
+        null=False,
+    )
 
+    segments = models.ManyToManyField(Segment, through="ServicePathSegmentMapping")
     comments = models.TextField(verbose_name="Comments", blank=True)
 
     class Meta:
@@ -40,3 +38,6 @@ class ServicePath(NetBoxModel):
 
     def get_status_color(self):
         return StatusChoices.colors.get(self.status, "gray")
+
+    def get_kind_color(self):
+        return KindChoices.colors.get(self.kind, "gray")

@@ -13,3 +13,17 @@ class StatusChoices(ChoiceSet):
         (PLANNED, "Planned", "orange"),
         (OFFLINE, "Offline", "red"),
     ]
+
+
+class KindChoices(ChoiceSet):
+    key = "cesnet_service_path_plugin.choices.kind"
+
+    EXPERIMENTAL = "experimental"
+    CORE = "core"
+    CUSTOMER = "customer"
+
+    CHOICES = [
+        (EXPERIMENTAL, "Experimentální", "cyan"),
+        (CORE, "Páteřní", "blue"),
+        (CUSTOMER, "Zákaznická", "green"),
+    ]

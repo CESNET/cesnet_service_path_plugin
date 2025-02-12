@@ -8,7 +8,7 @@ class ServicePathTable(NetBoxTable):
     tags = columns.TagColumn()
     name = tables.Column(linkify=True)
     status = ChoiceFieldColumn()
-    kind = tables.Column()
+    kind = ChoiceFieldColumn()
 
     class Meta(NetBoxTable.Meta):
         model = ServicePath
