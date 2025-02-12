@@ -30,7 +30,7 @@ class SegmentForm(NetBoxModelForm):
     )
     provider = DynamicModelChoiceField(
         queryset=Provider.objects.all(),
-        required=False,
+        required=True,
         label=_("Provider"),
         selector=True,
     )
