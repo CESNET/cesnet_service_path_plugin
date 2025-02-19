@@ -1,0 +1,29 @@
+<div class="card">
+    <h5 class="card-header">Provider</h5>
+    <table class="table table-hover attr-table">
+        {% if provider %}
+            <tr>
+                <th class="ps-3" scope="row">Name</th>
+                <td>
+                    <a href="{{ provider.get_absolute_url }}">{{ provider.name }}</a>
+                </td>
+            </tr>
+            <tr>
+                <th class="ps-3" scope="row">Circuits Count</th>
+                <td>
+                    <a href="{% url 'circuits:circuit_list' %}?provider_id={{ provider.pk }}">
+                        <span class="badge text-bg-primary rounded-pill" aria-hidden="true">{{ provider_circuits_count }}</span>
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <th class="ps-3" scope="row">Segments Count</th>
+                <td>
+                    <a href="{% url 'plugins:cesnet_service_path_plugin:segment_list' %}?provider_id={{ provider.pk }}">
+                        <span class="badge text-bg-primary rounded-pill" aria-hidden="true">{{ provider_segments_count }}</span>
+                    </a>
+                </td>
+            </tr>
+        {% endif %}
+    </table>
+</div>

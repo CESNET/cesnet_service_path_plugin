@@ -1,0 +1,174 @@
+{% extends 'generic/object.html' %}
+{% load buttons %}
+{% load custom_links %}
+{% load helpers %}
+{% load plugins %}
+{% load tabs %}
+{% load i18n %}
+{% load perms %}
+{% load plugins %}
+{% load render_table from django_tables2 %}
+{% block content %}
+    <div class="row mb-3">
+        <div class="col col-md-6">
+            <!-- Segment card -->
+            <div class="card">
+                <h5 class="card-header">Segment</h5>
+                <div class="card-body">
+                    <table class="table table-hover attr-table">
+                        <tr>
+                            <th scope="row">Name</th>
+                            <td>{{ object.name|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Network Label</th>
+                            <td>{{ object.network_label|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Install Date</th>
+                            <td>{{ object.install_date|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Termination Date</th>
+                            <td>{{ object.termination_date|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Provider</th>
+                            <td>
+                                {% if object.provider %}
+                                    <a href="{{ object.provider.get_absolute_url }}">{{ object.provider }}</a>
+                                {% else %}
+                                    {{ ''|placeholder }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Provider Name</th>
+                            <td>{{ object.provider_segment_name|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Provider ID</th>
+                            <td>{{ object.provider_segment_id|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Provider Contract</th>
+                            <td>{{ object.provider_segment_contract|placeholder }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Status</th>
+                            <td>
+                                <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Date Status</th>
+                            <td>{% include 'cesnet_service_path_plugin/inc/date_status_badge.html' with record=object %}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            {% plugin_left_page object %}
+        </div>
+        <div class="col col-md-6">
+            <!-- Tags, Comments, Imported Data cards -->
+            {% include 'inc/panels/custom_fields.html' %}
+            {% include 'inc/panels/tags.html' %}
+            {% include 'inc/panels/comments.html' %}
+            {% plugin_right_page object %}
+        </div>
+    </div>
+    <!-- A and B cards in full width row -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card">
+                <h5 class="card-header">Side A</h5>
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Site</th>
+                        <td>
+                            {% if object.site_a %}
+                                <a href="{{ object.site_a.get_absolute_url }}">{{ object.site_a }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Location</th>
+                        <td>
+                            {% if object.location_a %}
+                                <a href="{{ object.location_a.get_absolute_url }}">{{ object.location_a }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <h5 class="card-header">Side B</h5>
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Site</th>
+                        <td>
+                            {% if object.site_b %}
+                                <a href="{{ object.site_b.get_absolute_url }}">{{ object.site_b }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Location</th>
+                        <td>
+                            {% if object.location_b %}
+                                <a href="{{ object.location_b.get_absolute_url }}">{{ object.location_b }}</a>
+                            {% else %}
+                                {{ ''|placeholder }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-12">
+            {% load render_table from django_tables2 %}
+            <div class="card">
+                <h5 class="card-header">
+                    Related Circuits
+                    <div class="card-actions">
+                        <a href="{% url 'plugins:cesnet_service_path_plugin:segmentcircuitmapping_add' %}?segment={{ object.pk }}&return_url={{ request.path }}"
+                           class="btn btn-ghost-primary btn-sm">
+                            <i class="mdi mdi-plus-thick" aria-hidden="true"></i> {% trans "Add to Circuit" %}
+                        </a>
+                    </div>
+                </h5>
+                {% render_table circuits_table 'inc/table.html' %}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-12">
+            {% load render_table from django_tables2 %}
+            <div class="card">
+                <h5 class="card-header">
+                    Related ServicePaths
+                    <div class="card-actions">
+                        <a href="{% url 'plugins:cesnet_service_path_plugin:servicepathsegmentmapping_add' %}?segment={{ object.pk }}&return_url={{ request.path }}"
+                           class="btn btn-ghost-primary btn-sm">
+                            <i class="mdi mdi-plus-thick" aria-hidden="true"></i> {% trans "Add to ServicePath" %}
+                        </a>
+                    </div>
+                </h5>
+                {% render_table sevice_paths_table 'inc/table.html' %}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-md-12">{% plugin_full_width_page object %}</div>
+    </div>
+{% endblock content %}

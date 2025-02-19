@@ -1,4 +1,4 @@
-sources = Komora ServicePath Plugin
+sources = Cesnet ServicePath Plugin
 
 .PHONY: test format lint unittest pre-commit clean
 test: format lint unittest

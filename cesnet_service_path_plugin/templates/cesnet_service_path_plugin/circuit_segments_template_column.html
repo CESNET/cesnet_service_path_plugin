@@ -1,0 +1,7 @@
+{% if record.segment_set.count > 1 %}
+    <a href="{% url 'plugins:cesnet_service_path_plugin:segment_list' %}?circuits={{ record.pk }}"> {{ record.segment_set.count }} </a>
+{% elif record.segment_set.count == 1 %}
+    <a href="{{ record.segment_set.first.get_absolute_url }}">{{ record.segment_set.first.name }}</a>
+{% else %}
+    —
+{% endif %}

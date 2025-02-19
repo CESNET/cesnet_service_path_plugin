@@ -1,7 +1,7 @@
-site_name: Komora ServicePath Plugin
+site_name: Cesnet ServicePath Plugin
 site_url: ---
-repo_url: https://gitlab.cesnet.cz/701/done/komora_service_path_plugin
-repo_name: 701/done/komora_service_path_plugin
+repo_url: https://gitlab.cesnet.cz/701/done/cesnet_service_path_plugin
+repo_name: 701/done/cesnet_service_path_plugin
 #strict: true
 nav:
   - Home: index.md

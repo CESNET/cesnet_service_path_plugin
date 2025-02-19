@@ -1,0 +1,7 @@
+{% load i18n %}
+<div class="col col-md-12">
+    <div class="card">
+        <h5 class="card-header">{% trans "Segments" %}</h5>
+        {% htmx_table 'plugins:cesnet_service_path_plugin:segment_list' at_any_location=object.id %}
+    </div>
+</div>

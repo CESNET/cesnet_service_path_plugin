@@ -1,1 +1,1 @@
-"""Unit test package for komora_service_path_plugin."""
+"""Unit test package for cesnet_service_path_plugin."""
