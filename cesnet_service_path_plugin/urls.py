@@ -31,6 +31,10 @@ urlpatterns = (
     ),
     # Adds Changelog, Journal, and Attachment tabs to the Segment view
     path(
+        "segments/",
+        include(get_model_urls("cesnet_service_path_plugin", "segment", detail=False)),
+    ),
+    path(
         "segments/<int:pk>/",
         include(get_model_urls("cesnet_service_path_plugin", "segment")),
     ),
