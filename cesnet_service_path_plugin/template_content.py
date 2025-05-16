@@ -14,7 +14,7 @@ plugin_settings = settings.PLUGINS_CONFIG.get("cesnet_service_path_plugin", {})
 
 
 class CircuitKomoraSegmentExtension(PluginTemplateExtension):
-    model = "circuits.circuit"
+    models = ["circuits.circuit"]
 
     def full_width_page(self):
         return self.render(
@@ -23,7 +23,7 @@ class CircuitKomoraSegmentExtension(PluginTemplateExtension):
 
 
 class ProviderSegmentExtension(PluginTemplateExtension):
-    model = "circuits.provider"
+    models = ["circuits.provider"]
 
     def full_width_page(self):
         return self.render(
@@ -32,7 +32,7 @@ class ProviderSegmentExtension(PluginTemplateExtension):
 
 
 class SiteSegmentExtension(PluginTemplateExtension):
-    model = "dcim.site"
+    models = ["dcim.site"]
 
     def full_width_page(self):
         return self.render(
@@ -41,7 +41,7 @@ class SiteSegmentExtension(PluginTemplateExtension):
 
 
 class LocationSegmentExtension(PluginTemplateExtension):
-    model = "dcim.location"
+    models = ["dcim.location"]
 
     def full_width_page(self):
         return self.render(
@@ -50,7 +50,7 @@ class LocationSegmentExtension(PluginTemplateExtension):
 
 
 class TenantProviderExtension(PluginTemplateExtension):
-    model = "tenancy.tenant"
+    models = ["tenancy.tenant"]
 
     def left_page(self):
         provider = Provider.objects.filter(

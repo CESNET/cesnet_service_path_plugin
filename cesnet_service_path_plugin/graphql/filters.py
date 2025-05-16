@@ -1,32 +1,39 @@
 import strawberry_django
-from netbox.graphql.filter_mixins import autotype_decorator, BaseFilterMixin
+from netbox.graphql.filter_mixins import BaseFilterMixin
 
-from cesnet_service_path_plugin.models import Segment, ServicePath, ServicePathSegmentMapping, SegmentCircuitMapping
 from cesnet_service_path_plugin.filtersets import (
+    SegmentCircuitMappingFilterSet,
     SegmentFilterSet,
     ServicePathFilterSet,
-    SegmentCircuitMappingFilterSet,
     ServicePathSegmentMappingFilterSet,
+)
+from cesnet_service_path_plugin.models import (
+    Segment,
+    SegmentCircuitMapping,
+    ServicePath,
+    ServicePathSegmentMapping,
 )
 
 
 @strawberry_django.filter(Segment, lookups=True)
-@autotype_decorator(SegmentFilterSet)
 class SegmentFilter(BaseFilterMixin):
-    pass
+    class Meta:
+        filterset_class = SegmentFilterSet
 
 
 @strawberry_django.filter(ServicePath, lookups=True)
-@autotype_decorator(ServicePathFilterSet)
 class ServicePathFilter(BaseFilterMixin):
-    pass
+    class Meta:
+        filterset_class = ServicePathFilterSet
 
 
 @strawberry_django.filter(SegmentCircuitMapping, lookups=True)
 class SegmentCircuitMappingFilter(SegmentCircuitMappingFilterSet):
-    pass
+    class Meta:
+        filterset_class = SegmentCircuitMappingFilterSet
 
 
 @strawberry_django.filter(ServicePathSegmentMapping, lookups=True)
 class ServicePathSegmentMappingFilter(ServicePathSegmentMappingFilterSet):
-    pass
+    class Meta:
+        filterset_class = ServicePathSegmentMappingFilterSet
