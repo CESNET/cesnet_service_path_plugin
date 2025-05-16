@@ -53,6 +53,12 @@ urlpatterns = (
         name="servicepath_delete",
     ),
     path(
+        "service_paths/",
+        include(
+            get_model_urls("cesnet_service_path_plugin", "servicepath", detail=False)
+        ),
+    ),
+    path(
         "service_paths/<int:pk>/",
         include(get_model_urls("cesnet_service_path_plugin", "servicepath")),
     ),
@@ -81,6 +87,14 @@ urlpatterns = (
         "service-path-segment-mappings/<int:pk>/delete/",
         ServicePathSegmentMappingDeleteView.as_view(),
         name="servicepathsegmentmapping_delete",
+    ),
+    path(
+        "service-path-segment-mappings/",
+        include(
+            get_model_urls(
+                "cesnet_service_path_plugin", "servicepathsegmentmapping", detail=False
+            )
+        ),
     ),
     path(
         "service-path-segment-mappings/<int:pk>/",
@@ -113,6 +127,14 @@ urlpatterns = (
         "segment-circuit-mappings/<int:pk>/delete/",
         SegmentCircuitMappingDeleteView.as_view(),
         name="segmentcircuitmapping_delete",
+    ),
+    path(
+        "segment-circuit-mappings/",
+        include(
+            get_model_urls(
+                "cesnet_service_path_plugin", "segmentcircuitmapping", detail=False
+            )
+        ),
     ),
     path(
         "segment-circuit-mappings/<int:pk>/",

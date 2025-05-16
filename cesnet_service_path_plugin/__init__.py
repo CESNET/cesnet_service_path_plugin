@@ -1,7 +1,8 @@
 """Top-level package for Cesnet ServicePath Plugin."""
 
 from netbox.plugins import PluginConfig
-from .version import __version__, __author__, __email__, __description__, __name__
+
+from .version import __description__, __name__, __version__
 
 
 class CesnetServicePathPluginConfig(PluginConfig):
