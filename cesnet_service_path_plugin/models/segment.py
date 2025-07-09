@@ -1,5 +1,6 @@
 from circuits.models import Circuit
 from django.core.exceptions import ValidationError
+from django.contrib.gis.db import models as gis_models
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -62,6 +63,35 @@ class Segment(NetBoxModel):
         blank=False,
     )
 
+    # GIS fields for storing network segment path
+    path_geometry = gis_models.MultiLineStringField(
+        srid=4326,  # WGS84 coordinate system
+        null=True,
+        blank=True,
+        help_text="Geographic path of the network segment (supports complex multi-segment paths)",
+    )
+
+    # Optional: Store original data format info
+    path_source_format = models.CharField(
+        max_length=20,
+        choices=[
+            ("geojson", "GeoJSON"),
+            ("kmz", "KMZ"),
+            ("kml", "KML"),
+            ("manual", "Manual Entry"),
+        ],
+        null=True,
+        blank=True,
+        help_text="Source format of the path data",
+    )
+
+    # Optional: Store metadata about the path
+    path_length_km = models.DecimalField(
+        max_digits=10, decimal_places=3, null=True, blank=True, help_text="Calculated path length in kilometers"
+    )
+
+    path_notes = models.TextField(blank=True, help_text="Additional notes about the path geometry")
+
     # Circuit
     circuits = models.ManyToManyField(Circuit, through="SegmentCircuitMapping")
     comments = models.TextField(verbose_name="Comments", blank=True)
@@ -88,10 +118,23 @@ class Segment(NetBoxModel):
         # Validate install_date is not greater than termination_date
         if self.install_date and self.termination_date:
             if self.install_date > self.termination_date:
-                raise ValidationError({
-                    "install_date": "Install date cannot be later than termination date",
-                    "termination_date": "Termination date cannot be earlier than install date"
-                })
+                raise ValidationError(
+                    {
+                        "install_date": "Install date cannot be later than termination date",
+                        "termination_date": "Termination date cannot be earlier than install date",
+                    }
+                )
+
+    def save(self, *args, **kwargs):
+        # Auto-calculate path length if geometry is provided
+        if self.path_geometry:
+            # Transform to a projected coordinate system for accurate length calculation
+            # Using Web Mercator (3857) for approximate calculations
+            transformed_geom = self.path_geometry.transform(3857, clone=True)
+            # MultiLineString always has a length attribute that sums all segments
+            self.path_length_km = round(transformed_geom.length / 1000, 3)
+
+        super().save(*args, **kwargs)
 
     def get_status_color(self):
         return StatusChoices.colors.get(self.status, "gray")
@@ -166,3 +209,45 @@ class Segment(NetBoxModel):
             "color": "success",
             "message": "Active",
         }
+
+    # GIS-related helper methods
+    def get_path_geojson(self):
+        """Return path geometry as GeoJSON"""
+        if self.path_geometry:
+            return self.path_geometry.geojson
+        return None
+
+    def get_path_coordinates(self):
+        """Return path coordinates as list of LineString coordinate arrays"""
+        if self.path_geometry:
+            # MultiLineString always returns list of coordinate arrays for each LineString
+            return [list(line.coords) for line in self.path_geometry]
+        return None
+
+    def get_path_bounds(self):
+        """Return bounding box of the path geometry"""
+        if self.path_geometry:
+            return self.path_geometry.extent  # Returns (xmin, ymin, xmax, ymax)
+        return None
+
+    def has_path_data(self):
+        """Check if segment has path geometry data"""
+        return self.path_geometry is not None
+
+    def get_path_geometry_type(self):
+        """Get the type of path geometry"""
+        if self.path_geometry:
+            return "MultiLineString"  # Always MultiLineString now
+        return None
+
+    def get_path_segment_count(self):
+        """Get number of path segments in the MultiLineString"""
+        if self.path_geometry:
+            return len(self.path_geometry)
+        return 0
+
+    def get_total_points(self):
+        """Get total number of coordinate points across all segments"""
+        if self.path_geometry:
+            return sum(len(line.coords) for line in self.path_geometry)
+        return 0

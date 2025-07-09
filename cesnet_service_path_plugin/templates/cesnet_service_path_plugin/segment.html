@@ -77,6 +77,74 @@
             {% plugin_right_page object %}
         </div>
     </div>
+    
+    <!-- Path Information Card -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <h5 class="card-header">
+                    Path Information
+                    {% if object.has_path_data %}
+                        <div class="card-actions">
+                            <a href="{% url 'plugins:cesnet_service_path_plugin:segment_geojson_download' pk=object.pk %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="mdi mdi-download" aria-hidden="true"></i> Download GeoJSON
+                            </a>
+                        </div>
+                    {% endif %}
+                </h5>
+                <div class="card-body">
+                    <table class="table table-hover attr-table">
+                        <tr>
+                            <th scope="row">Has Path Data</th>
+                            <td>
+                                {% if object.has_path_data %}
+                                    <span class="badge text-bg-success">
+                                        <i class="mdi mdi-check" aria-hidden="true"></i> Yes
+                                    </span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">
+                                        <i class="mdi mdi-close" aria-hidden="true"></i> No
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if object.has_path_data %}
+                            <tr>
+                                <th scope="row">Path Length</th>
+                                <td>
+                                    {% if object.path_length_km %}
+                                        {{ object.path_length_km }} km
+                                    {% else %}
+                                        {{ ''|placeholder }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Source Format</th>
+                                <td>{{ object.get_path_source_format_display|default:object.path_source_format|placeholder }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Segments Count</th>
+                                <td>{{ object.get_path_segment_count }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Total Points</th>
+                                <td>{{ object.get_total_points }}</td>
+                            </tr>
+                            {% if object.path_notes %}
+                                <tr>
+                                    <th scope="row">Path Notes</th>
+                                    <td>{{ object.path_notes|linebreaks }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- A and B cards in full width row -->
     <div class="row mb-3">
         <div class="col-md-6">
