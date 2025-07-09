@@ -19,6 +19,7 @@ from cesnet_service_path_plugin.views import (
     ServicePathSegmentMappingView,
     ServicePathView,
     segment_geojson_download,
+    segment_path_clear,
 )
 
 urlpatterns = (
@@ -39,6 +40,7 @@ urlpatterns = (
     ),
     # GeoJSON download endpoint
     path("segments/<int:pk>/geojson/", segment_geojson_download, name="segment_geojson_download"),
+    path("segments/<int:pk>/clear-path/", segment_path_clear, name="segment_path_clear"),
     # ServicePath paths
     path("service-paths/", ServicePathListView.as_view(), name="servicepath_list"),
     path("service-paths/add/", ServicePathEditView.as_view(), name="servicepath_add"),

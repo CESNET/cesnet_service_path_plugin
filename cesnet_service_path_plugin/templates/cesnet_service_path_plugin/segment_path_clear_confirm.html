@@ -1,0 +1,88 @@
+{% extends 'generic/object_delete.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Clear Path Data" %}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col col-md-6">
+        <form action="" method="post">
+            {% csrf_token %}
+            <div class="card">
+                <div class="card-header">
+                    <strong>{% trans "Clear Path Data" %}</strong>
+                </div>
+                <div class="card-body">
+                    <p>
+                        {% blocktrans with name=object.name %}
+                        Are you sure you want to clear the path data from segment "<strong>{{ name }}</strong>"?
+                        {% endblocktrans %}
+                    </p>
+                    <p class="text-warning">
+                        <i class="mdi mdi-alert" aria-hidden="true"></i>
+                        {% trans "This will permanently remove:" %}
+                    </p>
+                    <ul class="text-warning">
+                        <li>{% trans "Path geometry data" %}</li>
+                        <li>{% trans "Path length calculation" %}</li>
+                        <li>{% trans "Source format information" %}</li>
+                        <li>{% trans "Path notes" %}</li>
+                    </ul>
+                    <p class="text-muted">
+                        <small>
+                            {% trans "The segment itself and all other data will remain unchanged. You can upload new path data later if needed." %}
+                        </small>
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> {% trans "Clear Path Data" %}
+                    </button>
+                    <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary">
+                        {% trans "Cancel" %}
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <strong>{% trans "Current Path Information" %}</strong>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">{% trans "Path Length" %}</th>
+                        <td>
+                            {% if object.path_length_km %}
+                                {{ object.path_length_km }} km
+                            {% else %}
+                                {{ ''|default:"—" }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "Source Format" %}</th>
+                        <td>{{ object.get_path_source_format_display|default:object.path_source_format|default:"—" }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "Segments Count" %}</th>
+                        <td>{{ object.get_path_segment_count }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">{% trans "Total Points" %}</th>
+                        <td>{{ object.get_total_points }}</td>
+                    </tr>
+                    {% if object.path_notes %}
+                        <tr>
+                            <th scope="row">{% trans "Path Notes" %}</th>
+                            <td>{{ object.path_notes|truncatewords:20 }}</td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

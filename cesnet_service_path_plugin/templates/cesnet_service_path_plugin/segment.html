@@ -74,13 +74,7 @@
             {% include 'inc/panels/custom_fields.html' %}
             {% include 'inc/panels/tags.html' %}
             {% include 'inc/panels/comments.html' %}
-            {% plugin_right_page object %}
-        </div>
-    </div>
-    
-    <!-- Path Information Card -->
-    <div class="row mb-3">
-        <div class="col-md-12">
+             <!-- Path Information Card -->
             <div class="card">
                 <h5 class="card-header">
                     Path Information
@@ -89,6 +83,10 @@
                             <a href="{% url 'plugins:cesnet_service_path_plugin:segment_geojson_download' pk=object.pk %}" 
                                class="btn btn-outline-primary btn-sm">
                                 <i class="mdi mdi-download" aria-hidden="true"></i> Download GeoJSON
+                            </a>
+                            <a href="{% url 'plugins:cesnet_service_path_plugin:segment_path_clear' pk=object.pk %}" 
+                               class="btn btn-outline-danger btn-sm">
+                                <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Clear Path
                             </a>
                         </div>
                     {% endif %}
@@ -124,14 +122,6 @@
                                 <th scope="row">Source Format</th>
                                 <td>{{ object.get_path_source_format_display|default:object.path_source_format|placeholder }}</td>
                             </tr>
-                            <tr>
-                                <th scope="row">Segments Count</th>
-                                <td>{{ object.get_path_segment_count }}</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Total Points</th>
-                                <td>{{ object.get_total_points }}</td>
-                            </tr>
                             {% if object.path_notes %}
                                 <tr>
                                     <th scope="row">Path Notes</th>
@@ -142,9 +132,9 @@
                     </table>
                 </div>
             </div>
+            {% plugin_right_page object %}
         </div>
     </div>
-    
     <!-- A and B cards in full width row -->
     <div class="row mb-3">
         <div class="col-md-6">

@@ -22,6 +22,26 @@ class SegmentTable(NetBoxTable):
         orderable=False,
     )
 
+    # New column for path data status
+    has_path_data = tables.TemplateColumn(
+        template_code="""
+            {% include 'cesnet_service_path_plugin/inc/path_data_badge.html' %}
+        """,
+        verbose_name="Path Data",
+        orderable=False,
+        attrs={"td": {"class": "text-center"}},  # Center the column content
+    )
+
+    # Optional: Path length column (only shows when there's data)
+    path_length = tables.TemplateColumn(
+        template_code="""
+            {% include 'cesnet_service_path_plugin/inc/path_length.html' %}
+        """,
+        verbose_name="Path Length",
+        orderable=True,
+        attrs={"td": {"class": "text-end"}},  # Right-align numbers
+    )
+
     class Meta(NetBoxTable.Meta):
         model = Segment
         fields = (
@@ -39,6 +59,8 @@ class SegmentTable(NetBoxTable):
             "location_a",
             "site_b",
             "location_b",
+            "has_path_data",  # New field
+            "path_length",  # New field
             "tags",
             "actions",
             "status",
@@ -53,6 +75,7 @@ class SegmentTable(NetBoxTable):
             "location_a",
             "site_b",
             "location_b",
+            "has_path_data",  # Added to default view
             "status",
             "date_status",
         )

@@ -3,6 +3,7 @@ Simplified utility functions for handling GIS data using GeoPandas
 """
 
 import tempfile
+import zipfile
 from pathlib import Path
 
 import geopandas as gpd
@@ -45,7 +46,12 @@ def process_path_file(uploaded_file, file_format):
 
         try:
             # Read the file with geopandas - let geopandas auto-detect the format
-            gdf = gpd.read_file(temp_file_path)
+            # if the suffix is kmz, extract the KML first
+            if file_format == "kmz":
+                kml_file_path = extract_kml_from_kmz(temp_file_path, temp_file_path.replace(".kmz", ".kml"))
+                gdf = gpd.read_file(kml_file_path)
+            else:
+                gdf = gpd.read_file(temp_file_path)
 
             # Convert to MultiLineString (automatically converts to 2D)
             multilinestring = gdf_to_multilinestring(gdf)
@@ -210,22 +216,14 @@ def determine_file_format_from_extension(filename):
         raise ValidationError(f"Unsupported file format. File: {filename}")
 
 
-# Main processing function for forms
-def process_path_data(uploaded_file, file_format=None):
-    """
-    Main function to process path data from uploaded file
-
-    Args:
-        uploaded_file: Django uploaded file object
-        file_format: Optional format override, auto-detected if None
-
-    Returns:
-        MultiLineString: Validated MultiLineString object
-    """
-    if file_format is None:
-        file_format = determine_file_format_from_extension(uploaded_file.name)
-
-    return process_path_file(uploaded_file, file_format)
+def extract_kml_from_kmz(kmz_path, output_kml_path):
+    with zipfile.ZipFile(kmz_path, "r") as kmz:
+        for file in kmz.namelist():
+            if file.endswith(".kml"):
+                with kmz.open(file) as kml_file, open(output_kml_path, "wb") as out_file:
+                    out_file.write(kml_file.read())
+                return output_kml_path
+    raise FileNotFoundError("No .kml file found in KMZ archive")
 
 
 # Utility functions for working with existing segments
@@ -277,3 +275,21 @@ def export_segment_paths_as_geojson(segments):
     else:
         # Return empty FeatureCollection
         return json.dumps({"type": "FeatureCollection", "features": []})
+
+
+# Main processing function for forms
+def process_path_data(uploaded_file, file_format=None):
+    """
+    Main function to process path data from uploaded file
+
+    Args:
+        uploaded_file: Django uploaded file object
+        file_format: Optional format override, auto-detected if None
+
+    Returns:
+        MultiLineString: Validated MultiLineString object
+    """
+    if file_format is None:
+        file_format = determine_file_format_from_extension(uploaded_file.name)
+
+    return process_path_file(uploaded_file, file_format)

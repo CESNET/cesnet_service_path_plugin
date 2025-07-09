@@ -1,0 +1,9 @@
+{% if record.has_path_data %}
+    <span class="badge text-bg-success" title="Path data available ({{ record.path_length_km|default:'Unknown length' }} km, {{ record.get_path_segment_count }} segments)">
+        <i class="mdi mdi-map-marker-path" aria-hidden="true"></i> Yes
+    </span>
+{% else %}
+    <span class="badge text-bg-secondary" title="No path data">
+        <i class="mdi mdi-map-marker-off" aria-hidden="true"></i> No
+    </span>
+{% endif %}
