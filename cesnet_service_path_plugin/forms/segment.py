@@ -277,9 +277,15 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         label=_("Circuits"),
     )
 
-    # Add filter for segments with path data
-    has_path_data = forms.BooleanField(
-        required=False, label=_("Has Path Data"), help_text="Filter segments that have path geometry data"
+    # Updated filter for segments with path data
+    has_path_data = forms.MultipleChoiceField(
+        required=False,
+        choices=[
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        label=_("Has Path Data"),
+        help_text="Filter segments that have path geometry data",
     )
 
     fieldsets = (

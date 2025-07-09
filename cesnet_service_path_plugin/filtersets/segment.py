@@ -76,6 +76,16 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Circuit (ID)",
     )
 
+    # New filter for path data
+    has_path_data = django_filters.MultipleChoiceFilter(
+        choices=[
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        method="_has_path_data",
+        label="Has Path Data",
+    )
+
     class Meta:
         model = Segment
         fields = [
@@ -92,6 +102,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "location_a",
             "site_b",
             "location_b",
+            "has_path_data",  # Added to Meta fields
         ]
 
     def _at_any_site(self, queryset, name, value):
@@ -110,6 +121,42 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         location_b = Q(location_b__in=value)
         return queryset.filter(location_a | location_b)
 
+    def _has_path_data(self, queryset, name, value):
+        """
+        Filter segments based on whether they have path data or not
+
+        Args:
+            value: List of selected values from choices
+                   [True] - show only segments with path data
+                   [False] - show only segments without path data
+                   [True, False] - show all segments (both with and without)
+                   [] - show all segments (nothing selected)
+        """
+        if not value:
+            # Nothing selected, show all segments
+            return queryset
+
+        # Convert string values to boolean (django-filter sometimes passes strings)
+        bool_values = []
+        for v in value:
+            if v is True or v == "True" or v == True:
+                bool_values.append(True)
+            elif v is False or v == "False" or v == False:
+                bool_values.append(False)
+
+        if True in bool_values and False in bool_values:
+            # Both selected, show all segments
+            return queryset
+        elif True in bool_values:
+            # Only "Yes" selected, show segments with path data
+            return queryset.filter(path_geometry__isnull=False)
+        elif False in bool_values:
+            # Only "No" selected, show segments without path data
+            return queryset.filter(path_geometry__isnull=True)
+        else:
+            # Fallback: show all segments
+            return queryset
+
     def search(self, queryset, name, value):
         site_a = Q(site_a__name__icontains=value)
         site_b = Q(site_b__name__icontains=value)
@@ -121,12 +168,5 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         status = Q(status__iexact=value)
 
         return queryset.filter(
-            site_a
-            | site_b
-            | location_a
-            | location_b
-            | segment_name
-            | network_label
-            | provider_segment_id
-            | status
+            site_a | site_b | location_a | location_b | segment_name | network_label | provider_segment_id | status
         )
