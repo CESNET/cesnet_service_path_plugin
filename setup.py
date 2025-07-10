@@ -34,12 +34,12 @@ def get_version(rel_path):
 setup(
     name=get_config_param("cesnet_service_path_plugin/version.py", "__name__"),
     version=get_version("cesnet_service_path_plugin/version.py"),
-    description=get_config_param(
-        "cesnet_service_path_plugin/version.py", "__description__"
-    ),
+    description=get_config_param("cesnet_service_path_plugin/version.py", "__description__"),
     author=get_config_param("cesnet_service_path_plugin/version.py", "__author__"),
     license="MIT",
-    install_requires=[],
+    install_requires=[
+        "geopandas",
+    ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
