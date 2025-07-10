@@ -1,3 +1,3 @@
-from .schema import KomoraServicePathQuery
+from .schema import CesnetServicePathQuery
 
-schema = [KomoraServicePathQuery]
+schema = [CesnetServicePathQuery]

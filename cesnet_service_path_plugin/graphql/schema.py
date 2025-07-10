@@ -6,7 +6,7 @@ from .types import SegmentType, SegmentCircuitMappingType, ServicePathType, Serv
 
 
 @strawberry.type(name="Query")
-class KomoraServicePathQuery:
+class CesnetServicePathQuery:
     segment: SegmentType = strawberry_django.field()
     segment_list: list[SegmentType] = strawberry_django.field()
 
@@ -21,7 +21,7 @@ class KomoraServicePathQuery:
 
 
 schema = strawberry.Schema(
-    query=KomoraServicePathQuery,
+    query=CesnetServicePathQuery,
     extensions=[
         DjangoOptimizerExtension,
     ],
