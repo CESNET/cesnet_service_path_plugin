@@ -20,6 +20,8 @@ from cesnet_service_path_plugin.views import (
     ServicePathView,
     segment_geojson_download,
     segment_path_clear,
+    segment_map_view,
+    segment_geojson_api,
 )
 
 urlpatterns = (
@@ -29,6 +31,9 @@ urlpatterns = (
     path("segments/<int:pk>/", SegmentView.as_view(), name="segment"),
     path("segments/<int:pk>/edit/", SegmentEditView.as_view(), name="segment_edit"),
     path("segments/<int:pk>/delete/", SegmentDeleteView.as_view(), name="segment_delete"),
+    # NEW: Map views
+    path("segments/<int:pk>/map/", segment_map_view, name="segment_map"),
+    path("segments/<int:pk>/geojson-api/", segment_geojson_api, name="segment_geojson_api"),
     # Adds Changelog, Journal, and Attachment tabs to the Segment view
     path(
         "segments/",

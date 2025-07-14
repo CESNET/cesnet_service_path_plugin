@@ -80,6 +80,10 @@
                     Path Information
                     {% if object.has_path_data %}
                         <div class="card-actions">
+                            <a href="{% url 'plugins:cesnet_service_path_plugin:segment_map' pk=object.pk %}" 
+                               class="btn btn-outline-success btn-sm">
+                                <i class="mdi mdi-map" aria-hidden="true"></i> View on Map
+                            </a>
                             <a href="{% url 'plugins:cesnet_service_path_plugin:segment_geojson_download' pk=object.pk %}" 
                                class="btn btn-outline-primary btn-sm">
                                 <i class="mdi mdi-download" aria-hidden="true"></i> Download GeoJSON

@@ -1,6 +1,6 @@
 from circuits.tables import CircuitTable
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.text import slugify
 from netbox.views import generic
@@ -72,8 +72,6 @@ def segment_geojson_download(request, pk):
     clean_name = slugify(segment.name)
     filename = f"segment_{segment.pk}_{clean_name}.geojson"
 
-    # filename = f"segment_{segment.pk}.geojson"
-
     response = HttpResponse(geojson_data, content_type="application/octet-stream")
 
     # Simple, safe Content-Disposition header
@@ -107,3 +105,51 @@ def segment_path_clear(request, pk):
 
     # For GET requests, show confirmation page
     return render(request, "cesnet_service_path_plugin/segment_path_clear_confirm.html", {"object": segment})
+
+
+# NEW: Map view for visualizing segment path
+def segment_map_view(request, pk):
+    """
+    Display segment path on an interactive map
+    """
+    segment = get_object_or_404(Segment, pk=pk)
+
+    context = {
+        "object": segment,
+        "segment": segment,
+    }
+
+    return render(request, "cesnet_service_path_plugin/segment_map.html", context)
+
+
+# NEW: API endpoint for segment GeoJSON data
+def segment_geojson_api(request, pk):
+    """
+    Return segment path as GeoJSON for map display
+    """
+    segment = get_object_or_404(Segment, pk=pk)
+
+    if not segment.has_path_data():
+        return JsonResponse({"type": "FeatureCollection", "features": []})
+
+    # Create GeoJSON feature
+    feature = {
+        "type": "Feature",
+        "geometry": json.loads(segment.get_path_geojson()),
+        "properties": {
+            "name": segment.name,
+            "network_label": segment.network_label,
+            "provider": str(segment.provider) if segment.provider else None,
+            "status": segment.get_status_display(),
+            "status_color": segment.get_status_color(),
+            "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
+            "install_date": segment.install_date.isoformat() if segment.install_date else None,
+            "termination_date": segment.termination_date.isoformat() if segment.termination_date else None,
+            "site_a": str(segment.site_a),
+            "site_b": str(segment.site_b),
+        },
+    }
+
+    geojson = {"type": "FeatureCollection", "features": [feature]}
+
+    return JsonResponse(geojson)

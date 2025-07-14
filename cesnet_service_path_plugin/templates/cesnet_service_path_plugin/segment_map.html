@@ -1,0 +1,155 @@
+{% extends 'generic/object.html' %}
+{% load static %}
+{% load helpers %}
+
+{% block title %}{{ object.name }} - Map View{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="mdi mdi-map" aria-hidden="true"></i>
+                    Map: {{ object.name }}
+                </h5>
+                <div class="card-actions">
+                    <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="mdi mdi-arrow-left" aria-hidden="true"></i> Back to Segment
+                    </a>
+                    <a href="{% url 'plugins:cesnet_service_path_plugin:segment_geojson_download' pk=object.pk %}" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="mdi mdi-download" aria-hidden="true"></i> Download GeoJSON
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if not object.has_path_data %}
+                    <div class="alert alert-warning" role="alert">
+                        <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
+                        This segment does not have path data.
+                    </div>
+                {% else %}
+                    <!-- Segment info -->
+                    <div class="alert alert-info mb-3">
+                        <strong>{{ object.provider }}</strong> | 
+                        <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span> | 
+                        {% if object.path_length_km %}{{ object.path_length_km }} km{% else %}Length unknown{% endif %} | 
+                        {{ object.site_a }} ↔ {{ object.site_b }}
+                    </div>
+                    
+                    <!-- Map controls -->
+                    <div class="mb-3">
+                        <button id="fitBounds" class="btn btn-sm btn-outline-primary">
+                            <i class="mdi mdi-fit-to-page-outline"></i> Fit to Path
+                        </button>
+                        <button id="toggleLayer" class="btn btn-sm btn-outline-secondary">
+                            <i class="mdi mdi-satellite-variant"></i> Satellite
+                        </button>
+                    </div>
+                    
+                    <!-- Map container -->
+                    <div id="map" style="height: 600px; width: 100%; border: 1px solid #ddd; border-radius: 4px;"></div>
+                    
+                    <!-- Load Leaflet -->
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+                    <script>
+                    
+                    // Create map
+                    const map = L.map('map').setView([49.75, 15.5], 7);
+                    
+                    // Add tile layers
+                    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    });
+                    
+                    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles © Esri'
+                    });
+                    
+                    // Start with OSM
+                    osmLayer.addTo(map);
+                    let currentLayer = osmLayer;
+                    
+                    // Load segment path
+                    fetch('{% url "plugins:cesnet_service_path_plugin:segment_geojson_api" pk=object.pk %}')
+                        .then(response => response.json())
+                        .then(data => {
+                            
+                            if (data.features && data.features.length > 0) {
+                                // Style based on status
+                                const statusColors = {
+                                    'Active': '#28a745',
+                                    'Planned': '#ffc107', 
+                                    'Offline': '#dc3545'                                    
+                                };
+                                const feature = data.features[0];
+                                const color = statusColors[feature.properties.status] || '#ff0000';
+                                
+                                // Add to map
+                                const pathLayer = L.geoJSON(data, {
+                                    style: {
+                                        color: color,
+                                        weight: 4,
+                                        opacity: 0.8,
+                                        dashArray: feature.properties.status_color === 'danger' ? '10, 5' : null
+                                    }
+                                }).addTo(map);
+                                
+                                // Add popup
+                                pathLayer.bindPopup(`
+                                    <div>
+                                        <h6>{{ object.name }}</h6>
+                                        <p><strong>Provider:</strong> {{ object.provider }}</p>
+                                        <p><strong>Status:</strong> {{ object.get_status_display }}</p>
+                                        {% if object.path_length_km %}<p><strong>Length:</strong> {{ object.path_length_km }} km</p>{% endif %}
+                                        <p><strong>Route:</strong> {{ object.site_a }} ↔ {{ object.site_b }}</p>
+                                    </div>
+                                `);
+                                
+                                // Fit to path
+                                setTimeout(() => {
+                                    map.fitBounds(pathLayer.getBounds(), {padding: [20, 20]});
+                                }, 100);
+                                
+                                // Store for controls
+                                window.pathLayer = pathLayer;
+                                
+
+                            } else {
+                                console.log('No path features found');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading path:', error);
+                        });
+                    
+                    // Control handlers
+                    document.getElementById('fitBounds').onclick = function() {
+                        if (window.pathLayer) {
+                            map.fitBounds(window.pathLayer.getBounds(), {padding: [20, 20]});
+                        }
+                    };
+                    
+                    document.getElementById('toggleLayer').onclick = function() {
+                        if (currentLayer === osmLayer) {
+                            map.removeLayer(osmLayer);
+                            map.addLayer(satelliteLayer);
+                            currentLayer = satelliteLayer;
+                            this.innerHTML = '<i class="mdi mdi-earth"></i> Street Map';
+                        } else {
+                            map.removeLayer(satelliteLayer);
+                            map.addLayer(osmLayer);
+                            currentLayer = osmLayer;
+                            this.innerHTML = '<i class="mdi mdi-satellite-variant"></i> Satellite';
+                        }
+                    };
+                    </script>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
