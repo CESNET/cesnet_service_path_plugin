@@ -3,11 +3,18 @@ from netbox.api.viewsets import NetBoxModelViewSet
 
 from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.filtersets import SegmentFilterSet
-from cesnet_service_path_plugin.api.serializers import SegmentSerializer
+from cesnet_service_path_plugin.api.serializers import SegmentListSerializer, SegmentDetailSerializer
 
 
 class SegmentViewSet(NetBoxModelViewSet):
     metadata_class = ContentTypeMetadata
     queryset = Segment.objects.all()
-    serializer_class = SegmentSerializer
     filterset_class = SegmentFilterSet
+
+    def get_serializer_class(self):
+        """
+        Return appropriate serializer based on action
+        """
+        if self.action == "list":
+            return SegmentListSerializer
+        return SegmentDetailSerializer

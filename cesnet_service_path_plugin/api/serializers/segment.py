@@ -11,7 +11,9 @@ from cesnet_service_path_plugin.models.segment import Segment
 from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
 
 
-class SegmentSerializer(NetBoxModelSerializer):
+class SegmentListSerializer(NetBoxModelSerializer):
+    """Lightweight serializer for list views - excludes heavy geometry fields"""
+
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
@@ -20,7 +22,63 @@ class SegmentSerializer(NetBoxModelSerializer):
     location_b = LocationSerializer(required=True, nested=True)
     circuits = CircuitSerializer(required=False, many=True, nested=True)
 
-    # Path geometry fields
+    # Only include lightweight path info
+    has_path_data = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Segment
+        fields = (
+            "id",
+            "url",
+            "display",
+            "name",
+            "status",
+            "network_label",
+            "install_date",
+            "termination_date",
+            "provider",
+            "provider_segment_id",
+            "provider_segment_name",
+            "provider_segment_contract",
+            "site_a",
+            "location_a",
+            "site_b",
+            "location_b",
+            "circuits",
+            # Only basic path info, no heavy geometry
+            "path_length_km",
+            "path_source_format",
+            "path_notes",
+            "has_path_data",
+            "tags",
+        )
+        brief_fields = (
+            "id",
+            "url",
+            "display",
+            "name",
+            "status",
+            "has_path_data",
+            "tags",
+        )
+
+    def get_has_path_data(self, obj):
+        return obj.has_path_data()
+
+
+class SegmentDetailSerializer(NetBoxModelSerializer):
+    """Full serializer with all geometry data for detail views"""
+
+    # This is your existing SegmentSerializer - just rename it
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
+    provider = ProviderSerializer(required=True, nested=True)
+    site_a = SiteSerializer(required=True, nested=True)
+    location_a = LocationSerializer(required=True, nested=True)
+    site_b = SiteSerializer(required=True, nested=True)
+    location_b = LocationSerializer(required=True, nested=True)
+    circuits = CircuitSerializer(required=False, many=True, nested=True)
+
+    # All the heavy geometry fields
     path_geometry_geojson = serializers.SerializerMethodField(read_only=True)
     path_coordinates = serializers.SerializerMethodField(read_only=True)
     path_bounds = serializers.SerializerMethodField(read_only=True)
@@ -46,7 +104,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "site_b",
             "location_b",
             "circuits",
-            # Path geometry fields
+            # All path geometry fields
             "path_geometry_geojson",
             "path_coordinates",
             "path_bounds",
@@ -62,7 +120,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "display",
             "name",
             "status",
-            "has_path_data",  # Added to brief fields for quick overview
+            "has_path_data",
             "tags",
         )
 
