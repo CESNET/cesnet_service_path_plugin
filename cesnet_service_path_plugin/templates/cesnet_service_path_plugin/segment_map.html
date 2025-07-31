@@ -59,7 +59,34 @@
                     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
                     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+                    <!-- Template data for JavaScript -->
+                    <script type="application/json" id="segment-data">
+                    {
+                        "siteA": {
+                            "lat": {% if object.site_a.latitude %}{{ object.site_a.latitude }}{% else %}null{% endif %},
+                            "lng": {% if object.site_a.longitude %}{{ object.site_a.longitude }}{% else %}null{% endif %},
+                            "name": "{{ object.site_a|escapejs }}"
+                        },
+                        "siteB": {
+                            "lat": {% if object.site_b.latitude %}{{ object.site_b.latitude }}{% else %}null{% endif %},
+                            "lng": {% if object.site_b.longitude %}{{ object.site_b.longitude }}{% else %}null{% endif %},
+                            "name": "{{ object.site_b|escapejs }}"
+                        },
+                        "segment": {
+                            "name": "{{ object.name|escapejs }}",
+                            "provider": "{{ object.provider|escapejs }}",
+                            "status": "{{ object.get_status_display|escapejs }}",
+                            "pathLength": {% if object.path_length_km %}{{ object.path_length_km }}{% else %}null{% endif %},
+                            "hasPathData": {% if object.has_path_data %}true{% else %}false{% endif %},
+                            "geojsonUrl": "{% url 'plugins:cesnet_service_path_plugin:segment_geojson_api' pk=object.pk %}"
+                        }
+                    }
+                    </script>
+
                     <script>
+                    // Load template data
+                    const segmentData = JSON.parse(document.getElementById('segment-data').textContent);
+                    const { siteA, siteB, segment } = segmentData;
                     
                     // Create map
                     const map = L.map('map').setView([49.75, 15.5], 7);
@@ -77,18 +104,6 @@
                     osmLayer.addTo(map);
                     let currentLayer = osmLayer;
                     
-                    // Site coordinates
-                    const siteA = { 
-                        lat: {{ object.site_a.latitude|default:"null" }}, 
-                        lng: {{ object.site_a.longitude|default:"null" }},
-                        name: "{{ object.site_a }}"
-                    };
-                    const siteB = { 
-                        lat: {{ object.site_b.latitude|default:"null" }}, 
-                        lng: {{ object.site_b.longitude|default:"null" }},
-                        name: "{{ object.site_b }}"
-                    };
-                    
                     // Status colors
                     const statusColors = {
                         'Active': '#dc3545',     // Red (changed from green for better visibility)
@@ -97,7 +112,7 @@
                     };
                     
                     // Get segment color based on status
-                    const segmentColor = statusColors['{{ object.get_status_display }}'] || '#dc3545';
+                    const segmentColor = statusColors[segment.status] || '#dc3545';
                     
                     // Function to add site markers
                     function addSiteMarkers() {
@@ -155,10 +170,10 @@
                             
                             straightLine.bindPopup(`
                                 <div>
-                                    <h6>{{ object.name }}</h6>
-                                    <p><strong>Provider:</strong> {{ object.provider }}</p>
-                                    <p><strong>Status:</strong> {{ object.get_status_display }}</p>
-                                    <p><strong>Route:</strong> {{ object.site_a }} ↔ {{ object.site_b }}</p>
+                                    <h6>${segment.name}</h6>
+                                    <p><strong>Provider:</strong> ${segment.provider}</p>
+                                    <p><strong>Status:</strong> ${segment.status}</p>
+                                    <p><strong>Route:</strong> ${siteA.name} ↔ ${siteB.name}</p>
                                     <p><em>Note: Showing straight line (no path data available)</em></p>
                                 </div>
                             `);
@@ -174,8 +189,8 @@
                     }
                     
                     // Load segment path or create fallback
-                    {% if object.has_path_data %}
-                    fetch('{% url "plugins:cesnet_service_path_plugin:segment_geojson_api" pk=object.pk %}')
+                    if (segment.hasPathData) {
+                        fetch(segment.geojsonUrl)
                         .then(response => response.json())
                         .then(data => {
                             
@@ -195,11 +210,11 @@
                                 // Add popup
                                 pathLayer.bindPopup(`
                                     <div>
-                                        <h6>{{ object.name }}</h6>
-                                        <p><strong>Provider:</strong> {{ object.provider }}</p>
-                                        <p><strong>Status:</strong> {{ object.get_status_display }}</p>
-                                        {% if object.path_length_km %}<p><strong>Length:</strong> {{ object.path_length_km }} km</p>{% endif %}
-                                        <p><strong>Route:</strong> {{ object.site_a }} ↔ {{ object.site_b }}</p>
+                                        <h6>${segment.name}</h6>
+                                        <p><strong>Provider:</strong> ${segment.provider}</p>
+                                        <p><strong>Status:</strong> ${segment.status}</p>
+                                        ${segment.pathLength ? `<p><strong>Length:</strong> ${segment.pathLength} km</p>` : ''}
+                                        <p><strong>Route:</strong> ${siteA.name} ↔ ${siteB.name}</p>
                                     </div>
                                 `);
                                 
@@ -226,11 +241,11 @@
                             createStraightLine();
                             addSiteMarkers();
                         });
-                    {% else %}
+                    } else {
                         // No path data, create straight line if coordinates available
                         createStraightLine();
                         addSiteMarkers();
-                    {% endif %}
+                    }
                     
                     // Control handlers
                     document.getElementById('fitBounds').onclick = function() {
