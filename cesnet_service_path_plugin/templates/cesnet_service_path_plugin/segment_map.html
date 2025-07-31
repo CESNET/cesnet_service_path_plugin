@@ -63,13 +63,13 @@
                     <script type="application/json" id="segment-data">
                     {
                         "siteA": {
-                            "lat": {% if object.site_a.latitude %}{{ object.site_a.latitude }}{% else %}null{% endif %},
-                            "lng": {% if object.site_a.longitude %}{{ object.site_a.longitude }}{% else %}null{% endif %},
+                            "lat": "{% if object.site_a.latitude %}{{ object.site_a.latitude }}{% else %}null{% endif %}",
+                            "lng": "{% if object.site_a.longitude %}{{ object.site_a.longitude }}{% else %}null{% endif %}",
                             "name": "{{ object.site_a|escapejs }}"
                         },
                         "siteB": {
-                            "lat": {% if object.site_b.latitude %}{{ object.site_b.latitude }}{% else %}null{% endif %},
-                            "lng": {% if object.site_b.longitude %}{{ object.site_b.longitude }}{% else %}null{% endif %},
+                            "lat": "{% if object.site_b.latitude %}{{ object.site_b.latitude }}{% else %}null{% endif %}",
+                            "lng": "{% if object.site_b.longitude %}{{ object.site_b.longitude }}{% else %}null{% endif %}",
                             "name": "{{ object.site_b|escapejs }}"
                         },
                         "segment": {
