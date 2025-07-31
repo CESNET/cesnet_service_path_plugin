@@ -107,18 +107,66 @@ def segment_path_clear(request, pk):
     return render(request, "cesnet_service_path_plugin/segment_path_clear_confirm.html", {"object": segment})
 
 
-# NEW: Map view for visualizing segment path
+# Map view for visualizing segment path
 def segment_map_view(request, pk):
     """
-    Display segment path on an interactive map
+    Display segment path on an interactive map with enhanced features
     """
+    import json
+    from django.shortcuts import get_object_or_404, render
+
     segment = get_object_or_404(Segment, pk=pk)
+
+    # Prepare site data for endpoints
+
+    has_fallback_line = False
+
+    # Extract site coordinates if available
+    try:
+        site_a_data = {
+            "name": str(segment.site_a),
+            "lat": float(segment.site_a.latitude),
+            "lng": float(segment.site_a.longitude),
+        }
+    except (ValueError, TypeError, AttributeError):
+        site_a_data = None
+
+    try:
+        site_b_data = {
+            "name": str(segment.site_b),
+            "lat": float(segment.site_b.latitude),
+            "lng": float(segment.site_b.longitude),
+        }
+    except (ValueError, TypeError, AttributeError):
+        site_b_data = None
+
+    # Check if we should show fallback line (when no geojson but sites have coordinates)
+    if site_a_data and site_b_data:
+        has_fallback_line = True
+
+    # Prepare segment styling data
+    segment_style = {"color": "#dc3545", "weight": 4, "opacity": 0.8}  # Red color for better visibility
+
+    # Adjust styling based on status if needed
+    # status_colors = {"Active": "#28a745", "Planned": "#ffc107", "Offline": "#dc3545"}
+
+    # if hasattr(segment, "status") and hasattr(segment, "get_status_display"):
+    #    segment_style["color"] = status_colors.get(segment.get_status_display(), "#dc3545")
+
+    print("has path data:", segment.has_path_data())
+    print("has fallback line:", has_fallback_line)
 
     context = {
         "object": segment,
         "segment": segment,
+        "site_a_data": site_a_data,
+        "site_b_data": site_b_data,
+        "has_fallback_line": has_fallback_line,
+        "segment_style": segment_style,
+        "site_a_data_json": json.dumps(site_a_data) if site_a_data else "null",
+        "site_b_data_json": json.dumps(site_b_data) if site_b_data else "null",
+        "segment_style_json": json.dumps(segment_style),
     }
-
     return render(request, "cesnet_service_path_plugin/segment_map.html", context)
 
 
