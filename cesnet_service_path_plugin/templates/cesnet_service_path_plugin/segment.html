@@ -93,6 +93,13 @@
                                 <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Clear Path
                             </a>
                         </div>
+                    {% else %}
+                        <div class="card-actions">
+                            <a href="{% url 'plugins:cesnet_service_path_plugin:segment_map' pk=object.pk %}" 
+                               class="btn btn-outline-success btn-sm">
+                                <i class="mdi mdi-map" aria-hidden="true"></i> View Start / End on Map
+                            </a>
+                        </div>      
                     {% endif %}
                 </h5>
                 <div class="card-body">

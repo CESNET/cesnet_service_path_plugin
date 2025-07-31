@@ -24,10 +24,10 @@
                 </div>
             </div>
             <div class="card-body">
-                {% if not object.has_path_data %}
+                {% if not object.has_path_data and not object.site_a.latitude %}
                     <div class="alert alert-warning" role="alert">
                         <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
-                        This segment does not have path data.
+                        This segment does not have path data and site coordinates are not available.
                     </div>
                 {% else %}
                     <!-- Segment info -->
@@ -36,6 +36,10 @@
                         <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span> | 
                         {% if object.path_length_km %}{{ object.path_length_km }} km{% else %}Length unknown{% endif %} | 
                         {{ object.site_a }} ↔ {{ object.site_b }}
+                        {% if object.site_a.latitude and object.site_a.longitude %}
+                            {{ object.site_a.latitude }}, {{ object.site_a.longitude }} ↔ 
+                            {{ object.site_b.latitude }}, {{ object.site_b.longitude }}
+                        {% endif %}
                     </div>
                     
                     <!-- Map controls -->
@@ -73,28 +77,118 @@
                     osmLayer.addTo(map);
                     let currentLayer = osmLayer;
                     
-                    // Load segment path
+                    // Site coordinates
+                    const siteA = { 
+                        lat: {{ object.site_a.latitude|default:"null" }}, 
+                        lng: {{ object.site_a.longitude|default:"null" }},
+                        name: "{{ object.site_a }}"
+                    };
+                    const siteB = { 
+                        lat: {{ object.site_b.latitude|default:"null" }}, 
+                        lng: {{ object.site_b.longitude|default:"null" }},
+                        name: "{{ object.site_b }}"
+                    };
+                    
+                    // Status colors
+                    const statusColors = {
+                        'Active': '#dc3545',     // Red (changed from green for better visibility)
+                        'Planned': '#ffc107',    // Yellow
+                        'Offline': '#6c757d'     // Gray
+                    };
+                    
+                    // Get segment color based on status
+                    const segmentColor = statusColors['{{ object.get_status_display }}'] || '#dc3545';
+                    
+                    // Function to add site markers
+                    function addSiteMarkers() {
+                        if (siteA.lat && siteA.lng) {
+                            const markerA = L.circleMarker([siteA.lat, siteA.lng], {
+                                radius: 8,
+                                fillColor: '#007bff',
+                                color: '#ffffff',
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            }).addTo(map);
+                            
+                            markerA.bindPopup(`
+                                <div>
+                                    <h6>${siteA.name}</h6>
+                                    <p><strong>Type:</strong> Start Site</p>
+                                    <p><strong>Coordinates:</strong> ${siteA.lat}, ${siteA.lng}</p>
+                                </div>
+                            `);
+                        }
+                        
+                        if (siteB.lat && siteB.lng) {
+                            const markerB = L.circleMarker([siteB.lat, siteB.lng], {
+                                radius: 8,
+                                fillColor: '#28a745',
+                                color: '#ffffff',
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.8
+                            }).addTo(map);
+                            
+                            markerB.bindPopup(`
+                                <div>
+                                    <h6>${siteB.name}</h6>
+                                    <p><strong>Type:</strong> End Site</p>
+                                    <p><strong>Coordinates:</strong> ${siteB.lat}, ${siteB.lng}</p>
+                                </div>
+                            `);
+                        }
+                    }
+                    
+                    // Function to create straight line fallback
+                    function createStraightLine() {
+                        if (siteA.lat && siteA.lng && siteB.lat && siteB.lng) {
+                            const straightLine = L.polyline([
+                                [siteA.lat, siteA.lng],
+                                [siteB.lat, siteB.lng]
+                            ], {
+                                color: segmentColor,
+                                weight: 4,
+                                opacity: 0.8,
+                                dashArray: '10, 5' // Dashed line to indicate it's a fallback
+                            }).addTo(map);
+                            
+                            straightLine.bindPopup(`
+                                <div>
+                                    <h6>{{ object.name }}</h6>
+                                    <p><strong>Provider:</strong> {{ object.provider }}</p>
+                                    <p><strong>Status:</strong> {{ object.get_status_display }}</p>
+                                    <p><strong>Route:</strong> {{ object.site_a }} ↔ {{ object.site_b }}</p>
+                                    <p><em>Note: Showing straight line (no path data available)</em></p>
+                                </div>
+                            `);
+                            
+                            // Fit to straight line
+                            setTimeout(() => {
+                                map.fitBounds(straightLine.getBounds(), {padding: [50, 50]});
+                            }, 100);
+                            
+                            // Store for controls
+                            window.pathLayer = straightLine;
+                        }
+                    }
+                    
+                    // Load segment path or create fallback
+                    {% if object.has_path_data %}
                     fetch('{% url "plugins:cesnet_service_path_plugin:segment_geojson_api" pk=object.pk %}')
                         .then(response => response.json())
                         .then(data => {
                             
                             if (data.features && data.features.length > 0) {
-                                // Style based on status
-                                const statusColors = {
-                                    'Active': '#28a745',
-                                    'Planned': '#ffc107', 
-                                    'Offline': '#dc3545'                                    
-                                };
                                 const feature = data.features[0];
-                                const color = statusColors[feature.properties.status] || '#ff0000';
                                 
-                                // Add to map
+                                // Add path to map
                                 const pathLayer = L.geoJSON(data, {
                                     style: {
-                                        color: color,
+                                        color: segmentColor,
                                         weight: 4,
                                         opacity: 0.8,
-                                        dashArray: feature.properties.status_color === 'danger' ? '10, 5' : null
+                                        dashArray: feature.properties.status === 'Offline' ? '10, 5' : null
                                     }
                                 }).addTo(map);
                                 
@@ -109,6 +203,9 @@
                                     </div>
                                 `);
                                 
+                                // Add site markers
+                                addSiteMarkers();
+                                
                                 // Fit to path
                                 setTimeout(() => {
                                     map.fitBounds(pathLayer.getBounds(), {padding: [20, 20]});
@@ -116,15 +213,24 @@
                                 
                                 // Store for controls
                                 window.pathLayer = pathLayer;
-                                
 
                             } else {
-                                console.log('No path features found');
+                                console.log('No path features found, using straight line fallback');
+                                createStraightLine();
+                                addSiteMarkers();
                             }
                         })
                         .catch(error => {
                             console.error('Error loading path:', error);
+                            console.log('Using straight line fallback due to error');
+                            createStraightLine();
+                            addSiteMarkers();
                         });
+                    {% else %}
+                        // No path data, create straight line if coordinates available
+                        createStraightLine();
+                        addSiteMarkers();
+                    {% endif %}
                     
                     // Control handlers
                     document.getElementById('fitBounds').onclick = function() {

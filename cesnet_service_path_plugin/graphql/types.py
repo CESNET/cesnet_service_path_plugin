@@ -17,7 +17,7 @@ from cesnet_service_path_plugin.models import (
     ServicePathSegmentMapping,
 )
 
-# Import the GraphQL filters from the new filters directory
+# Import the GraphQL filters
 from .filters import (
     SegmentFilter,
     SegmentCircuitMappingFilter,
