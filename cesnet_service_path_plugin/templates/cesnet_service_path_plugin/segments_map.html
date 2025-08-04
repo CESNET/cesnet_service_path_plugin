@@ -1,0 +1,408 @@
+{% extends 'generic/object_list.html' %}
+{% load static %}
+{% load helpers %}
+{% load buttons %}
+{% load helpers %}
+{% load plugins %}
+{% load render_table from django_tables2 %}
+{% load i18n %}
+
+{% block title %}Segments Map View{% endblock %}
+
+{% block content %}
+   {# Object list tab #}
+    <div class="tab-pane show active" id="object-list" role="tabpanel" aria-labelledby="object-list-tab">
+
+      {# Applied filters #}
+      {% if filter_form %}
+        {% applied_filters model filter_form request.GET %}
+      {% endif %}
+
+      {# Object table controls #}
+      
+      <form method="post" class="form form-horizontal">
+        {% csrf_token %}
+        {# "Select all" form #}
+        {% if table.paginator.num_pages > 1 %}
+          <div id="select-all-box" class="d-none card d-print-none">
+            <div class="form col-md-12">
+              <div class="card-body d-flex justify-content-between">
+                <div class="form-check">
+                  <input type="checkbox" id="select-all" name="_all" class="form-check-input" />
+                  <label for="select-all" class="form-check-label">
+                    {% blocktrans trimmed with count=table.page.paginator.count object_type_plural=table.data.verbose_name_plural %}
+                      Select <strong>all <span class="total-object-count">{{ count }}</span> {{ object_type_plural }}</strong> matching query
+                    {% endblocktrans %}
+                  </label>
+                </div>
+                <div class="bulk-action-buttons">
+                  {% if 'bulk_edit' in actions %}
+                    {% bulk_edit_button model query_params=request.GET %}
+                  {% endif %}
+                  {% if 'bulk_delete' in actions %}
+                    {% bulk_delete_button model query_params=request.GET %}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="form form-horizontal">
+          {% csrf_token %}
+          <input type="hidden" name="return_url" value="{% if return_url %}{{ return_url }}{% else %}{{ request.path }}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}{% endif %}" />
+
+          {# Warn of any missing prerequisite objects #}
+          {% if prerequisite_model %}
+            {% include 'inc/missing_prerequisites.html' %}
+          {% endif %}
+
+          {# Objects table #}
+<div class="row">
+    <!-- Full Width Map Area -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="mdi mdi-map" aria-hidden="true"></i>
+                    Segments Map
+                    <span class="badge bg-info text-dark">{{ segments_count }} segments</span>
+                </h5>
+                <div class="card-actions">
+                    <a href="{% url 'plugins:cesnet_service_path_plugin:segment_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="mdi mdi-table" aria-hidden="true"></i> Table View
+                    </a>
+                    <!-- Map Legend -->
+                    <div class="btn-group ms-2" role="group">
+                        <button type="button" class="btn btn-outline-info btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="mdi mdi-map-legend" aria-hidden="true"></i> Legend
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><span class="dropdown-item-text small">
+                                <span style="display: inline-block; width: 20px; height: 3px; background-color: #dc3545; margin-right: 8px;"></span>
+                                Active
+                            </span></li>
+                            <li><span class="dropdown-item-text small">
+                                <span style="display: inline-block; width: 20px; height: 3px; background-color: #ff6b35; margin-right: 8px;"></span>
+                                Planned
+                            </span></li>
+                            <li><span class="dropdown-item-text small">
+                                <span style="display: inline-block; width: 20px; height: 3px; background-color: #dc3545; margin-right: 8px;"></span>
+                                Offline
+                            </span></li>
+                            <li><span class="dropdown-item-text small">
+                                <span style="display: inline-block; width: 20px; height: 3px; background-color: #6c757d; margin-right: 8px;"></span>
+                                Decommissioned
+                            </span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><span class="dropdown-item-text small">
+                                <strong>Solid line:</strong> Actual path data<br>
+                                <strong>Dashed line:</strong> No path data
+                            </span></li>
+                        </ul>
+                    </div>
+                    <button id="fitBounds" class="btn btn-outline-primary btn-sm">
+                        <i class="mdi mdi-fit-to-page-outline" aria-hidden="true"></i> Fit All
+                    </button>
+                    <button id="toggleLayer" class="btn btn-outline-secondary btn-sm">
+                        <i class="mdi mdi-satellite-variant" aria-hidden="true"></i> Satellite
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if map_warning %}
+                    <div class="alert alert-warning" role="alert">
+                        <i class="mdi mdi-alert" aria-hidden="true"></i>
+                        {{ map_warning }}
+                    </div>
+                {% endif %}
+                
+                {% if segments_count == 0 %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="mdi mdi-information" aria-hidden="true"></i>
+                        No segments match the current filters.
+                    </div>
+                {% else %}
+                    <!-- Map Container -->
+                    <div id="map" style="height: 800px; width: 100%; border: 1px solid #ddd; border-radius: 4px;"></div>
+                    
+                    <!-- Load Leaflet -->
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                    
+                    <!-- Segment Info Panel (Initially Hidden) -->
+                    <div id="segmentInfo" class="mt-3" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Selected Segment</h6>
+                                <button type="button" class="btn-close" onclick="hideSegmentInfo()"></button>
+                            </div>
+                            <div class="card-body" id="segmentInfoContent">
+                                <!-- Content will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Template data as JSON -->
+                    <script type="application/json" id="map-data">
+                    {
+                        "segments": {{ segments_data_json|safe }},
+                        "mapBounds": {{ map_bounds_json|safe }},
+                        "mapCenter": {{ map_center_json|safe }},
+                        "apiUrl": "{{ api_url }}"
+                    }
+                    </script>
+
+                    <script>
+                    // Parse template data
+                    const mapData = JSON.parse(document.getElementById('map-data').textContent);
+                    const segmentsData = mapData.segments;
+                    const mapBounds = mapData.mapBounds;
+                    const mapCenter = mapData.mapCenter;
+                    const apiUrl = mapData.apiUrl;
+                    
+                    // Create map
+                    const map = L.map('map').setView([mapCenter.lat, mapCenter.lng], mapCenter.zoom);
+                    
+                    // Add tile layers
+                    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    });
+                    
+                    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles © Esri'
+                    });
+                    
+                    // Start with OSM
+                    osmLayer.addTo(map);
+                    let currentLayer = osmLayer;
+                    
+                    // Layer groups for different types
+                    const pathLayers = L.layerGroup().addTo(map);
+                    const siteLayers = L.layerGroup().addTo(map);
+                    
+                    // Status color mapping - using red as primary color for better visibility
+                    const statusColors = {
+                        "Active": "#dc3545",       // Red - more visible on OSM
+                        "Planned": "#ff6b35",      // Orange-red 
+                        "Offline": "#dc3545",      // Red
+                        "Decommissioned": "#6c757d" // Gray
+                    };
+                    
+                    // Function to show segment info
+                    function showSegmentInfo(segment) {
+                        const infoPanel = document.getElementById('segmentInfo');
+                        const infoContent = document.getElementById('segmentInfoContent');
+                        
+                        const pathDataBadge = segment.has_path_data 
+                            ? '<span class="badge bg-success">Has Path Data</span>'
+                            : '<span class="badge bg-warning">No Path Data</span>';
+                        
+                        infoContent.innerHTML = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>${segment.name}</h6>
+                                    <p><strong>Provider:</strong> ${segment.provider || 'N/A'}</p>
+                                    <p><strong>Status:</strong> <span class="badge" style="background-color: ${statusColors[segment.status] || '#6c757d'}">${segment.status}</span></p>
+                                    <p><strong>Path Data:</strong> ${pathDataBadge}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Sites:</strong> ${segment.site_a ? segment.site_a.name : 'N/A'} ↔ ${segment.site_b ? segment.site_b.name : 'N/A'}</p>
+                                    <p><strong>Length:</strong> ${segment.path_length_km ? segment.path_length_km + ' km' : 'Unknown'}</p>
+                                    <div class="mt-2">
+                                        <a href="${segment.url}" class="btn btn-primary btn-sm">View Details</a>
+                                        <a href="${segment.map_url}" class="btn btn-outline-secondary btn-sm">Individual Map</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        infoPanel.style.display = 'block';
+                        infoPanel.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    
+                    // Function to hide segment info
+                    function hideSegmentInfo() {
+                        document.getElementById('segmentInfo').style.display = 'none';
+                    }
+                    
+                    // Make function global
+                    window.hideSegmentInfo = hideSegmentInfo;
+                    
+                    // Load and display segments
+                    function loadSegments() {
+                        // Clear existing layers
+                        pathLayers.clearLayers();
+                        siteLayers.clearLayers();
+                        
+                        // Add site markers and fallback lines
+                        segmentsData.forEach(segment => {
+                            const color = statusColors[segment.status] || '#dc3545';
+                            
+                            // Add site markers
+                            if (segment.site_a) {
+                                const markerA = L.circleMarker([segment.site_a.lat, segment.site_a.lng], {
+                                    radius: 6,
+                                    fillColor: '#007bff',
+                                    color: '#ffffff',
+                                    weight: 2,
+                                    opacity: 1,
+                                    fillOpacity: 0.8
+                                });
+                                
+                                markerA.bindPopup(`<strong>Site A:</strong> ${segment.site_a.name}<br><strong>Segment:</strong> ${segment.name}`);
+                                siteLayers.addLayer(markerA);
+                            }
+                            
+                            if (segment.site_b) {
+                                const markerB = L.circleMarker([segment.site_b.lat, segment.site_b.lng], {
+                                    radius: 6,
+                                    fillColor: '#28a745',
+                                    color: '#ffffff',
+                                    weight: 2,
+                                    opacity: 1,
+                                    fillOpacity: 0.8
+                                });
+                                
+                                markerB.bindPopup(`<strong>Site B:</strong> ${segment.site_b.name}<br><strong>Segment:</strong> ${segment.name}`);
+                                siteLayers.addLayer(markerB);
+                            }
+                            
+                            // Add fallback line if no path data but both sites have coordinates
+                            if (!segment.has_path_data && segment.site_a && segment.site_b) {
+                                const fallbackLine = L.polyline([
+                                    [segment.site_a.lat, segment.site_a.lng],
+                                    [segment.site_b.lat, segment.site_b.lng]
+                                ], {
+                                    color: color,
+                                    weight: 3,
+                                    opacity: 0.7,
+                                    dashArray: '5, 10'
+                                });
+                                
+                                fallbackLine.on('click', () => showSegmentInfo(segment));
+                                fallbackLine.bindPopup(`
+                                    <strong>${segment.name}</strong><br>
+                                    Provider: ${segment.provider || 'N/A'}<br>
+                                    Status: ${segment.status}<br>
+                                    <small>Straight line - no path data</small>
+                                `);
+                                
+                                pathLayers.addLayer(fallbackLine);
+                            }
+                        });
+                        
+                        // Load actual path data via API
+                        const currentUrl = new URL(window.location);
+                        const apiUrlWithParams = apiUrl + currentUrl.search;
+                        
+                        fetch(apiUrlWithParams)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.features && data.features.length > 0) {
+                                    data.features.forEach(feature => {
+                                        if (feature.properties.type === 'path') {
+                                            // Actual path data
+                                            const pathLayer = L.geoJSON(feature, {
+                                                style: {
+                                                    color: statusColors[feature.properties.status] || '#dc3545',
+                                                    weight: 4,
+                                                    opacity: 0.8
+                                                }
+                                            });
+                                            
+                                            pathLayer.on('click', () => {
+                                                const segment = segmentsData.find(s => s.id === feature.properties.id);
+                                                if (segment) showSegmentInfo(segment);
+                                            });
+                                            
+                                            pathLayer.bindPopup(`
+                                                <strong>${feature.properties.name}</strong><br>
+                                                Provider: ${feature.properties.provider || 'N/A'}<br>
+                                                Status: ${feature.properties.status}<br>
+                                                Length: ${feature.properties.path_length_km ? feature.properties.path_length_km + ' km' : 'Unknown'}
+                                            `);
+                                            
+                                            pathLayers.addLayer(pathLayer);
+                                        }
+                                    });
+                                }
+                                
+                                // Fit map to show all segments
+                                setTimeout(fitMapToSegments, 100);
+                            })
+                            .catch(error => {
+                                console.error('Error loading segment paths:', error);
+                                setTimeout(fitMapToSegments, 100);
+                            });
+                    }
+                    
+                    // Function to fit map to all segments
+                    function fitMapToSegments() {
+                        if (mapBounds.minLat !== null && mapBounds.maxLat !== null) {
+                            const bounds = L.latLngBounds(
+                                [mapBounds.minLat, mapBounds.minLng],
+                                [mapBounds.maxLat, mapBounds.maxLng]
+                            );
+                            map.fitBounds(bounds, {padding: [20, 20]});
+                        }
+                    }
+                    
+                    // Control handlers
+                    document.getElementById('fitBounds').onclick = function() {
+                        fitMapToSegments();
+                    };
+                    
+                    document.getElementById('toggleLayer').onclick = function() {
+                        if (currentLayer === osmLayer) {
+                            map.removeLayer(osmLayer);
+                            map.addLayer(satelliteLayer);
+                            currentLayer = satelliteLayer;
+                            this.innerHTML = '<i class="mdi mdi-earth"></i> Street Map';
+                        } else {
+                            map.removeLayer(satelliteLayer);
+                            map.addLayer(osmLayer);
+                            currentLayer = osmLayer;
+                            this.innerHTML = '<i class="mdi mdi-satellite-variant"></i> Satellite';
+                        }
+                    };
+                    
+                    // Load segments on page load
+                    loadSegments();
+                    </script>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{# /Objects table #}
+
+          {# Form buttons #}
+          <div class="btn-list d-print-none">
+            {% block bulk_buttons %}
+              <div class="bulk-action-buttons">
+                {% if 'bulk_edit' in actions %}
+                  {% bulk_edit_button model query_params=request.GET %}
+                {% endif %}
+                {% if 'bulk_delete' in actions %}
+                  {% bulk_delete_button model query_params=request.GET %}
+                {% endif %}
+              </div>
+            {% endblock %}
+          </div>
+          {# /Form buttons #}
+
+        </div>
+      </form>
+    </div>
+    {# /Object list tab #}
+
+    {# Filters tab #}
+    {% if filter_form %}
+      <div class="tab-pane show" id="filters-form" role="tabpanel" aria-labelledby="filters-form-tab">
+        {% include 'inc/filter_list.html' %}
+      </div>
+    {% endif %}
+    {# /Filters tab #}
+
+{% endblock content %}
