@@ -105,9 +105,41 @@
                      <button type="button" id="fitBounds" class="btn btn-outline-primary btn-sm">
                         <i class="mdi mdi-fit-to-page-outline" aria-hidden="true"></i> Fit All
                     </button>
-                    <button type="button" id="toggleLayer" class="btn btn-outline-secondary btn-sm">
-                        <i class="mdi mdi-satellite-variant" aria-hidden="true"></i> Satellite
-                    </button>
+                    <!-- Replace the existing toggleLayer button with this dropdown -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" id="layerButton">
+                            <i id="layerIcon" class="mdi mdi-map" aria-hidden="true"></i> 
+                            <span id="currentLayerName">OpenStreetMap</span>
+                        </button>
+                        <ul class="dropdown-menu" style="min-width: 200px;">
+                            <li><h6 class="dropdown-header">Street Maps</h6></li>
+                            <li><a class="dropdown-item" href="#" data-layer="osm">
+                                <i class="mdi mdi-map"></i> OpenStreetMap
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-layer="osmHot">
+                                <i class="mdi mdi-map-marker"></i> Humanitarian OSM
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-layer="cartodb">
+                                <i class="mdi mdi-map-outline"></i> CartoDB Positron
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-layer="cartodbDark">
+                                <i class="mdi mdi-weather-night"></i> CartoDB Dark Matter
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Topographic</h6></li>
+                            <li><a class="dropdown-item" href="#" data-layer="openTopo">
+                                <i class="mdi mdi-terrain"></i> OpenTopoMap
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-layer="cyclOSM">
+                                <i class="mdi mdi-bike"></i> CyclOSM
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Satellite</h6></li>
+                            <li><a class="dropdown-item" href="#" data-layer="satellite">
+                                <i class="mdi mdi-satellite-variant"></i> Satellite Imagery
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -165,18 +197,99 @@
                     // Create map
                     const map = L.map('map').setView([mapCenter.lat, mapCenter.lng], mapCenter.zoom);
                     
-                    // Add tile layers
-                    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors'
-                    });
-                    
-                    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                        attribution: 'Tiles © Esri'
-                    });
-                    
+
+                    // Define all available tile layers
+                    const tileLayers = {
+                        osm: {
+                            layer: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '© OpenStreetMap contributors',
+                                maxZoom: 19
+                            }),
+                            name: 'OpenStreetMap',
+                            icon: 'mdi-map'
+                        },
+                        osmHot: {
+                            layer: L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                                attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team',
+                                maxZoom: 19
+                            }),
+                            name: 'Humanitarian OSM',
+                            icon: 'mdi-map-marker'
+                        },
+                        cartodb: {
+                            layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                                attribution: '© OpenStreetMap contributors © CARTO',
+                                subdomains: 'abcd',
+                                maxZoom: 19
+                            }),
+                            name: 'CartoDB Positron',
+                            icon: 'mdi-map-outline'
+                        },
+                        cartodbDark: {
+                            layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                                attribution: '© OpenStreetMap contributors © CARTO',
+                                subdomains: 'abcd',
+                                maxZoom: 19
+                            }),
+                            name: 'CartoDB Dark Matter',
+                            icon: 'mdi-weather-night'
+                        },
+                        openTopo: {
+                            layer: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                                attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)',
+                                maxZoom: 17
+                            }),
+                            name: 'OpenTopoMap',
+                            icon: 'mdi-terrain'
+                        },
+                        cyclOSM: {
+                            layer: L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+                                attribution: '© OpenStreetMap contributors. Tiles courtesy of CyclOSM',
+                                maxZoom: 20
+                            }),
+                            name: 'CyclOSM',
+                            icon: 'mdi-bike'
+                        },
+                        satellite: {
+                            layer: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                                attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                                maxZoom: 18
+                            }),
+                            name: 'Satellite Imagery',
+                            icon: 'mdi-satellite-variant'
+                        }
+                    };
+
                     // Start with OSM
-                    osmLayer.addTo(map);
-                    let currentLayer = osmLayer;
+                    let currentLayerKey = 'osm';
+                    let currentLayer = tileLayers[currentLayerKey].layer;
+                    currentLayer.addTo(map);
+
+                    // Layer switching functionality
+                    function switchLayer(layerKey) {
+                        // Remove current layer
+                        map.removeLayer(currentLayer);
+                        
+                        // Add new layer
+                        currentLayerKey = layerKey;
+                        currentLayer = tileLayers[layerKey].layer;
+                        currentLayer.addTo(map);
+                        
+                        // Update button text
+                        document.getElementById('currentLayerName').textContent = tileLayers[layerKey].name;
+                        document.getElementById('layerIcon').className = `mdi ${tileLayers[layerKey].icon}`;
+                    }
+
+                    // Add click handlers to dropdown items
+                    document.addEventListener('DOMContentLoaded', function() {
+                        document.querySelectorAll('[data-layer]').forEach(item => {
+                            item.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                const layerKey = this.getAttribute('data-layer');
+                                switchLayer(layerKey);
+                            });
+                        });
+                    });
                     
                     // Layer groups for different types
                     const pathLayers = L.layerGroup().addTo(map);
@@ -354,19 +467,6 @@
                         fitMapToSegments();
                     };
                     
-                    document.getElementById('toggleLayer').onclick = function() {
-                        if (currentLayer === osmLayer) {
-                            map.removeLayer(osmLayer);
-                            map.addLayer(satelliteLayer);
-                            currentLayer = satelliteLayer;
-                            this.innerHTML = '<i class="mdi mdi-earth"></i> Street Map';
-                        } else {
-                            map.removeLayer(satelliteLayer);
-                            map.addLayer(osmLayer);
-                            currentLayer = osmLayer;
-                            this.innerHTML = '<i class="mdi mdi-satellite-variant"></i> Satellite';
-                        }
-                    };
                     
                     // Load segments on page load
                     loadSegments();
