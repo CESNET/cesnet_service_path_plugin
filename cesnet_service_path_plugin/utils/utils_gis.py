@@ -115,8 +115,10 @@ def read_kmz_file(kmz_path):
     Returns:
         GeoDataFrame: Combined data from all KML files in the KMZ
     """
+    print(f"DEBUG: Reading KMZ file: {kmz_path}")
     try:
         # First, try direct GeoPandas reading (works for simple KMZ files)
+        print(f"DEBUG: Attempting direct read of {kmz_path}")
         return gpd.read_file(kmz_path)
     except Exception as e:
         print(f"Direct KMZ reading failed: {e}. Trying extraction method...")
