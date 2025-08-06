@@ -49,17 +49,15 @@
                         <button id="fitBounds" class="btn btn-sm btn-outline-primary">
                             <i class="mdi mdi-fit-to-page-outline"></i> Fit to Path
                         </button>
-                        <button id="toggleLayer" class="btn btn-sm btn-outline-secondary">
-                            <i class="mdi mdi-satellite-variant"></i> Satellite
-                        </button>
+                        <!-- Use the new layer dropdown -->
+                        {% include './inc/map_layer_dropdown.html' %}
                     </div>
                     
                     <!-- Map container -->
                     <div id="map" style="height: 600px; width: 100%; border: 1px solid #ddd; border-radius: 4px;"></div>
                     
                     <!-- Load Leaflet -->
-                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                    {% include './inc/leaflet_includes.html' %}
 
                     <!-- Template data as JSON -->
                     <script type="application/json" id="segment-data">
@@ -80,6 +78,9 @@
                     }
                     </script>
 
+                    <!-- Include common layer configuration -->
+                    {% include './inc/map_layers_config.html' %}
+
                     <script>
                     // Parse template data
                     const templateData = JSON.parse(document.getElementById('segment-data').textContent);
@@ -94,18 +95,8 @@
                     // Create map
                     const map = L.map('map').setView([49.75, 15.5], 7);
                     
-                    // Add tile layers
-                    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors'
-                    });
-                    
-                    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                        attribution: 'Tiles © Esri'
-                    });
-                    
-                    // Start with OSM
-                    osmLayer.addTo(map);
-                    let currentLayer = osmLayer;
+                    // Initialize layers using common function
+                    initializeMapLayers(map);
                     
                     // Store layers for bounds fitting
                     const allLayers = [];
@@ -248,19 +239,8 @@
                         fitMapToLayers();
                     };
                     
-                    document.getElementById('toggleLayer').onclick = function() {
-                        if (currentLayer === osmLayer) {
-                            map.removeLayer(osmLayer);
-                            map.addLayer(satelliteLayer);
-                            currentLayer = satelliteLayer;
-                            this.innerHTML = '<i class="mdi mdi-earth"></i> Street Map';
-                        } else {
-                            map.removeLayer(satelliteLayer);
-                            map.addLayer(osmLayer);
-                            currentLayer = osmLayer;
-                            this.innerHTML = '<i class="mdi mdi-satellite-variant"></i> Satellite';
-                        }
-                    };
+                    // Initialize layer switching functionality
+                    initializeLayerSwitching(map);
                     </script>
                 {% endif %}
             </div>
