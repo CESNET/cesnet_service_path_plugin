@@ -217,6 +217,7 @@
                     </div>
                 </h5>
                 {% render_table circuits_table 'inc/table.html' %}
+                {% include 'inc/paginator.html' with paginator=circuits_table.paginator page=circuits_table.page %}
             </div>
         </div>
     </div>
@@ -233,7 +234,8 @@
                         </a>
                     </div>
                 </h5>
-                {% render_table sevice_paths_table 'inc/table.html' %}
+                {% render_table service_paths_table 'inc/table.html' %}
+                {% include 'inc/paginator.html' with paginator=service_paths_table.paginator page=service_paths_table.page %}
             </div>
         </div>
     </div>

@@ -22,16 +22,19 @@ class SegmentView(generic.ObjectView):
 
     def get_extra_context(self, request, instance):
         circuits = instance.circuits.all()
-        circuits_table = CircuitTable(circuits, exclude=())
+        circuits_table = CircuitTable(circuits)
+        circuits_table.configure(request)
 
         related_service_paths_ids = ServicePathSegmentMapping.objects.filter(segment=instance).values_list(
             "service_path_id", flat=True
         )
         service_paths = ServicePath.objects.filter(id__in=related_service_paths_ids)
-        service_paths_table = ServicePathTable(service_paths, exclude=())
+        service_paths_table = ServicePathTable(service_paths)
+        service_paths_table.configure(request)
+
         return {
             "circuits_table": circuits_table,
-            "sevice_paths_table": service_paths_table,
+            "service_paths_table": service_paths_table,
         }
 
 
