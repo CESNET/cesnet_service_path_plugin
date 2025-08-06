@@ -2,6 +2,7 @@
 Simplified utility functions for handling GIS data using GeoPandas
 """
 
+import os
 import tempfile
 import zipfile
 from pathlib import Path
@@ -275,7 +276,7 @@ def read_all_kml_layers(kml_file):
                     print(f"  ERROR: Layer read exception type: {type(layer_error)}")
                     continue
         else:
-            print(f"No layers found or layer listing failed, trying default read")
+            print("No layers found or layer listing failed, trying default read")
 
         # Fallback to default reading if no layers were processed or layer listing failed
         if not layer_gdfs:
