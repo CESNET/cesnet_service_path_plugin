@@ -3,7 +3,7 @@ from netbox.api.viewsets import NetBoxModelViewSet
 
 from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.filtersets import SegmentFilterSet
-from cesnet_service_path_plugin.api.serializers import SegmentListSerializer, SegmentDetailSerializer
+from cesnet_service_path_plugin.api.serializers import SegmentSerializer, SegmentDetailSerializer
 
 
 class SegmentViewSet(NetBoxModelViewSet):
@@ -15,6 +15,10 @@ class SegmentViewSet(NetBoxModelViewSet):
         """
         Return appropriate serializer based on action
         """
-        if self.action == "list":
-            return SegmentListSerializer
-        return SegmentDetailSerializer
+        if self.action == "retrieve":
+            pathdata = self.request.query_params.get("pathdata", "false").lower() == "true"
+            if pathdata:
+                print("Using SegmentDetailSerializer with path data for retrieve action")
+                return SegmentDetailSerializer
+
+        return SegmentSerializer
