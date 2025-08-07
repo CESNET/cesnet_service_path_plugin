@@ -18,7 +18,6 @@ class SegmentViewSet(NetBoxModelViewSet):
         if self.action == "retrieve":
             pathdata = self.request.query_params.get("pathdata", "false").lower() == "true"
             if pathdata:
-                print("Using SegmentDetailSerializer with path data for retrieve action")
                 return SegmentDetailSerializer
 
         return SegmentSerializer
