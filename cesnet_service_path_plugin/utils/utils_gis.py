@@ -6,10 +6,14 @@ import os
 import tempfile
 import zipfile
 from pathlib import Path
+import logging
 
 import geopandas as gpd
 from django.contrib.gis.geos import MultiLineString, LineString
 from django.core.exceptions import ValidationError
+
+# Create a logger for this module
+logger = logging.getLogger(__name__)
 
 
 def check_gis_environment():
@@ -22,20 +26,20 @@ def check_gis_environment():
     import tempfile
     import os
 
-    print("=== GIS Environment Check ===")
-    print(f"GeoPandas version: {gpd.__version__}")
-    print(f"Fiona version: {fiona.__version__}")
-    print(f"Supported drivers: {list(fiona.supported_drivers.keys())}")
-    print(f"KML driver available: {'KML' in fiona.supported_drivers}")
-    print(f"Temp directory: {tempfile.gettempdir()}")
-    print(f"Temp dir writable: {os.access(tempfile.gettempdir(), os.W_OK)}")
+    logger.info("=== GIS Environment Check ===")
+    logger.info(f"GeoPandas version: {gpd.__version__}")
+    logger.info(f"Fiona version: {fiona.__version__}")
+    logger.info(f"Supported drivers: {list(fiona.supported_drivers.keys())}")
+    logger.info(f"KML driver available: {'KML' in fiona.supported_drivers}")
+    logger.info(f"Temp directory: {tempfile.gettempdir()}")
+    logger.info(f"Temp dir writable: {os.access(tempfile.gettempdir(), os.W_OK)}")
 
     # Test creating a temp file
     try:
         with tempfile.NamedTemporaryFile(suffix=".kml") as tmp:
-            print(f"Can create temp files: True ({tmp.name})")
+            logger.info(f"Can create temp files: True ({tmp.name})")
     except Exception as e:
-        print(f"Cannot create temp files: {e}")
+        logger.error(f"Cannot create temp files: {e}")
 
     return True
 
@@ -115,13 +119,13 @@ def read_kmz_file(kmz_path):
     Returns:
         GeoDataFrame: Combined data from all KML files in the KMZ
     """
-    print(f"DEBUG: Reading KMZ file: {kmz_path}")
+    logger.debug(f"🔍 Reading KMZ file: {kmz_path}")
     try:
         # First, try direct GeoPandas reading (works for simple KMZ files)
-        print(f"DEBUG: Attempting direct read of {kmz_path}")
+        logger.debug(f"🔍 Attempting direct read of {kmz_path}")
         return gpd.read_file(kmz_path)
     except Exception as e:
-        print(f"Direct KMZ reading failed: {e}. Trying extraction method...")
+        logger.warning(f"🔍 Direct KMZ reading failed: {e}. Trying extraction method...")
         return _read_kmz_by_extraction(kmz_path)
 
 
@@ -131,19 +135,19 @@ def _read_kmz_by_extraction(kmz_path):
     """
     temp_dir = None
     try:
-        print(f"DEBUG: Starting KMZ extraction from {kmz_path}")
-        print(f"DEBUG: KMZ file exists: {Path(kmz_path).exists()}")
-        print(f"DEBUG: KMZ file size: {Path(kmz_path).stat().st_size if Path(kmz_path).exists() else 'N/A'} bytes")
+        logger.debug(f"🔍 Starting KMZ extraction from {kmz_path}")
+        logger.debug(f"🔍 KMZ file exists: {Path(kmz_path).exists()}")
+        logger.debug(f"🔍 KMZ file size: {Path(kmz_path).stat().st_size if Path(kmz_path).exists() else 'N/A'} bytes")
 
         # Create temporary directory for extraction with explicit permissions
         temp_dir = tempfile.mkdtemp(prefix="kmz_extract_")
         os.chmod(temp_dir, 0o755)  # Ensure proper permissions
-        print(f"DEBUG: Created temp directory: {temp_dir}")
-        print(f"DEBUG: Temp dir writable: {os.access(temp_dir, os.W_OK)}")
+        logger.debug(f"🔍 Created temp directory: {temp_dir}")
+        logger.debug(f"🔍 Temp dir writable: {os.access(temp_dir, os.W_OK)}")
 
         # Extract all KML files from KMZ
         kml_files = extract_all_kml_from_kmz(kmz_path, temp_dir)
-        print(f"DEBUG: Extracted KML files: {kml_files}")
+        logger.debug(f"🔍 Extracted KML files: {kml_files}")
 
         if not kml_files:
             raise ValidationError("No KML files found in KMZ archive")
@@ -152,44 +156,46 @@ def _read_kmz_by_extraction(kmz_path):
         all_gdfs = []
         for kml_file in kml_files:
             try:
-                print(f"DEBUG: Processing KML file: {Path(kml_file).name}")
-                print(f"DEBUG: KML file exists: {Path(kml_file).exists()}")
-                print(
-                    f"DEBUG: KML file size: {Path(kml_file).stat().st_size if Path(kml_file).exists() else 'N/A'} bytes"
+                logger.debug(f"🔍 Processing KML file: {Path(kml_file).name}")
+                logger.debug(f"🔍 KML file exists: {Path(kml_file).exists()}")
+                logger.debug(
+                    f"🔍 KML file size: {Path(kml_file).stat().st_size if Path(kml_file).exists() else 'N/A'} bytes"
                 )
-                print(f"DEBUG: KML file readable: {os.access(kml_file, os.R_OK) if Path(kml_file).exists() else 'N/A'}")
+                logger.debug(
+                    f"🔍 KML file readable: {os.access(kml_file, os.R_OK) if Path(kml_file).exists() else 'N/A'}"
+                )
 
                 # Read all layers from this KML file
                 layer_gdfs = read_all_kml_layers(kml_file)
-                print(f"DEBUG: Got {len(layer_gdfs)} layer(s) from {Path(kml_file).name}")
+                logger.debug(f"🔍 Got {len(layer_gdfs)} layer(s) from {Path(kml_file).name}")
                 all_gdfs.extend(layer_gdfs)
-                print(f"Successfully loaded {len(layer_gdfs)} layer(s) from {Path(kml_file).name}")
+                logger.info(f"🔍 Successfully loaded {len(layer_gdfs)} layer(s) from {Path(kml_file).name}")
             except Exception as e:
-                print(f"ERROR: Could not load {kml_file}: {e}")
-                print(f"ERROR: Exception type: {type(e)}")
+                logger.error(f"🔍 Could not load {kml_file}: {e}")
+                logger.error(f"🔍 Exception type: {type(e)}")
                 import traceback
 
-                print(f"ERROR: Traceback: {traceback.format_exc()}")
+                logger.error(f"🔍 Traceback: {traceback.format_exc()}")
                 continue
 
-        print(f"DEBUG: Total GeoDataFrames collected: {len(all_gdfs)}")
+        logger.debug(f"🔍 Total GeoDataFrames collected: {len(all_gdfs)}")
 
         if not all_gdfs:
             # Additional debugging before raising error
-            print("ERROR: No GeoDataFrames were successfully created")
-            print(f"ERROR: Original KML files found: {kml_files}")
+            logger.error("🔍 No GeoDataFrames were successfully created")
+            logger.error(f"🔍 Original KML files found: {kml_files}")
             for kml_file in kml_files:
                 if Path(kml_file).exists():
-                    print(f"ERROR: {kml_file} exists with size {Path(kml_file).stat().st_size}")
+                    logger.error(f"🔍 {kml_file} exists with size {Path(kml_file).stat().st_size}")
                     # Try to read first few lines
                     try:
                         with open(kml_file, "r", encoding="utf-8") as f:
                             first_lines = f.read(500)
-                            print(f"ERROR: First 500 chars of {Path(kml_file).name}: {repr(first_lines)}")
+                            logger.error(f"🔍 First 500 chars of {Path(kml_file).name}: {repr(first_lines)}")
                     except Exception as read_error:
-                        print(f"ERROR: Could not read KML file content: {read_error}")
+                        logger.error(f"🔍 Could not read KML file content: {read_error}")
                 else:
-                    print(f"ERROR: {kml_file} does not exist after extraction")
+                    logger.error(f"🔍 {kml_file} does not exist after extraction")
 
             raise ValidationError("Could not load any layers from the KMZ archive")
 
@@ -199,18 +205,20 @@ def _read_kmz_by_extraction(kmz_path):
         else:
             # Concatenate all GeoDataFrames
             combined_gdf = gpd.GeoDataFrame(gpd.pd.concat(all_gdfs, ignore_index=True), crs=all_gdfs[0].crs)
-            print(f"Combined {len(all_gdfs)} layer(s) into single GeoDataFrame with {len(combined_gdf)} total features")
+            logger.info(
+                f"🔍 Combined {len(all_gdfs)} layer(s) into single GeoDataFrame with {len(combined_gdf)} total features"
+            )
 
         return combined_gdf
 
     except ValidationError:
         raise  # Re-raise validation errors as-is
     except Exception as e:
-        print(f"ERROR: Unexpected error in _read_kmz_by_extraction: {e}")
-        print(f"ERROR: Exception type: {type(e)}")
+        logger.error(f"🔍 Unexpected error in _read_kmz_by_extraction: {e}")
+        logger.error(f"🔍 Exception type: {type(e)}")
         import traceback
 
-        print(f"ERROR: Full traceback: {traceback.format_exc()}")
+        logger.error(f"🔍 Full traceback: {traceback.format_exc()}")
         raise ValidationError(f"Failed to extract KMZ file: {str(e)}")
 
     finally:
@@ -220,9 +228,9 @@ def _read_kmz_by_extraction(kmz_path):
                 import shutil
 
                 shutil.rmtree(temp_dir, ignore_errors=True)
-                print(f"DEBUG: Cleaned up temp directory: {temp_dir}")
+                logger.debug(f"🔍 Cleaned up temp directory: {temp_dir}")
             except Exception as cleanup_error:
-                print(f"WARNING: Could not clean up temp directory {temp_dir}: {cleanup_error}")
+                logger.warning(f"🔍 Could not clean up temp directory {temp_dir}: {cleanup_error}")
 
 
 def read_all_kml_layers(kml_file):
@@ -240,27 +248,27 @@ def read_all_kml_layers(kml_file):
     layer_gdfs = []
 
     try:
-        print(f"DEBUG: Attempting to read layers from {kml_file}")
-        print(f"DEBUG: File exists: {Path(kml_file).exists()}")
+        logger.debug(f"🔍 Attempting to read layers from {kml_file}")
+        logger.debug(f"🔍 File exists: {Path(kml_file).exists()}")
 
         if not Path(kml_file).exists():
-            print(f"ERROR: KML file does not exist: {kml_file}")
+            logger.error(f"🔍 KML file does not exist: {kml_file}")
             return layer_gdfs
 
         # Get all layer names from the KML file
         try:
             layers = fiona.listlayers(kml_file)
-            print(f"Found {len(layers)} layer(s) in {Path(kml_file).name}: {layers}")
+            logger.debug(f"🔍 Found {len(layers)} layer(s) in {Path(kml_file).name}: {layers}")
         except Exception as list_error:
-            print(f"ERROR: Could not list layers in {kml_file}: {list_error}")
-            print(f"ERROR: fiona.listlayers exception type: {type(list_error)}")
+            logger.error(f"🔍 Could not list layers in {kml_file}: {list_error}")
+            logger.error(f"🔍 fiona.listlayers exception type: {type(list_error)}")
             # Try fallback immediately
             layers = []
 
         if layers:
             for layer_name in layers:
                 try:
-                    print(f"DEBUG: Reading layer '{layer_name}'")
+                    logger.debug(f"🔍 Reading layer '{layer_name}'")
                     # Read each layer explicitly
                     gdf = gpd.read_file(kml_file, layer=layer_name)
                     if not gdf.empty:
@@ -268,50 +276,50 @@ def read_all_kml_layers(kml_file):
                         gdf["source_kml"] = Path(kml_file).name
                         gdf["source_layer"] = layer_name
                         layer_gdfs.append(gdf)
-                        print(
-                            f"  Layer '{layer_name}': {len(gdf)} features, geometry types: {gdf.geometry.geom_type.value_counts().to_dict()}"
+                        logger.debug(
+                            f"🔍 Layer '{layer_name}': {len(gdf)} features, geometry types: {gdf.geometry.geom_type.value_counts().to_dict()}"
                         )
                     else:
-                        print(f"  Layer '{layer_name}': empty")
+                        logger.debug(f"🔍 Layer '{layer_name}': empty")
                 except Exception as layer_error:
-                    print(f"  ERROR: Could not read layer '{layer_name}': {layer_error}")
-                    print(f"  ERROR: Layer read exception type: {type(layer_error)}")
+                    logger.error(f"🔍 Could not read layer '{layer_name}': {layer_error}")
+                    logger.error(f"🔍 Layer read exception type: {type(layer_error)}")
                     continue
         else:
-            print("No layers found or layer listing failed, trying default read")
+            logger.debug("🔍 No layers found or layer listing failed, trying default read")
 
         # Fallback to default reading if no layers were processed or layer listing failed
         if not layer_gdfs:
             try:
-                print(f"DEBUG: Attempting default read of {kml_file}")
+                logger.debug(f"🔍 Attempting default read of {kml_file}")
                 gdf = gpd.read_file(kml_file)
                 if not gdf.empty:
                     gdf["source_kml"] = Path(kml_file).name
                     gdf["source_layer"] = "default"
                     layer_gdfs.append(gdf)
-                    print(f"Default read successful: {len(gdf)} features")
+                    logger.debug(f"🔍 Default read successful: {len(gdf)} features")
                 else:
-                    print("Default read returned empty GeoDataFrame")
+                    logger.debug("🔍 Default read returned empty GeoDataFrame")
             except Exception as fallback_error:
-                print(f"ERROR: Fallback read also failed: {fallback_error}")
-                print(f"ERROR: Fallback exception type: {type(fallback_error)}")
+                logger.error(f"🔍 Fallback read also failed: {fallback_error}")
+                logger.error(f"🔍 Fallback exception type: {type(fallback_error)}")
 
                 # Try to diagnose the issue
                 try:
                     with open(kml_file, "r", encoding="utf-8") as f:
                         content_sample = f.read(1000)
-                        print(f"ERROR: KML file content sample (first 1000 chars): {repr(content_sample)}")
+                        logger.error(f"🔍 KML file content sample (first 1000 chars): {repr(content_sample)}")
                 except Exception as read_error:
-                    print(f"ERROR: Could not even read KML file as text: {read_error}")
+                    logger.error(f"🔍 Could not even read KML file as text: {read_error}")
 
     except Exception as outer_error:
-        print(f"ERROR: Outer exception in read_all_kml_layers: {outer_error}")
-        print(f"ERROR: Outer exception type: {type(outer_error)}")
+        logger.error(f"🔍 Outer exception in read_all_kml_layers: {outer_error}")
+        logger.error(f"🔍 Outer exception type: {type(outer_error)}")
         import traceback
 
-        print(f"ERROR: Full traceback: {traceback.format_exc()}")
+        logger.error(f"🔍 Full traceback: {traceback.format_exc()}")
 
-    print(f"DEBUG: Returning {len(layer_gdfs)} layer GeoDataFrames")
+    logger.debug(f"🔍 Returning {len(layer_gdfs)} layer GeoDataFrames")
     return layer_gdfs
 
 
@@ -335,7 +343,7 @@ def extract_all_kml_from_kmz(kmz_path, output_dir):
         if not kml_files:
             raise FileNotFoundError("No .kml files found in KMZ archive")
 
-        print(f"Found {len(kml_files)} KML file(s) in KMZ: {kml_files}")
+        logger.debug(f"🔍 Found {len(kml_files)} KML file(s) in KMZ: {kml_files}")
 
         for kml_file in kml_files:
             # Generate unique output filename to avoid conflicts
@@ -360,7 +368,7 @@ def extract_all_kml_from_kmz(kmz_path, output_dir):
                     out_file.write(kml_content.read())
 
             extracted_files.append(str(output_path))
-            print(f"Extracted: {kml_file} -> {output_path}")
+            logger.debug(f"🔍 Extracted: {kml_file} -> {output_path}")
 
     return extracted_files
 
@@ -380,9 +388,9 @@ def gdf_to_multilinestring(gdf):
         raise ValidationError("No geometry found in the file")
 
     # Debug information
-    print(f"GeoDataFrame info: {len(gdf)} features")
-    print(f"Geometry types: {gdf.geometry.geom_type.value_counts().to_dict()}")
-    print(f"CRS: {gdf.crs}")
+    logger.debug(f"🔍 GeoDataFrame info: {len(gdf)} features")
+    logger.debug(f"🔍 Geometry types: {gdf.geometry.geom_type.value_counts().to_dict()}")
+    logger.debug(f"🔍 CRS: {gdf.crs}")
 
     # Filter for LineString and MultiLineString geometries
     line_geometries = gdf[gdf.geometry.geom_type.isin(["LineString", "MultiLineString"])]
@@ -421,13 +429,13 @@ def gdf_to_multilinestring(gdf):
                         linestrings.append(LineString(coords_2d, srid=4326))
 
         except Exception as e:
-            print(f"Error processing geometry {idx}: {e}")
+            logger.error(f"🔍 Error processing geometry {idx}: {e}")
             continue
 
     if not linestrings:
         raise ValidationError("No valid line geometries could be extracted from the file. Please check file structure.")
 
-    print(f"Successfully extracted {len(linestrings)} line segments (converted to 2D)")
+    logger.info(f"🔍 Successfully extracted {len(linestrings)} line segments (converted to 2D)")
 
     # Create MultiLineString from all collected LineStrings
     return MultiLineString(*linestrings)
@@ -457,7 +465,7 @@ def validate_path_geometry(geometry):
     if geometry.num_geom == 0:
         raise ValidationError("MultiLineString contains no line segments. Please Check GeoJSON structure.")
 
-    print(f"Geometry validation passed: {geometry.num_geom} segments, valid={geometry.valid}")
+    logger.info(f"🔍 Geometry validation passed: {geometry.num_geom} segments, valid={geometry.valid}")
 
 
 def ensure_2d_geometry(geometry):
