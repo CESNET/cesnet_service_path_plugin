@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cesnet_service_path_plugin"
+version = "5.0.2"
+description = "Adds ability to create, edit and view service paths in the CESNET network."
+authors = [
+    {name = "Jan Krupa", email = "jan.krupa@cesnet.cz"},
+    {name = "Jiri Vrany", email = "jiri.vrany@cesnet.cz"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "geopandas",
+    "fiona",
+    "shapely"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==24.3.0",
+    "autopep8",
+    "pip==24.0",
+    "check-manifest==0.49",
+]
+
+[tool.setuptools.packages.find]
+# This replaces find_packages()
+where = ["."]
+include = ["cesnet_service_path_plugin*"]
+
+[tool.setuptools.package-data]
+# This replaces include_package_data=True
+"*" = ["*"]

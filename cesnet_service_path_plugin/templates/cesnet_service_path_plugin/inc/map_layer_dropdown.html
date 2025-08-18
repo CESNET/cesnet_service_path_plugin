@@ -1,0 +1,35 @@
+<!-- Layer Selection Dropdown -->
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" id="layerButton">
+        <i id="layerIcon" class="mdi mdi-map" aria-hidden="true"></i> 
+        <span id="currentLayerName">OpenStreetMap</span>
+    </button>
+    <ul class="dropdown-menu" style="min-width: 200px;">
+        <li><h6 class="dropdown-header">Street Maps</h6></li>
+        <li><a class="dropdown-item" href="#" data-layer="osm">
+            <i class="mdi mdi-map"></i> OpenStreetMap
+        </a></li>
+        <li><a class="dropdown-item" href="#" data-layer="osmHot">
+            <i class="mdi mdi-map-marker"></i> Humanitarian OSM
+        </a></li>
+        <li><a class="dropdown-item" href="#" data-layer="cartodb">
+            <i class="mdi mdi-map-outline"></i> CartoDB Positron
+        </a></li>
+        <li><a class="dropdown-item" href="#" data-layer="cartodbDark">
+            <i class="mdi mdi-weather-night"></i> CartoDB Dark Matter
+        </a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><h6 class="dropdown-header">Topographic</h6></li>
+        <li><a class="dropdown-item" href="#" data-layer="openTopo">
+            <i class="mdi mdi-terrain"></i> OpenTopoMap
+        </a></li>
+        <li><a class="dropdown-item" href="#" data-layer="cyclOSM">
+            <i class="mdi mdi-bike"></i> CyclOSM
+        </a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><h6 class="dropdown-header">Satellite</h6></li>
+        <li><a class="dropdown-item" href="#" data-layer="satellite">
+            <i class="mdi mdi-satellite-variant"></i> Satellite Imagery
+        </a></li>
+    </ul>
+</div>

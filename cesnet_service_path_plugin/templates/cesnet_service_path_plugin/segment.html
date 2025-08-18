@@ -74,6 +74,75 @@
             {% include 'inc/panels/custom_fields.html' %}
             {% include 'inc/panels/tags.html' %}
             {% include 'inc/panels/comments.html' %}
+             <!-- Path Information Card -->
+            <div class="card">
+                <h5 class="card-header">
+                    Path Information
+                    {% if object.has_path_data %}
+                        <div class="card-actions">
+                            <a href="{% url 'plugins:cesnet_service_path_plugin:segment_map' pk=object.pk %}" 
+                               class="btn btn-outline-success btn-sm">
+                                <i class="mdi mdi-map" aria-hidden="true"></i> View on Map
+                            </a>
+                            <a href="{% url 'plugins:cesnet_service_path_plugin:segment_geojson_download' pk=object.pk %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="mdi mdi-download" aria-hidden="true"></i> Download GeoJSON
+                            </a>
+                            <a href="{% url 'plugins:cesnet_service_path_plugin:segment_path_clear' pk=object.pk %}" 
+                               class="btn btn-outline-danger btn-sm">
+                                <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Clear Path
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="card-actions">
+                            <a href="{% url 'plugins:cesnet_service_path_plugin:segment_map' pk=object.pk %}" 
+                               class="btn btn-outline-success btn-sm">
+                                <i class="mdi mdi-map" aria-hidden="true"></i> View Start / End on Map
+                            </a>
+                        </div>      
+                    {% endif %}
+                </h5>
+                <div class="card-body">
+                    <table class="table table-hover attr-table">
+                        <tr>
+                            <th scope="row">Has Path Data</th>
+                            <td>
+                                {% if object.has_path_data %}
+                                    <span class="badge text-bg-success">
+                                        <i class="mdi mdi-check" aria-hidden="true"></i> Yes
+                                    </span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">
+                                        <i class="mdi mdi-close" aria-hidden="true"></i> No
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if object.has_path_data %}
+                            <tr>
+                                <th scope="row">Path Length</th>
+                                <td>
+                                    {% if object.path_length_km %}
+                                        {{ object.path_length_km }} km
+                                    {% else %}
+                                        {{ ''|placeholder }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Source Format</th>
+                                <td>{{ object.get_path_source_format_display|default:object.path_source_format|placeholder }}</td>
+                            </tr>
+                            {% if object.path_notes %}
+                                <tr>
+                                    <th scope="row">Path Notes</th>
+                                    <td>{{ object.path_notes|linebreaks }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
             {% plugin_right_page object %}
         </div>
     </div>

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from netbox.api.serializers import NetBoxModelSerializer
-from cesnet_service_path_plugin.api.serializers.segment import SegmentSerializer
+from cesnet_service_path_plugin.api.serializers.segment import SegmentListSerializer
 from cesnet_service_path_plugin.api.serializers.service_path import (
     ServicePathSerializer,
 )
@@ -16,7 +16,7 @@ class ServicePathSegmentMappingSerializer(NetBoxModelSerializer):
     #    required=True
     # )
     service_path = ServicePathSerializer(nested=True)
-    segment = SegmentSerializer(nested=True)
+    segment = SegmentListSerializer(nested=True)
 
     class Meta:
         model = ServicePathSegmentMapping

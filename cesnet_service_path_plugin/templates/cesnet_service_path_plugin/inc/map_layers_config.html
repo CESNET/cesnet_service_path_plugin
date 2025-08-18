@@ -1,0 +1,129 @@
+<!-- Map Layers Configuration - Common tile layer definitions -->
+<script>
+// Define all available tile layers - shared configuration
+const tileLayers = {
+    osm: {
+        layer: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }),
+        name: 'OpenStreetMap',
+        icon: 'mdi-map'
+    },
+    osmHot: {
+        layer: L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team',
+            maxZoom: 19
+        }),
+        name: 'Humanitarian OSM',
+        icon: 'mdi-map-marker'
+    },
+    cartodb: {
+        layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }),
+        name: 'CartoDB Positron',
+        icon: 'mdi-map-outline'
+    },
+    cartodbDark: {
+        layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }),
+        name: 'CartoDB Dark Matter',
+        icon: 'mdi-weather-night'
+    },
+    openTopo: {
+        layer: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)',
+            maxZoom: 17
+        }),
+        name: 'OpenTopoMap',
+        icon: 'mdi-terrain'
+    },
+    cyclOSM: {
+        layer: L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors. Tiles courtesy of CyclOSM',
+            maxZoom: 20
+        }),
+        name: 'CyclOSM',
+        icon: 'mdi-bike'
+    },
+    satellite: {
+        layer: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            maxZoom: 18
+        }),
+        name: 'Satellite Imagery',
+        icon: 'mdi-satellite-variant'
+    }
+};
+
+// Global layer management variables
+let currentLayerKey = 'osm';
+let currentLayer = null;
+
+// Initialize map with default layer
+function initializeMapLayers(map) {
+    currentLayer = tileLayers[currentLayerKey].layer;
+    currentLayer.addTo(map);
+    return currentLayer;
+}
+
+// Layer switching functionality
+function switchLayer(map, layerKey) {
+    // Remove current layer
+    if (currentLayer) {
+        map.removeLayer(currentLayer);
+    }
+    
+    // Add new layer
+    currentLayerKey = layerKey;
+    currentLayer = tileLayers[layerKey].layer;
+    currentLayer.addTo(map);
+    
+    // Update button text if elements exist
+    const layerNameElement = document.getElementById('currentLayerName');
+    const layerIconElement = document.getElementById('layerIcon');
+    
+    if (layerNameElement) {
+        layerNameElement.textContent = tileLayers[layerKey].name;
+    }
+    if (layerIconElement) {
+        layerIconElement.className = `mdi ${tileLayers[layerKey].icon}`;
+    }
+    
+    return currentLayer;
+}
+
+// Initialize layer switching event handlers
+function initializeLayerSwitching(map) {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle dropdown layer switching
+        document.querySelectorAll('[data-layer]').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const layerKey = this.getAttribute('data-layer');
+                switchLayer(map, layerKey);
+            });
+        });
+        
+        // Handle simple toggle button (for backward compatibility)
+        const toggleButton = document.getElementById('toggleLayer');
+        if (toggleButton) {
+            toggleButton.onclick = function() {
+                if (currentLayerKey === 'osm') {
+                    switchLayer(map, 'satellite');
+                    this.innerHTML = '<i class="mdi mdi-earth"></i> Street Map';
+                } else {
+                    switchLayer(map, 'osm');
+                    this.innerHTML = '<i class="mdi mdi-satellite-variant"></i> Satellite';
+                }
+            };
+        }
+    });
+}
+</script>
