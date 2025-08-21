@@ -1,3 +1,15 @@
+# 🚨 WARNING – Work in Progress! 🚨
+
+⚠️ This plugin is **under heavy development** and is **NOT production-ready**.  
+- Database changes that are required for the current implementation are **missing**.  
+- Documentation of the data model and functionality is **incomplete**.  
+- Expect breaking changes, unfinished features, and possible instability.  
+
+Use this code **at your own risk** and only for testing or development purposes.  
+
+---
+
+
 # CESNET ServicePath Plugin for NetBox
 
 A NetBox plugin for managing service paths and segments in network infrastructure.
