@@ -31,6 +31,11 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
+[project.urls]
+Homepage = "https://github.com/CESNET/cesnet_service_path_plugin"
+Repository = "https://github.com/CESNET/cesnet_service_path_plugin"
+Issues = "https://github.com/CESNET/cesnet_service_path_plugin/issues"
+
 [project.optional-dependencies]
 dev = [
     "black==24.3.0",
