@@ -10,7 +10,7 @@ authors = [
     {name = "Jan Krupa", email = "jan.krupa@cesnet.cz"},
     {name = "Jiri Vrany", email = "jiri.vrany@cesnet.cz"}
 ]
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
