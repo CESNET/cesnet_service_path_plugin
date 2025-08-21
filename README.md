@@ -12,7 +12,7 @@ Use this code **at your own risk** and only for testing or development purposes.
 
 A NetBox plugin for managing service paths and segments in network infrastructure with advanced geographic path visualization.
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ## Overview
 
