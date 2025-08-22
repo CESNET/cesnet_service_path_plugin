@@ -55,6 +55,8 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Fallback visualization** showing straight lines when path data unavailable
 - **Overlapping segment detection** and selection on maps
 - **Path data export** as GeoJSON for external use
+- An example of a geographic service path visualized using the plugin:
+    ![Sample Service Path Map](./docs/sample_path.png)
 
 ### Integration Features
 - **Template extensions** for Circuits, Providers, Sites, and Locations
