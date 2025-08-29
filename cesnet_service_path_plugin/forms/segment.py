@@ -157,6 +157,7 @@ class SegmentForm(NetBoxModelForm):
 
         if commit:
             instance.save()
+            self.save_m2m()  # This is required to save many-to-many fields like tags
 
         return instance
 
