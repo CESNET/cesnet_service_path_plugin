@@ -20,4 +20,5 @@ class SegmentViewSet(NetBoxModelViewSet):
             if pathdata:
                 return SegmentDetailSerializer
 
+        # Use the updated SegmentSerializer for all other actions (including create/update)
         return SegmentSerializer

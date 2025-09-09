@@ -228,6 +228,9 @@ The plugin provides comprehensive REST API and GraphQL support:
 - `/api/plugins/cesnet-service-path-plugin/service-paths/` - Service path management
 - `/api/plugins/cesnet-service-path-plugin/segments/{id}/geojson-api/` - Geographic data
 
+#### Example of segment with path file PATCH and POST 
+See [detailed example in docs](./docs/API_path.md).
+
 ### Geographic API Features
 
 - **Lightweight list serializers** for performance
