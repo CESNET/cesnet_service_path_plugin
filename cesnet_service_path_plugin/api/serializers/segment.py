@@ -10,9 +10,12 @@ from rest_framework import serializers
 from cesnet_service_path_plugin.models.segment import Segment
 from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
 
+from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 
 class SegmentSerializer(NetBoxModelSerializer):
-    """Default serializer Segment - excludes heavy geometry fields"""
+    """Default serializer Segment - now with file upload support"""
 
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
     provider = ProviderSerializer(required=True, nested=True)
@@ -21,6 +24,13 @@ class SegmentSerializer(NetBoxModelSerializer):
     site_b = SiteSerializer(required=True, nested=True)
     location_b = LocationSerializer(required=True, nested=True)
     circuits = CircuitSerializer(required=False, many=True, nested=True)
+
+    # Add file upload field
+    path_file = serializers.FileField(
+        required=False,
+        write_only=True,  # Only for input, not included in output
+        help_text="Upload a file containing the path geometry. Supported formats: GeoJSON (.geojson, .json), KML (.kml), KMZ (.kmz)",
+    )
 
     # Only include lightweight path info
     has_path_data = serializers.SerializerMethodField(read_only=True)
@@ -50,6 +60,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "path_source_format",
             "path_notes",
             "has_path_data",
+            "path_file",  # Add the file field
             "tags",
         )
         brief_fields = (
@@ -64,6 +75,64 @@ class SegmentSerializer(NetBoxModelSerializer):
 
     def get_has_path_data(self, obj):
         return obj.has_path_data()
+
+    def update(self, instance, validated_data):
+        """Handle file upload during update"""
+        path_file = validated_data.pop("path_file", None)
+
+        # Update other fields first
+        instance = super().update(instance, validated_data)
+
+        # Process uploaded file if provided
+        if path_file:
+            try:
+                # Process the uploaded file using existing utility functions
+                file_format = determine_file_format_from_extension(path_file.name)
+                path_geometry = process_path_data(path_file, file_format)
+
+                # Update instance with processed geometry
+                instance.path_geometry = path_geometry
+                instance.path_source_format = file_format
+                # path_length_km will be auto-calculated in the model's save method
+                instance.save()
+
+            except DjangoValidationError as e:
+                raise serializers.ValidationError(f"Path file error: {str(e)}")
+            except Exception as e:
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}': {str(e)}")
+
+        return instance
+
+    def create(self, validated_data):
+        """Handle file upload during creation"""
+        path_file = validated_data.pop("path_file", None)
+
+        # Create instance without path data first
+        instance = super().create(validated_data)
+
+        # Process uploaded file if provided
+        if path_file:
+            try:
+                # Process the uploaded file using existing utility functions
+                file_format = determine_file_format_from_extension(path_file.name)
+                path_geometry = process_path_data(path_file, file_format)
+
+                # Update instance with processed geometry
+                instance.path_geometry = path_geometry
+                instance.path_source_format = file_format
+                # path_length_km will be auto-calculated in the model's save method
+                instance.save()
+
+            except DjangoValidationError as e:
+                # Clean up created instance if path processing fails
+                instance.delete()
+                raise serializers.ValidationError(f"Path file error: {str(e)}")
+            except Exception as e:
+                # Clean up created instance if path processing fails
+                instance.delete()
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}': {str(e)}")
+
+        return instance
 
 
 class SegmentListSerializer(NetBoxModelSerializer):
