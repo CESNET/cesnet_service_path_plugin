@@ -178,9 +178,10 @@
                     
                     // Status color mapping - using red as primary color for better visibility
                     const statusColorsLine = {
-                        "Active": "#dc3545",       // Red - more visible on OSM
-                        "Planned": "#ff6b35",      // Orange-red 
+                        "Active": "#198754",       // Dark Green
+                        "Planned": "#3b82f6",      // Blue
                         "Offline": "#dc3545",      // Red
+                        "Maintenance": "#ff8c00",  // Dark Orange
                         "Decommissioned": "#6c757d" // Gray
                     };
 
@@ -231,82 +232,75 @@
                         document.getElementById('segmentInfo').style.display = 'none';
                     }
                     
-                    // Enhanced function to handle overlapping segments
+                    // Visual-based overlap detection using screen coordinates
                     function handleSegmentClick(e) {
                         e.originalEvent.preventDefault();
                         const clickPoint = e.latlng;
+                        const clickScreenPoint = map.latLngToContainerPoint(clickPoint);
                         
-                        // Find all segments near the click point using a simple distance check
-                        const overlappingSegments = [];
-                        const tolerance = 0.01; // Adjust this value as needed
+                        // Find all segments that are visually close to the click
+                        const visuallyOverlappingSegments = [];
+                        const screenTolerance = 10; // pixels
                         
                         segmentLayers.forEach((layer, segmentId) => {
                             const segment = segmentsData.find(s => s.id.toString() === segmentId.toString());
                             if (!segment) return;
                             
-                            let isNearClick = false;
+                            let isVisuallyNear = false;
                             
-                            // Check if click is near this layer
+                            // Check if layer is visually near the click point
                             if (layer instanceof L.Polyline) {
-                                const bounds = layer.getBounds();
-                                if (bounds.contains(clickPoint)) {
-                                    // More detailed check - see if click is near the path
-                                    const latlngs = layer.getLatLngs();
-                                    const flatLatLngs = Array.isArray(latlngs[0]) ? latlngs.flat() : latlngs;
-                                    
-                                    for (let i = 0; i < flatLatLngs.length - 1; i++) {
-                                        if (distanceToLineSegment(clickPoint, flatLatLngs[i], flatLatLngs[i + 1]) < tolerance) {
-                                            isNearClick = true;
-                                            break;
-                                        }
-                                    }
-                                }
+                                isVisuallyNear = checkPolylineVisualProximity(layer, clickScreenPoint, screenTolerance);
                             } else if (layer.eachLayer) {
                                 // Handle GeoJSON layers
                                 layer.eachLayer(function(subLayer) {
-                                    if (subLayer instanceof L.Polyline) {
-                                        const bounds = subLayer.getBounds();
-                                        if (bounds.contains(clickPoint)) {
-                                            const latlngs = subLayer.getLatLngs();
-                                            const flatLatLngs = Array.isArray(latlngs[0]) ? latlngs.flat() : latlngs;
-                                            
-                                            for (let i = 0; i < flatLatLngs.length - 1; i++) {
-                                                if (distanceToLineSegment(clickPoint, flatLatLngs[i], flatLatLngs[i + 1]) < tolerance) {
-                                                    isNearClick = true;
-                                                    return;
-                                                }
-                                            }
-                                        }
+                                    if (subLayer instanceof L.Polyline && !isVisuallyNear) {
+                                        isVisuallyNear = checkPolylineVisualProximity(subLayer, clickScreenPoint, screenTolerance);
                                     }
                                 });
                             }
                             
-                            if (isNearClick) {
-                                overlappingSegments.push({
+                            if (isVisuallyNear) {
+                                visuallyOverlappingSegments.push({
                                     layer: layer,
                                     segment: segment
                                 });
                             }
                         });
                         
-                        if (overlappingSegments.length === 1) {
-                            // Single segment - show popup and detailed info
-                            const segment = overlappingSegments[0].segment;
-                            showSingleSegmentPopup(segment, clickPoint);
-                            showSegmentInfo(segment);
-                        } else if (overlappingSegments.length > 1) {
-                            // Multiple segments - show selection popup
-                            showOverlappingSegmentsPopup(overlappingSegments, clickPoint);
-                            showSegmentInfo(overlappingSegments[0].segment);
+                        // Now find which segments are truly overlapping (sharing visual space)
+                        const trueOverlaps = findVisualOverlaps(visuallyOverlappingSegments, clickScreenPoint, screenTolerance);
+                        
+                        if (trueOverlaps.length === 1) {
+                            showSingleSegmentPopup(trueOverlaps[0].segment, clickPoint);
+                            showSegmentInfo(trueOverlaps[0].segment);
+                        } else if (trueOverlaps.length > 1) {
+                            showOverlappingSegmentsPopup(trueOverlaps, clickPoint);
+                            showSegmentInfo(trueOverlaps[0].segment);
                         }
                     }
 
-                    // Helper function to calculate distance from point to line segment
-                    function distanceToLineSegment(point, lineStart, lineEnd) {
-                        const A = point.lat - lineStart.lat;
-                        const B = point.lng - lineStart.lng;
-                        const C = lineEnd.lat - lineStart.lat;
-                        const D = lineEnd.lng - lineStart.lng;
+                    function checkPolylineVisualProximity(polyline, clickScreenPoint, tolerance) {
+                        const latlngs = polyline.getLatLngs();
+                        const flatLatLngs = Array.isArray(latlngs[0]) ? latlngs.flat() : latlngs;
+                        
+                        for (let i = 0; i < flatLatLngs.length - 1; i++) {
+                            const point1 = map.latLngToContainerPoint(flatLatLngs[i]);
+                            const point2 = map.latLngToContainerPoint(flatLatLngs[i + 1]);
+                            
+                            const distance = distanceToLineSegmentScreen(clickScreenPoint, point1, point2);
+                            if (distance <= tolerance) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    function distanceToLineSegmentScreen(point, lineStart, lineEnd) {
+                        const A = point.x - lineStart.x;
+                        const B = point.y - lineStart.y;
+                        const C = lineEnd.x - lineStart.x;
+                        const D = lineEnd.y - lineStart.y;
 
                         const dot = A * C + B * D;
                         const lenSq = C * C + D * D;
@@ -315,21 +309,119 @@
 
                         let xx, yy;
                         if (param < 0) {
-                            xx = lineStart.lat;
-                            yy = lineStart.lng;
+                            xx = lineStart.x;
+                            yy = lineStart.y;
                         } else if (param > 1) {
-                            xx = lineEnd.lat;
-                            yy = lineEnd.lng;
+                            xx = lineEnd.x;
+                            yy = lineEnd.y;
                         } else {
-                            xx = lineStart.lat + param * C;
-                            yy = lineStart.lng + param * D;
+                            xx = lineStart.x + param * C;
+                            yy = lineStart.y + param * D;
                         }
 
-                        const dx = point.lat - xx;
-                        const dy = point.lng - yy;
+                        const dx = point.x - xx;
+                        const dy = point.y - yy;
                         return Math.sqrt(dx * dx + dy * dy);
                     }
 
+                    function findVisualOverlaps(segments, clickScreenPoint, tolerance) {
+                        if (segments.length <= 1) return segments;
+                        
+                        // Group segments that share similar screen coordinates
+                        const groups = [];
+                        
+                        for (const segmentInfo of segments) {
+                            let addedToGroup = false;
+                            
+                            for (const group of groups) {
+                                // Check if this segment visually overlaps with segments in this group
+                                if (checkSegmentGroupOverlap(segmentInfo, group, tolerance)) {
+                                    group.push(segmentInfo);
+                                    addedToGroup = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!addedToGroup) {
+                                groups.push([segmentInfo]);
+                            }
+                        }
+                        
+                        // Return the group that contains the most segments near the click point
+                        let bestGroup = groups[0];
+                        let bestScore = 0;
+                        
+                        for (const group of groups) {
+                            let score = 0;
+                            for (const segmentInfo of group) {
+                                // Check how close this segment is to the click point
+                                const layer = segmentInfo.layer;
+                                if (layer instanceof L.Polyline) {
+                                    if (checkPolylineVisualProximity(layer, clickScreenPoint, tolerance)) {
+                                        score += 1;
+                                    }
+                                } else if (layer.eachLayer) {
+                                    layer.eachLayer(function(subLayer) {
+                                        if (subLayer instanceof L.Polyline) {
+                                            if (checkPolylineVisualProximity(subLayer, clickScreenPoint, tolerance)) {
+                                                score += 1;
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                            
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestGroup = group;
+                            }
+                        }
+                        
+                        return bestGroup;
+                    }
+
+                    function checkSegmentGroupOverlap(segmentInfo, group, tolerance) {
+                        // Simplified check - compare with first segment in group
+                        if (group.length === 0) return false;
+                        
+                        const firstSegment = group[0];
+                        
+                        // For a more sophisticated approach, you could compare actual line coordinates
+                        // For now, we'll use a simple heuristic
+                        
+                        const segment1 = segmentInfo.segment;
+                        const segment2 = firstSegment.segment;
+                        
+                        // If both segments don't have path data, check if they share endpoints
+                        if (!segment1.has_path_data && !segment2.has_path_data) {
+                            if (segment1.site_a && segment1.site_b && segment2.site_a && segment2.site_b) {
+                                const tolerance_deg = 0.001;
+                                const sameEndpoints = (
+                                    Math.abs(segment1.site_a.lat - segment2.site_a.lat) < tolerance_deg &&
+                                    Math.abs(segment1.site_a.lng - segment2.site_a.lng) < tolerance_deg &&
+                                    Math.abs(segment1.site_b.lat - segment2.site_b.lat) < tolerance_deg &&
+                                    Math.abs(segment1.site_b.lng - segment2.site_b.lng) < tolerance_deg
+                                ) || (
+                                    Math.abs(segment1.site_a.lat - segment2.site_b.lat) < tolerance_deg &&
+                                    Math.abs(segment1.site_a.lng - segment2.site_b.lng) < tolerance_deg &&
+                                    Math.abs(segment1.site_b.lat - segment2.site_a.lat) < tolerance_deg &&
+                                    Math.abs(segment1.site_b.lng - segment2.site_a.lng) < tolerance_deg
+                                );
+                                return sameEndpoints;
+                            }
+                            return false;
+                        }
+                        
+                        // If both have path data, they could be truly overlapping routes
+                        if (segment1.has_path_data && segment2.has_path_data) {
+                            return true; // Let visual proximity determine this
+                        }
+                        
+                        // Mixed case - probably not overlapping
+                        return false;
+                    }
+
+                    
                     // Show popup for single segment
                     function showSingleSegmentPopup(segment, clickPoint) {
                         const color = statusBadge[segment.status] || '#6c757d';
@@ -393,6 +485,7 @@
                                         <ul class="list-unstyled mb-0">
                                             <li><strong>Sites:</strong> ${segment.site_a ? segment.site_a.name : 'N/A'} ↔ ${segment.site_b ? segment.site_b.name : 'N/A'}</li>
                                             <li><strong>Status:</strong> <span class="badge text-bg-${color}">${segment.status}</span></li>
+                                            <li><strong>Path Data:</strong> ${segment.has_path_data ? '<span class="badge text-bg-green">Has Path Data</span>' : '<span class="badge text-bg-orange">No Path Data</span>'}</li> 
                                             <li><strong>Length:</strong> ${segment.path_length_km ? segment.path_length_km + ' km' : 'Unknown'}</li>
                                         </ul>
                                     
