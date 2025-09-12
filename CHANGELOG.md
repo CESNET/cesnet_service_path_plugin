@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.4] - 2025-09-12
+
+### Added
+- **Enhanced Map Visualization**: Improved segment map display with dual color schemes
+  - Status-based color coding for visual segment identification
+  - Provider-based color coding for organizational clarity
+  - Enhanced overlay segment selection with improved click algorithm
+  - Better visual differentiation for overlapping segments
+
+### Changed
+- **API Improvements**: Streamlined segment serialization
+  - Consolidated SegmentListSerializer functionality into SegmentSerializer
+  - Enhanced segment serializer to handle path file uploads
+  - Improved API response consistency and performance
+
+### Fixed
+- Improved segment map interaction and overlay handling
+- Enhanced map rendering performance with optimized color algorithms
+
+### Technical Details
+- Major updates to segment map template with enhanced JavaScript functionality
+- Refactored segment view logic for better maintainability
+- Code cleanup and consolidation of serializer classes
+
+## [5.0.3] - 2025-08-29
+
+### Fixed
+- **Forms**: Added save_m2m() call to SegmentForm to properly save tags
+- Resolved tag persistence issues in segment creation and editing
+
 ## [5.0.2] - 2025-01-XX
 
 ### Added
