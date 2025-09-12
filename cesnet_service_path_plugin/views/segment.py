@@ -206,7 +206,7 @@ def segment_geojson_api(request, pk):
     return JsonResponse(geojson)
 
 
-# Replace your function-based segments_map_view with this class-based view
+# In cesnet_service_path_plugin/views/segment.py
 
 
 class SegmentsMapView(generic.ObjectListView):
@@ -262,28 +262,19 @@ class SegmentsMapView(generic.ObjectListView):
             except (ValueError, TypeError, AttributeError):
                 pass
 
-            # Determine segment color based on status - using red as primary for visibility
-            status_colors = {
-                "Active": "#dc3545",  # Red - more visible on OSM
-                "Planned": "#ff6b35",  # Orange-red
-                "Offline": "#dc3545",  # Red
-                "Decommissioned": "#6c757d",  # Gray
-            }
-            segment_color = status_colors.get(segment.get_status_display(), "#dc3545")
-
             segment_data = {
                 "id": segment.pk,
                 "name": segment.name,
                 "provider": str(segment.provider) if segment.provider else None,
+                "provider_id": segment.provider.pk if segment.provider else None,  # NEW: Add provider ID
                 "status": segment.get_status_display(),
                 "status_color": segment.get_status_color(),
                 "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
                 "site_a": site_a_data,
                 "site_b": site_b_data,
                 "has_path_data": segment.has_path_data(),
-                "color": segment_color,
                 "url": segment.get_absolute_url(),
-                "map_url": f"/plugins/cesnet-service-path-plugin/segments/{segment.pk}/map/",  # Adjust URL pattern as needed
+                "map_url": f"/plugins/cesnet-service-path-plugin/segments/{segment.pk}/map/",
             }
 
             # Update map bounds
@@ -320,9 +311,7 @@ class SegmentsMapView(generic.ObjectListView):
                 "segments_count": len(segments_data),
                 "total_segments": Segment.objects.count(),
                 "map_warning": map_warning,
-                "api_url": self.request.build_absolute_uri(
-                    "/plugins/cesnet-service-path-plugin/segments/map/api/"
-                ),  # Adjust as needed
+                "api_url": self.request.build_absolute_uri("/plugins/cesnet-service-path-plugin/segments/map/api/"),
             }
         )
 

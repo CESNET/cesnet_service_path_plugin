@@ -72,35 +72,32 @@
                     <a href="{% url 'plugins:cesnet_service_path_plugin:segment_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-outline-secondary btn-sm">
                         <i class="mdi mdi-table" aria-hidden="true"></i> Table View
                     </a>
+                    
+                    <!-- Color Scheme Selector -->
+                    <div class="btn-group ms-2" role="group">
+                        <button type="button" class="btn btn-outline-info btn-sm dropdown-toggle" data-bs-toggle="dropdown" id="colorSchemeButton">
+                            <i class="mdi mdi-palette" aria-hidden="true"></i> <span id="currentColorScheme">Status</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-scheme="status">
+                                <i class="mdi mdi-circle-medium" style="color: #198754;"></i> By Status
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-scheme="provider">
+                                <i class="mdi mdi-circle-medium" style="color: #e74c3c;"></i> By Provider
+                            </a></li>
+                        </ul>
+                    </div>
+                    
                     <!-- Map Legend -->
                     <div class="btn-group ms-2" role="group">
                         <button type="button" class="btn btn-outline-info btn-sm dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="mdi mdi-map-legend" aria-hidden="true"></i> Legend
                         </button>
-                        <ul class="dropdown-menu">
-                            <li><span class="dropdown-item-text small">
-                                <span style="display: inline-block; width: 20px; height: 3px; background-color: #dc3545; margin-right: 8px;"></span>
-                                Active
-                            </span></li>
-                            <li><span class="dropdown-item-text small">
-                                <span style="display: inline-block; width: 20px; height: 3px; background-color: #ff6b35; margin-right: 8px;"></span>
-                                Planned
-                            </span></li>
-                            <li><span class="dropdown-item-text small">
-                                <span style="display: inline-block; width: 20px; height: 3px; background-color: #dc3545; margin-right: 8px;"></span>
-                                Offline
-                            </span></li>
-                            <li><span class="dropdown-item-text small">
-                                <span style="display: inline-block; width: 20px; height: 3px; background-color: #6c757d; margin-right: 8px;"></span>
-                                Decommissioned
-                            </span></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><span class="dropdown-item-text small">
-                                <strong>Solid line:</strong> Actual path data<br>
-                                <strong>Dashed line:</strong> No path data
-                            </span></li>
+                        <ul class="dropdown-menu" id="legendDropdown">
+                            <!-- Legend content will be populated by JavaScript -->
                         </ul>
                     </div>
+                    
                     <!-- Map Controls -->
                      <button type="button" id="fitBounds" class="btn btn-outline-primary btn-sm">
                         <i class="mdi mdi-fit-to-page-outline" aria-hidden="true"></i> Fit All
@@ -176,7 +173,10 @@
                     const pathLayers = L.layerGroup().addTo(map);
                     const siteLayers = L.layerGroup().addTo(map);
                     
-                    // Status color mapping - using red as primary color for better visibility
+                    // Color schemes
+                    let currentColorScheme = 'status';
+                    
+                    // Status color mapping
                     const statusColorsLine = {
                         "Active": "#198754",       // Dark Green
                         "Planned": "#3b82f6",      // Blue
@@ -186,31 +186,146 @@
                     };
 
                     const statusBadge = {
-                        "Active": "green",       // Red - more visible on OSM
-                        "Planned": "orange",      // Orange-red 
-                        "Offline": "red",      // Red
-                        "Decommissioned": "gray" // Gray
+                        "Active": "success",
+                        "Planned": "primary", 
+                        "Offline": "danger",
+                        "Decommissioned": "secondary"
                     };
 
-                    // Store all segments with their layers - simpler approach
-                    let segmentLayers = new Map(); // segmentId -> layer
-                    let clickedLayers = []; // Store layers that were clicked at the same point
+                    // Provider color mapping - generate colors dynamically
+                    const providerColors = {};
                     
-                    // Function to show segment info
+                    // Generate color palette for providers
+                    const colorPalette = [
+                        '#d32f2f', // strong red    
+                        '#1976d2', // strong blue
+                        '#512da8', // deep purple
+                        '#f57c00', // vivid orange
+                        '#7b1fa2', // purple
+                        '#c2185b', // magenta
+                        '#303f9f', // deep indigo
+                        '#00796b', // teal (dark enough)
+                        '#455a64', // dark gray-blue
+                        '#ff1744', // bright pink-red
+                        '#00bcd4', // cyan
+                        '#e64a19', // orange-red
+                        '#5d4037', // brown
+                        '#3f51b5', // indigo
+                        '#9c27b0', // purple
+                        '#ff5722', // orange
+                        '#b71c1c', // deep red
+                        '#0d47a1', // navy blue
+                        '#ad1457', // dark pink
+                        '#4a148c'  // very dark purple
+                        ];
+                   
+                    
+                    // Build provider color mappings from segments data
+                    function buildProviderColors() {
+                        const uniqueProviders = [...new Set(segmentsData.map(s => s.provider).filter(p => p))];
+                        uniqueProviders.forEach((provider, index) => {
+                            providerColors[provider] = colorPalette[index % colorPalette.length];
+                        });
+                    }
+                    
+                    // Initialize provider colors
+                    buildProviderColors();
+
+                    // Store all segments with their layers
+                    let segmentLayers = new Map(); // segmentId -> layer
+                    
+                    // Function to get segment color based on current scheme
+                    function getSegmentColor(segment) {
+                        if (currentColorScheme === 'status') {
+                            return statusColorsLine[segment.status] || '#dc3545';
+                        } else if (currentColorScheme === 'provider') {
+                            return providerColors[segment.provider] || '#6c757d';
+                        }
+                        return '#dc3545';
+                    }
+                    
+                    // Function to get status badge color 
+                    function getStatusBadgeColor(segment) {
+                        return statusBadge[segment.status] || 'secondary';
+                    }
+
+                    // Function to generate path data badge
+                    function getPathDataBadge(segment) {
+                        return segment.has_path_data 
+                            ? '<span class="badge text-bg-success">Has Path Data</span>'
+                            : '<span class="badge text-bg-warning">No Path Data</span>';
+                    }
+                    
+                    // Function to update legend based on current color scheme
+                    function updateLegend() {
+                        const legendDropdown = document.getElementById('legendDropdown');
+                        legendDropdown.innerHTML = '';
+                        
+                        if (currentColorScheme === 'status') {
+                            // Status legend
+                            Object.entries(statusColorsLine).forEach(([status, color]) => {
+                                const li = document.createElement('li');
+                                li.innerHTML = `<span class="dropdown-item-text small">
+                                    <span style="display: inline-block; width: 20px; height: 3px; background-color: ${color}; margin-right: 8px;"></span>
+                                    ${status}
+                                </span>`;
+                                legendDropdown.appendChild(li);
+                            });
+                        } else if (currentColorScheme === 'provider') {
+                            // Provider legend
+                            Object.entries(providerColors).forEach(([provider, color]) => {
+                                const li = document.createElement('li');
+                                li.innerHTML = `<span class="dropdown-item-text small">
+                                    <span style="display: inline-block; width: 20px; height: 3px; background-color: ${color}; margin-right: 8px;"></span>
+                                    ${provider}
+                                </span>`;
+                                legendDropdown.appendChild(li);
+                            });
+                        }
+                        
+                        // Add common legend items
+                        const divider = document.createElement('li');
+                        divider.innerHTML = '<hr class="dropdown-divider">';
+                        legendDropdown.appendChild(divider);
+                        
+                        const pathInfo = document.createElement('li');
+                        pathInfo.innerHTML = `<span class="dropdown-item-text small">
+                            <strong>Solid line:</strong> Actual path data<br>
+                            <strong>Dashed line:</strong> No path data
+                        </span>`;
+                        legendDropdown.appendChild(pathInfo);
+                    }
+                    
+                    // Function to switch color scheme
+                    function switchColorScheme(scheme) {
+                        currentColorScheme = scheme;
+                        
+                        // Update button text
+                        const schemeButton = document.getElementById('currentColorScheme');
+                        schemeButton.textContent = scheme === 'status' ? 'Status' : 'Provider';
+                        
+                        // Update legend
+                        updateLegend();
+                        
+                        // Reload segments with new colors
+                        loadSegmentsWithOverlapHandling();
+                    }
+                    
+                    // Function to show segment info in the info panel under the map
                     function showSegmentInfo(segment) {
                         const infoPanel = document.getElementById('segmentInfo');
                         const infoContent = document.getElementById('segmentInfoContent');
+
+                        const pathDataBadge = getPathDataBadge(segment);
                         
-                        const pathDataBadge = segment.has_path_data 
-                            ? '<span class="badge text-bg-green">Has Path Data</span>'
-                            : '<span class="badge text-bg-orange">No Path Data</span>';
+                        const badgeColor = getStatusBadgeColor(segment);
                         
                         infoContent.innerHTML = `
                             <div class="row">
                                 <div class="col-md-6">
-                                    <h6>${segment.name}</h6>
+                                    <h4>${segment.name}</h4>
                                     <p><strong>Provider:</strong> ${segment.provider || 'N/A'}</p>
-                                    <p><strong>Status:</strong> <span class="badge text-bg-${statusBadge[segment.status] || 'green'}">${segment.status}</span></p>
+                                    <p><strong>Status:</strong> <span class="badge text-bg-${badgeColor}">${segment.status}</span></p>
                                     <p><strong>Path Data:</strong> ${pathDataBadge}</p>
                                 </div>
                                 <div class="col-md-6">
@@ -386,9 +501,6 @@
                         
                         const firstSegment = group[0];
                         
-                        // For a more sophisticated approach, you could compare actual line coordinates
-                        // For now, we'll use a simple heuristic
-                        
                         const segment1 = segmentInfo.segment;
                         const segment2 = firstSegment.segment;
                         
@@ -424,16 +536,15 @@
                     
                     // Show popup for single segment
                     function showSingleSegmentPopup(segment, clickPoint) {
-                        const color = statusBadge[segment.status] || '#6c757d';
-                        const pathDataText = segment.has_path_data ? 'Has Path Data' : 'No Path Data';
-                        const pathDataClass = segment.has_path_data ? 'text-success' : 'text-warning';
+                        const badgeColor = getStatusBadgeColor(segment);
+                        const pathDataBadge = getPathDataBadge(segment);
                         
                         const popupContent = `
                             <div class="single-segment-popup">
-                                <h6><strong>${segment.name}</strong></h6>
+                                <h4 class="mt-4">${segment.name}</h4>
                                 <p class="mb-1"><strong>Provider:</strong> ${segment.provider || 'N/A'}</p>
-                                <p class="mb-1"><strong>Status:</strong> <span class="badge text-bg-${color}">${segment.status}</span></p>
-                                <p class="mb-1"><strong>Path Data:</strong> <span class="${pathDataClass} small">${pathDataText}</span></p>
+                                <p class="mb-1"><strong>Status:</strong> <span class="badge text-bg-${badgeColor}">${segment.status}</span></p>
+                                <p class="mb-1"><strong>Path Data:</strong> ${pathDataBadge}</p>
                                 <p class="mb-1"><strong>Route:</strong> ${segment.site_a ? segment.site_a.name : 'N/A'} ↔ ${segment.site_b ? segment.site_b.name : 'N/A'}</p>
                                 <p class="mb-2"><strong>Length:</strong> ${segment.path_length_km ? segment.path_length_km + ' km' : 'Unknown'}</p>
                                 <div class="text-center">
@@ -473,8 +584,10 @@
                         
                         overlappingLayers.forEach((layerInfo, index) => {
                             const segment = layerInfo.segment;
-                            const color = statusBadge[segment.status] || '#6c757d';
-                            
+                            const badgeColor = getStatusBadgeColor(segment);
+                            const displayValue = segment.status;
+                            const pathDataBadge = getPathDataBadge(segment);
+
                             content += `
                                 <div class="segment-option border-bottom border-dark border-1 pb-2 mb-2" style="cursor: pointer;" 
                                     onclick="selectOverlappingSegment('${segment.id}')">
@@ -484,8 +597,8 @@
                                         </p>
                                         <ul class="list-unstyled mb-0">
                                             <li><strong>Sites:</strong> ${segment.site_a ? segment.site_a.name : 'N/A'} ↔ ${segment.site_b ? segment.site_b.name : 'N/A'}</li>
-                                            <li><strong>Status:</strong> <span class="badge text-bg-${color}">${segment.status}</span></li>
-                                            <li><strong>Path Data:</strong> ${segment.has_path_data ? '<span class="badge text-bg-green">Has Path Data</span>' : '<span class="badge text-bg-orange">No Path Data</span>'}</li> 
+                                            <li><strong>Status:</strong> <span class="badge text-bg-${badgeColor}">${displayValue}</span></li>
+                                            <li><strong>Path Data:</strong> ${pathDataBadge}</li>
                                             <li><strong>Length:</strong> ${segment.path_length_km ? segment.path_length_km + ' km' : 'Unknown'}</li>
                                         </ul>
                                     
@@ -521,7 +634,7 @@
                         
                         // Add site markers and fallback lines
                         segmentsData.forEach(segment => {
-                            const color = statusColorsLine[segment.status] || '#dc3545';
+                            const color = getSegmentColor(segment);
                             
                             // Add site markers
                             if (segment.site_a) {
@@ -582,10 +695,14 @@
                                 if (data.features && data.features.length > 0) {
                                     data.features.forEach(feature => {
                                         if (feature.properties.type === 'path') {
+                                            // Find segment to get current color
+                                            const segment = segmentsData.find(s => s.id === feature.properties.id);
+                                            const color = segment ? getSegmentColor(segment) : '#dc3545';
+                                            
                                             // Actual path data
                                             const pathLayer = L.geoJSON(feature, {
                                                 style: {
-                                                    color: statusColorsLine[feature.properties.status] || '#dc3545',
+                                                    color: color,
                                                     weight: 4,
                                                     opacity: 0.8
                                                 }
@@ -629,8 +746,22 @@
                         fitMapToSegments();
                     };
                     
+                    // Color scheme switching
+                    document.addEventListener('DOMContentLoaded', function() {
+                        document.querySelectorAll('[data-scheme]').forEach(item => {
+                            item.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                const scheme = this.getAttribute('data-scheme');
+                                switchColorScheme(scheme);
+                            });
+                        });
+                    });
+                    
                     // Initialize layer switching functionality
                     initializeLayerSwitching(map);
+                    
+                    // Initialize legend
+                    updateLegend();
                     
                     // Load segments on page load with overlap handling
                     loadSegmentsWithOverlapHandling();
