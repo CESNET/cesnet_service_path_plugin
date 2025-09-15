@@ -16,6 +16,7 @@ from utilities.forms.widgets.datetime import DatePicker
 from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
+from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices, SEGMENT_TYPE_SCHEMAS
 
 
 class SegmentForm(NetBoxModelForm):
@@ -75,8 +76,18 @@ class SegmentForm(NetBoxModelForm):
         help_text="Additional notes about the path geometry",
     )
 
+    segment_type = forms.ChoiceField(
+        choices=SegmentTypeChoices,
+        initial=SegmentTypeChoices.DARK_FIBER,
+        required=True,
+        widget=forms.Select(attrs={"class": "form-control", "onchange": "updateTypeSpecificFields(this.value)"}),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Add dynamic fields for type-specific data
+        self.add_type_specific_fields()
 
         # If editing existing segment with path data, show some info
         if self.instance.pk and self.instance.path_geometry:
@@ -85,6 +96,67 @@ class SegmentForm(NetBoxModelForm):
                 help_text += f" ({self.instance.path_length_km} km)"
             help_text += ". Upload a new file to replace the current path."
             self.fields["path_file"].help_text = help_text
+
+        # Pre-populate type-specific fields if editing existing object
+        if self.instance.pk and self.instance.type_specific_data:
+            self.populate_type_specific_fields()
+
+    def add_type_specific_fields(self):
+        """Dynamically add fields for all segment types"""
+        for segment_type, schema in SEGMENT_TYPE_SCHEMAS.items():
+            for field_name, field_config in schema.items():
+                form_field_name = f"type_{field_name}"
+
+                # Create appropriate form field based on schema
+                if field_config["type"] == "decimal":
+                    field = forms.DecimalField(
+                        label=field_config["label"],
+                        required=False,  # We'll handle required validation in clean()
+                        min_value=field_config.get("min_value"),
+                        max_value=field_config.get("max_value"),
+                        max_digits=field_config.get("max_digits", 8),
+                        decimal_places=field_config.get("decimal_places", 2),
+                        help_text=field_config.get("help_text", ""),
+                        widget=forms.NumberInput(
+                            attrs={"class": f"form-control type-field type-{segment_type}", "step": "any"}
+                        ),
+                    )
+                elif field_config["type"] == "integer":
+                    field = forms.IntegerField(
+                        label=field_config["label"],
+                        required=False,
+                        min_value=field_config.get("min_value"),
+                        max_value=field_config.get("max_value"),
+                        help_text=field_config.get("help_text", ""),
+                        widget=forms.NumberInput(attrs={"class": f"form-control type-field type-{segment_type}"}),
+                    )
+                elif field_config["type"] == "choice":
+                    choices = [("", "--------")] + [(c, c) for c in field_config.get("choices", [])]
+                    field = forms.ChoiceField(
+                        label=field_config["label"],
+                        required=False,
+                        choices=choices,
+                        help_text=field_config.get("help_text", ""),
+                        widget=forms.Select(attrs={"class": f"form-control type-field type-{segment_type}"}),
+                    )
+                else:  # string
+                    field = forms.CharField(
+                        label=field_config["label"],
+                        required=False,
+                        max_length=field_config.get("max_length", 255),
+                        help_text=field_config.get("help_text", ""),
+                        widget=forms.TextInput(attrs={"class": f"form-control type-field type-{segment_type}"}),
+                    )
+
+                self.fields[form_field_name] = field
+
+    def populate_type_specific_fields(self):
+        """Populate type-specific fields with existing data"""
+        type_data = self.instance.type_specific_data or {}
+        for field_name, value in type_data.items():
+            form_field_name = f"type_{field_name}"
+            if form_field_name in self.fields:
+                self.fields[form_field_name].initial = value
 
     def _validate_dates(self, install_date, termination_date):
         """
@@ -140,6 +212,25 @@ class SegmentForm(NetBoxModelForm):
             except ValidationError as e:
                 self.add_error("path_file", e)
 
+        segment_type = self.cleaned_data.get("segment_type")
+
+        if segment_type:
+            # Collect type-specific data from form
+            type_specific_data = {}
+            schema = SEGMENT_TYPE_SCHEMAS.get(segment_type, {})
+
+            for field_name, field_config in schema.items():
+                form_field_name = f"type_{field_name}"
+                value = self.cleaned_data.get(form_field_name)
+
+                # Only include non-empty values
+                if value is not None and value != "":
+                    type_specific_data[field_name] = value
+                elif field_config.get("required", False):
+                    self.add_error(form_field_name, "This field is required for this segment type.")
+
+            self.cleaned_data["type_specific_data"] = type_specific_data
+
         return self.cleaned_data
 
     def save(self, commit=True):
@@ -155,6 +246,10 @@ class SegmentForm(NetBoxModelForm):
             # This allows editing other fields without losing path data
             pass
 
+        # Handle type-specific data
+        if "type_specific_data" in self.cleaned_data:
+            instance.type_specific_data = self.cleaned_data["type_specific_data"]
+
         if commit:
             instance.save()
             self.save_m2m()  # This is required to save many-to-many fields like tags
@@ -165,6 +260,7 @@ class SegmentForm(NetBoxModelForm):
         model = Segment
         fields = [
             "name",
+            "segment_type",
             "status",
             "network_label",
             "install_date",
@@ -186,6 +282,7 @@ class SegmentForm(NetBoxModelForm):
     fieldsets = (
         FieldSet(
             "name",
+            "segment_type",
             "network_label",
             "status",
             InlineFields("install_date", "termination_date", label="Dates"),
@@ -207,6 +304,12 @@ class SegmentForm(NetBoxModelForm):
             "site_b",
             "location_b",
             name="Side B",
+        ),
+        # Dynamic fieldset for type-specific fields (removed 'classes' parameter)
+        FieldSet(
+            # Fields will be dynamically shown/hidden via JavaScript
+            *[f"type_{field}" for schema in SEGMENT_TYPE_SCHEMAS.values() for field in schema.keys()],
+            name="Technical Specifications",
         ),
         FieldSet(
             "path_file",

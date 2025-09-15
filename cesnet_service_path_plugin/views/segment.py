@@ -50,6 +50,8 @@ class SegmentEditView(generic.ObjectEditView):
     queryset = Segment.objects.all()
     form = SegmentForm
 
+    template_name = "cesnet_service_path_plugin/segment_edit.html"
+
 
 class SegmentDeleteView(generic.ObjectDeleteView):
     queryset = Segment.objects.all()

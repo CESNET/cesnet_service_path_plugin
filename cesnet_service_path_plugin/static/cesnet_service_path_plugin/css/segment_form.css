@@ -1,0 +1,18 @@
+/* Initially hide all type-specific fields */
+.type-field {
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Hide type fields by default - JavaScript will show appropriate ones */
+.field:has(.type-field),
+.form-group:has(.type-field),
+.mb-3:has(.type-field) {
+    display: none;
+}
+
+/* Visual indicator for required type-specific fields */
+.type-field[required] + label::after,
+.type-field.required + label::after {
+    content: " *";
+    color: #dc3545;
+}
