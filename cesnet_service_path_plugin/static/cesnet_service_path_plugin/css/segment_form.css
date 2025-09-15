@@ -4,9 +4,7 @@
 }
 
 /* Hide type fields by default - JavaScript will show appropriate ones */
-.field:has(.type-field),
-.form-group:has(.type-field),
-.mb-3:has(.type-field) {
+.row:has(.type-field) {
     display: none;
 }
 

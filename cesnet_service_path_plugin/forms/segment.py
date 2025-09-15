@@ -1,3 +1,4 @@
+import logging
 from circuits.models import Circuit, Provider
 from dcim.models import Location, Site
 from django import forms
@@ -101,6 +102,12 @@ class SegmentForm(NetBoxModelForm):
         if self.instance.pk and self.instance.type_specific_data:
             self.populate_type_specific_fields()
 
+        # DEBUG
+        vals = (*[f"type_{field}" for schema in SEGMENT_TYPE_SCHEMAS.values() for field in schema.keys()],)
+        logging.debug(f"DEBUG: SegmentForm __init__ fields: {vals}")
+        for key, val in self.instance.type_specific_data.items():
+            logging.debug(f"DEBUG: SegmentForm __init__ type_specific_data: {key} = {val}")
+
     def add_type_specific_fields(self):
         """Dynamically add fields for all segment types"""
         for segment_type, schema in SEGMENT_TYPE_SCHEMAS.items():
@@ -111,14 +118,14 @@ class SegmentForm(NetBoxModelForm):
                 if field_config["type"] == "decimal":
                     field = forms.DecimalField(
                         label=field_config["label"],
-                        required=False,  # We'll handle required validation in clean()
+                        required=False,
                         min_value=field_config.get("min_value"),
                         max_value=field_config.get("max_value"),
                         max_digits=field_config.get("max_digits", 8),
                         decimal_places=field_config.get("decimal_places", 2),
                         help_text=field_config.get("help_text", ""),
                         widget=forms.NumberInput(
-                            attrs={"class": f"form-control type-field type-{segment_type}", "step": "any"}
+                            attrs={"class": "form-control", "data-type-field": segment_type, "step": "any"}
                         ),
                     )
                 elif field_config["type"] == "integer":
@@ -128,7 +135,7 @@ class SegmentForm(NetBoxModelForm):
                         min_value=field_config.get("min_value"),
                         max_value=field_config.get("max_value"),
                         help_text=field_config.get("help_text", ""),
-                        widget=forms.NumberInput(attrs={"class": f"form-control type-field type-{segment_type}"}),
+                        widget=forms.NumberInput(attrs={"class": "form-control", "data-type-field": segment_type}),
                     )
                 elif field_config["type"] == "choice":
                     choices = [("", "--------")] + [(c, c) for c in field_config.get("choices", [])]
@@ -137,7 +144,7 @@ class SegmentForm(NetBoxModelForm):
                         required=False,
                         choices=choices,
                         help_text=field_config.get("help_text", ""),
-                        widget=forms.Select(attrs={"class": f"form-control type-field type-{segment_type}"}),
+                        widget=forms.Select(attrs={"class": "form-select", "data-type-field": segment_type}),
                     )
                 else:  # string
                     field = forms.CharField(
@@ -145,7 +152,7 @@ class SegmentForm(NetBoxModelForm):
                         required=False,
                         max_length=field_config.get("max_length", 255),
                         help_text=field_config.get("help_text", ""),
-                        widget=forms.TextInput(attrs={"class": f"form-control type-field type-{segment_type}"}),
+                        widget=forms.TextInput(attrs={"class": "form-control", "data-type-field": segment_type}),
                     )
 
                 self.fields[form_field_name] = field
@@ -309,7 +316,7 @@ class SegmentForm(NetBoxModelForm):
         FieldSet(
             # Fields will be dynamically shown/hidden via JavaScript
             *[f"type_{field}" for schema in SEGMENT_TYPE_SCHEMAS.values() for field in schema.keys()],
-            name="Technical Specifications",
+            name="Segment Type Technical Specifications",
         ),
         FieldSet(
             "path_file",

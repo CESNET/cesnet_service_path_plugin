@@ -1,10 +1,14 @@
 function updateTypeSpecificFields(selectedType) {
-    // Hide all type-specific fields first
-    const allTypeFields = document.querySelectorAll('.type-field');
+    const allTypeFields = document.querySelectorAll('[data-type-field]');
     allTypeFields.forEach(field => {
-        const fieldContainer = field.closest('.field') || field.closest('.form-group') || field.closest('.mb-3');
+        const fieldContainer =
+            field.closest('.field') ||
+            field.closest('.form-group') ||
+            field.closest('.mb-3') ||
+            field.closest('.row');
+
         if (fieldContainer) {
-            fieldContainer.style.display = 'none';
+            fieldContainer.classList.add('d-none');
             // Clear field value when hiding
             if (field.tagName === 'SELECT') {
                 field.selectedIndex = 0;
@@ -13,22 +17,26 @@ function updateTypeSpecificFields(selectedType) {
             }
         }
     });
-    
-    // Show fields for selected type
+
     if (selectedType) {
-        const typeFields = document.querySelectorAll(`.type-${selectedType}`);
+        const typeFields = document.querySelectorAll(`[data-type-field="${selectedType}"]`);
         typeFields.forEach(field => {
-            const fieldContainer = field.closest('.field') || field.closest('.form-group') || field.closest('.mb-3');
+            const fieldContainer =
+                field.closest('.field') ||
+                field.closest('.form-group') ||
+                field.closest('.mb-3') ||
+                field.closest('.row');
+
             if (fieldContainer) {
-                fieldContainer.style.display = 'block';
+                fieldContainer.classList.remove('d-none');
             }
         });
     }
 }
 
+
 // Initialize form when page loads
 document.addEventListener('DOMContentLoaded', function() {
-
     console.log("Segment form script loaded");
     const segmentTypeField = document.querySelector('select[name="segment_type"]') || 
                             document.querySelector('#id_segment_type');
