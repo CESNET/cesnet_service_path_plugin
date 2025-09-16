@@ -91,6 +91,11 @@ class SegmentForm(NetBoxModelForm):
         # Add dynamic fields for type-specific data
         self.add_type_specific_fields()
 
+        # Pre-populate type-specific fields if editing existing object
+        # IMPORTANT: This must happen AFTER add_type_specific_fields()
+        if self.instance.pk and self.instance.type_specific_data:
+            self.populate_type_specific_fields()
+
         # If editing existing segment with path data, show some info
         if self.instance.pk and self.instance.path_geometry:
             help_text = f"Current path: {self.instance.path_source_format or 'Unknown format'}"
@@ -98,16 +103,6 @@ class SegmentForm(NetBoxModelForm):
                 help_text += f" ({self.instance.path_length_km} km)"
             help_text += ". Upload a new file to replace the current path."
             self.fields["path_file"].help_text = help_text
-
-        # Pre-populate type-specific fields if editing existing object
-        if self.instance.pk and self.instance.type_specific_data:
-            self.populate_type_specific_fields()
-
-        # DEBUG
-        vals = (*[f"type_{field}" for schema in SEGMENT_TYPE_SCHEMAS.values() for field in schema.keys()],)
-        logging.debug(f"DEBUG: SegmentForm __init__ fields: {vals}")
-        for key, val in self.instance.type_specific_data.items():
-            logging.debug(f"DEBUG: SegmentForm __init__ type_specific_data: {key} = {val}")
 
     def add_type_specific_fields(self):
         """Dynamically add fields for all segment types"""
@@ -161,10 +156,50 @@ class SegmentForm(NetBoxModelForm):
     def populate_type_specific_fields(self):
         """Populate type-specific fields with existing data"""
         type_data = self.instance.type_specific_data or {}
+
         for field_name, value in type_data.items():
             form_field_name = f"type_{field_name}"
+
             if form_field_name in self.fields:
-                self.fields[form_field_name].initial = value
+                # Convert value to appropriate type for the form field
+                field = self.fields[form_field_name]
+                converted_value = value
+
+                if isinstance(field, forms.DecimalField):
+                    # Ensure decimal values are properly converted
+                    if isinstance(value, (int, float, str)):
+                        try:
+                            converted_value = Decimal(str(value))
+                        except (ValueError, TypeError) as e:
+                            converted_value = value
+
+                elif isinstance(field, forms.IntegerField):
+                    # Ensure integer values are properly converted
+                    if isinstance(value, (float, str)):
+                        try:
+                            converted_value = int(value)
+                        except (ValueError, TypeError) as e:
+                            converted_value = value
+
+                # Set initial value
+                self.fields[form_field_name].initial = converted_value
+
+                # CRUCIAL FIX: Also set the value in self.initial if it exists
+                if not hasattr(self, "initial"):
+                    self.initial = {}
+                self.initial[form_field_name] = converted_value
+
+            else:
+                logging.warning(f"DEBUG: Form field {form_field_name} not found in self.fields")
+                logging.debug(
+                    f"DEBUG: Available form fields starting with 'type_': {[f for f in self.fields.keys() if f.startswith('type_')]}"
+                )
+
+    def get_initial_for_field(self, field, field_name):
+        """Override to ensure our type-specific initial values are used"""
+        if field_name.startswith("type_") and hasattr(self, "initial") and field_name in self.initial:
+            return self.initial[field_name]
+        return super().get_initial_for_field(field, field_name)
 
     def _validate_dates(self, install_date, termination_date):
         """

@@ -1,3 +1,4 @@
+import logging
 import django_filters
 from circuits.models import Circuit, Provider
 from dcim.models import Location, Site
@@ -306,7 +307,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
         conditions = Q()
         json_field = f"type_specific_data__{name}"
-
         if value.start is not None:
             # Greater than or equal to start value
             conditions &= Q(**{f"{json_field}__gte": value.start})
