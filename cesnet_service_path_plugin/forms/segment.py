@@ -17,8 +17,8 @@ from utilities.forms.widgets.datetime import DatePicker
 
 from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
-from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices, SEGMENT_TYPE_SCHEMAS
+from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
 
 
 class SegmentForm(NetBoxModelForm):
@@ -347,6 +347,11 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     status = forms.MultipleChoiceField(required=False, choices=StatusChoices, initial=None)
     network_label = forms.CharField(required=False)
 
+    # Basic segment type filter
+    segment_type = forms.MultipleChoiceField(
+        required=False, choices=SegmentTypeChoices, initial=None, label=_("Segment Type")
+    )
+
     tag = TagFilterField(model)
 
     site_a_id = DynamicModelMultipleChoiceField(queryset=Site.objects.all(), required=False, label=_("Site A"))
@@ -397,7 +402,6 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         label=_("Circuits"),
     )
 
-    # Updated filter for segments with path data
     has_path_data = forms.MultipleChoiceField(
         required=False,
         choices=[
@@ -408,9 +412,133 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         help_text="Filter segments that have path geometry data",
     )
 
+    # =============================================================================
+    # TYPE-SPECIFIC FILTER FIELDS
+    # =============================================================================
+
+    # Dark Fiber specific filters
+    fiber_type = forms.MultipleChoiceField(
+        required=False,
+        choices=[
+            ("G.652D", "G.652D"),
+            ("G.655", "G.655"),
+            ("G.657A1", "G.657A1"),
+            ("G.657A2", "G.657A2"),
+            ("G.652B", "G.652B"),
+            ("G.652C", "G.652C"),
+            ("G.653", "G.653"),
+            ("G.654E", "G.654E"),
+        ],
+        label=_("Fiber Type"),
+        help_text="Filter by ITU-T fiber standard designation",
+    )
+
+    fiber_attenuation_max = forms.CharField(
+        required=False, label=_("Fiber Attenuation Max (dB/km)"), help_text="Range format: min-max (e.g., 0.2-0.4)"
+    )
+
+    total_loss = forms.CharField(
+        required=False, label=_("Total Loss (dB)"), help_text="Range format: min-max (e.g., 5-15)"
+    )
+
+    total_length = forms.CharField(
+        required=False, label=_("Total Length (km)"), help_text="Range format: min-max (e.g., 10-100)"
+    )
+
+    number_of_fibers = forms.CharField(
+        required=False, label=_("Number of Fibers"), help_text="Range format: min-max (e.g., 24-144)"
+    )
+
+    connector_type = forms.MultipleChoiceField(
+        required=False,
+        choices=[
+            ("LC/APC", "LC/APC"),
+            ("LC/UPC", "LC/UPC"),
+            ("SC/APC", "SC/APC"),
+            ("SC/UPC", "SC/UPC"),
+            ("FC/APC", "FC/APC"),
+            ("FC/UPC", "FC/UPC"),
+            ("ST/UPC", "ST/UPC"),
+            ("E2000/APC", "E2000/APC"),
+            ("MTP/MPO", "MTP/MPO"),
+        ],
+        label=_("Connector Type"),
+    )
+
+    # Optical Spectrum specific filters
+    wavelength = forms.CharField(
+        required=False, label=_("Wavelength (nm)"), help_text="Range format: min-max (e.g., 1530-1565)"
+    )
+
+    spectral_slot_width = forms.CharField(
+        required=False, label=_("Spectral Slot Width (GHz)"), help_text="Range format: min-max (e.g., 25-100)"
+    )
+
+    itu_grid_position = forms.CharField(
+        required=False, label=_("ITU Grid Position"), help_text="Range format: min-max (e.g., -50-50)"
+    )
+
+    modulation_format = forms.MultipleChoiceField(
+        required=False,
+        choices=[
+            ("NRZ", "NRZ"),
+            ("PAM4", "PAM4"),
+            ("QPSK", "QPSK"),
+            ("16QAM", "16QAM"),
+            ("64QAM", "64QAM"),
+            ("DP-QPSK", "DP-QPSK"),
+            ("DP-16QAM", "DP-16QAM"),
+        ],
+        label=_("Modulation Format"),
+    )
+
+    # Ethernet Service specific filters
+    port_speed = forms.CharField(
+        required=False, label=_("Port Speed / Bandwidth (Mbps)"), help_text="Range format: min-max (e.g., 1000-10000)"
+    )
+
+    vlan_id = forms.CharField(
+        required=False, label=_("Primary VLAN ID"), help_text="Range format: min-max (e.g., 100-4000)"
+    )
+
+    encapsulation_type = forms.MultipleChoiceField(
+        required=False,
+        choices=[
+            ("Untagged", "Untagged"),
+            ("IEEE 802.1Q", "IEEE 802.1Q"),
+            ("IEEE 802.1ad (QinQ)", "IEEE 802.1ad (QinQ)"),
+            ("IEEE 802.1ah (PBB)", "IEEE 802.1ah (PBB)"),
+            ("MPLS", "MPLS"),
+            ("MEF E-Line", "MEF E-Line"),
+            ("MEF E-LAN", "MEF E-LAN"),
+        ],
+        label=_("Encapsulation Type"),
+    )
+
+    interface_type = forms.MultipleChoiceField(
+        required=False,
+        choices=[
+            ("RJ45", "RJ45"),
+            ("SFP", "SFP"),
+            ("SFP+", "SFP+"),
+            ("QSFP+", "QSFP+"),
+            ("QSFP28", "QSFP28"),
+            ("QSFP56", "QSFP56"),
+            ("OSFP", "OSFP"),
+            ("CFP", "CFP"),
+            ("CFP2", "CFP2"),
+            ("CFP4", "CFP4"),
+        ],
+        label=_("Interface Type"),
+    )
+
+    mtu_size = forms.CharField(
+        required=False, label=_("MTU Size (bytes)"), help_text="Range format: min-max (e.g., 1500-9000)"
+    )
+
     fieldsets = (
-        FieldSet("q", "tag", "filter_id", name="Misc"),
-        FieldSet("name", "status", "network_label", "has_path_data", name="Basic"),
+        FieldSet("q", "tag", "filter_id", name="General"),
+        FieldSet("name", "status", "segment_type", "network_label", "has_path_data", name="Basic"),
         FieldSet(
             "provider_id",
             "provider_segment_id",
@@ -425,7 +553,32 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
             "termination_date__lte",
             name="Dates",
         ),
-        FieldSet("circuits", "at_any_site", "at_any_location", name="Extra"),
+        FieldSet("circuits", "at_any_site", "at_any_location", name="Connections"),
         FieldSet("site_a_id", "location_a_id", name="Side A"),
         FieldSet("site_b_id", "location_b_id", name="Side B"),
+        # Type-specific fieldsets
+        FieldSet(
+            "fiber_type",
+            "fiber_attenuation_max",
+            "total_loss",
+            "total_length",
+            "number_of_fibers",
+            "connector_type",
+            name="Dark Fiber Technical Specs",
+        ),
+        FieldSet(
+            "wavelength",
+            "spectral_slot_width",
+            "itu_grid_position",
+            "modulation_format",
+            name="Optical Spectrum Technical Specs",
+        ),
+        FieldSet(
+            "port_speed",
+            "vlan_id",
+            "encapsulation_type",
+            "interface_type",
+            "mtu_size",
+            name="Ethernet Service Technical Specs",
+        ),
     )

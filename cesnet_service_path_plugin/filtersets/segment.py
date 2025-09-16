@@ -7,6 +7,7 @@ from netbox.filtersets import NetBoxModelFilterSet
 
 from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
+from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 
 
 class SegmentFilterSet(NetBoxModelFilterSet):
@@ -18,6 +19,11 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     name = django_filters.CharFilter(lookup_expr="icontains")
     network_label = django_filters.CharFilter(lookup_expr="icontains")
     status = django_filters.MultipleChoiceFilter(choices=StatusChoices, null_value=None)
+
+    # Basic segment type filter
+    segment_type = django_filters.MultipleChoiceFilter(
+        choices=SegmentTypeChoices, null_value=None, label="Segment Type"
+    )
 
     # @NOTE: Keep commented -> automatically enables date filtering (supports __empty, __lt, __gt, __lte, __gte, __n, ...)
     # install_date = django_filters.DateFilter()
@@ -76,7 +82,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Circuit (ID)",
     )
 
-    # New filter for path data
+    # Path data filter
     has_path_data = django_filters.MultipleChoiceFilter(
         choices=[
             (True, "Yes"),
@@ -86,12 +92,120 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Has Path Data",
     )
 
+    # =============================================================================
+    # TYPE-SPECIFIC FILTERS
+    # =============================================================================
+
+    # Dark Fiber specific filters
+    fiber_type = django_filters.MultipleChoiceFilter(
+        choices=[
+            ("G.652D", "G.652D"),
+            ("G.655", "G.655"),
+            ("G.657A1", "G.657A1"),
+            ("G.657A2", "G.657A2"),
+            ("G.652B", "G.652B"),
+            ("G.652C", "G.652C"),
+            ("G.653", "G.653"),
+            ("G.654E", "G.654E"),
+        ],
+        method="_filter_type_specific_choice",
+        label="Fiber Type",
+    )
+
+    fiber_attenuation_max = django_filters.RangeFilter(
+        method="_filter_type_specific_range", label="Fiber Attenuation Max (dB/km)"
+    )
+
+    total_loss = django_filters.RangeFilter(method="_filter_type_specific_range", label="Total Loss (dB)")
+
+    total_length = django_filters.RangeFilter(method="_filter_type_specific_range", label="Total Length (km)")
+
+    number_of_fibers = django_filters.RangeFilter(method="_filter_type_specific_range", label="Number of Fibers")
+
+    connector_type = django_filters.MultipleChoiceFilter(
+        choices=[
+            ("LC/APC", "LC/APC"),
+            ("LC/UPC", "LC/UPC"),
+            ("SC/APC", "SC/APC"),
+            ("SC/UPC", "SC/UPC"),
+            ("FC/APC", "FC/APC"),
+            ("FC/UPC", "FC/UPC"),
+            ("ST/UPC", "ST/UPC"),
+            ("E2000/APC", "E2000/APC"),
+            ("MTP/MPO", "MTP/MPO"),
+        ],
+        method="_filter_type_specific_choice",
+        label="Connector Type",
+    )
+
+    # Optical Spectrum specific filters
+    wavelength = django_filters.RangeFilter(method="_filter_type_specific_range", label="Wavelength (nm)")
+
+    spectral_slot_width = django_filters.RangeFilter(
+        method="_filter_type_specific_range", label="Spectral Slot Width (GHz)"
+    )
+
+    itu_grid_position = django_filters.RangeFilter(method="_filter_type_specific_range", label="ITU Grid Position")
+
+    modulation_format = django_filters.MultipleChoiceFilter(
+        choices=[
+            ("NRZ", "NRZ"),
+            ("PAM4", "PAM4"),
+            ("QPSK", "QPSK"),
+            ("16QAM", "16QAM"),
+            ("64QAM", "64QAM"),
+            ("DP-QPSK", "DP-QPSK"),
+            ("DP-16QAM", "DP-16QAM"),
+        ],
+        method="_filter_type_specific_choice",
+        label="Modulation Format",
+    )
+
+    # Ethernet Service specific filters
+    port_speed = django_filters.RangeFilter(method="_filter_type_specific_range", label="Port Speed / Bandwidth (Mbps)")
+
+    vlan_id = django_filters.RangeFilter(method="_filter_type_specific_range", label="Primary VLAN ID")
+
+    encapsulation_type = django_filters.MultipleChoiceFilter(
+        choices=[
+            ("Untagged", "Untagged"),
+            ("IEEE 802.1Q", "IEEE 802.1Q"),
+            ("IEEE 802.1ad (QinQ)", "IEEE 802.1ad (QinQ)"),
+            ("IEEE 802.1ah (PBB)", "IEEE 802.1ah (PBB)"),
+            ("MPLS", "MPLS"),
+            ("MEF E-Line", "MEF E-Line"),
+            ("MEF E-LAN", "MEF E-LAN"),
+        ],
+        method="_filter_type_specific_choice",
+        label="Encapsulation Type",
+    )
+
+    interface_type = django_filters.MultipleChoiceFilter(
+        choices=[
+            ("RJ45", "RJ45"),
+            ("SFP", "SFP"),
+            ("SFP+", "SFP+"),
+            ("QSFP+", "QSFP+"),
+            ("QSFP28", "QSFP28"),
+            ("QSFP56", "QSFP56"),
+            ("OSFP", "OSFP"),
+            ("CFP", "CFP"),
+            ("CFP2", "CFP2"),
+            ("CFP4", "CFP4"),
+        ],
+        method="_filter_type_specific_choice",
+        label="Interface Type",
+    )
+
+    mtu_size = django_filters.RangeFilter(method="_filter_type_specific_range", label="MTU Size (bytes)")
+
     class Meta:
         model = Segment
         fields = [
             "id",
             "name",
             "network_label",
+            "segment_type",  # Added segment_type
             "install_date",
             "termination_date",
             "provider",
@@ -102,7 +216,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "location_a",
             "site_b",
             "location_b",
-            "has_path_data",  # Added to Meta fields
+            "has_path_data",
         ]
 
     def _at_any_site(self, queryset, name, value):
@@ -157,6 +271,55 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             # Fallback: show all segments
             return queryset
 
+    def _filter_type_specific_choice(self, queryset, name, value):
+        """
+        Filter by type-specific choice fields
+
+        Args:
+            queryset: Current queryset
+            name: Field name (matches the filter name)
+            value: List of selected values
+        """
+        if not value:
+            return queryset
+
+        # Create OR conditions for each selected value
+        q_conditions = Q()
+        for val in value:
+            # Use JSON field lookup to check if the field exists and has the specified value
+            json_lookup = f"type_specific_data__{name}"
+            q_conditions |= Q(**{json_lookup: val})
+
+        return queryset.filter(q_conditions)
+
+    def _filter_type_specific_range(self, queryset, name, value):
+        """
+        Filter by type-specific range fields (min/max values)
+
+        Args:
+            queryset: Current queryset
+            name: Field name (matches the filter name)
+            value: Range object with start and stop values
+        """
+        if not value:
+            return queryset
+
+        conditions = Q()
+        json_field = f"type_specific_data__{name}"
+
+        if value.start is not None:
+            # Greater than or equal to start value
+            conditions &= Q(**{f"{json_field}__gte": value.start})
+
+        if value.stop is not None:
+            # Less than or equal to stop value
+            conditions &= Q(**{f"{json_field}__lte": value.stop})
+
+        # Only return segments that have this field defined (not null)
+        conditions &= Q(**{f"{json_field}__isnull": False})
+
+        return queryset.filter(conditions)
+
     def search(self, queryset, name, value):
         site_a = Q(site_a__name__icontains=value)
         site_b = Q(site_b__name__icontains=value)
@@ -166,7 +329,16 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         network_label = Q(network_label__icontains=value)
         provider_segment_id = Q(provider_segment_id__icontains=value)
         status = Q(status__iexact=value)
+        segment_type = Q(segment_type__iexact=value)  # Added segment_type to search
 
         return queryset.filter(
-            site_a | site_b | location_a | location_b | segment_name | network_label | provider_segment_id | status
+            site_a
+            | site_b
+            | location_a
+            | location_b
+            | segment_name
+            | network_label
+            | provider_segment_id
+            | status
+            | segment_type
         )
