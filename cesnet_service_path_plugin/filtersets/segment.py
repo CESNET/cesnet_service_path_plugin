@@ -1,6 +1,6 @@
 import django_filters
 from circuits.models import Circuit, Provider
-from dcim.models import Device, Interface, Location, Site
+from dcim.models import Location, Site
 from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
@@ -139,9 +139,9 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         # Convert string values to boolean (django-filter sometimes passes strings)
         bool_values = []
         for v in value:
-            if v is True or v == "True" or v == True:
+            if v is True or v == "True" or v:
                 bool_values.append(True)
-            elif v is False or v == "False" or v == False:
+            elif v is False or v == "False" or not v:
                 bool_values.append(False)
 
         if True in bool_values and False in bool_values:

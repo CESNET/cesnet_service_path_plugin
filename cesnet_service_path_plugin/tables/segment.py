@@ -8,6 +8,7 @@ class SegmentTable(NetBoxTable):
     tags = columns.TagColumn()
     name = tables.Column(linkify=True)
     status = ChoiceFieldColumn()
+    segment_type = ChoiceFieldColumn()
     provider = tables.Column(linkify=True)
     site_a = tables.Column(linkify=True)
     location_a = tables.Column(linkify=True)
@@ -48,6 +49,7 @@ class SegmentTable(NetBoxTable):
             "pk",
             "id",
             "name",
+            "segment_type",
             "network_label",
             "install_date",
             "termination_date",
@@ -69,6 +71,7 @@ class SegmentTable(NetBoxTable):
 
         default_columns = (
             "name",
+            "segment_type",
             "network_label",
             "provider",
             "site_a",

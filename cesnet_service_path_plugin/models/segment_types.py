@@ -134,22 +134,12 @@ SEGMENT_TYPE_SCHEMAS = {
     },
     SegmentTypeChoices.ETHERNET_SERVICE: {
         "port_speed": {
-            "type": "choice",
-            "label": "Port Speed / Bandwidth",
-            "choices": [
-                "10 Mbps",
-                "100 Mbps",
-                "1 Gbps",
-                "10 Gbps",
-                "25 Gbps",
-                "40 Gbps",
-                "100 Gbps",
-                "200 Gbps",
-                "400 Gbps",
-                "800 Gbps",
-            ],
+            "type": "integer",
+            "label": "Port Speed / Bandwidth (Mbps)",
+            "min_value": 1,
+            "max_value": 100000,
             "required": False,
-            "help_text": "Ethernet port speed or service bandwidth",
+            "help_text": "Ethernet port speed or service bandwidth in Mbps",
         },
         "vlan_id": {
             "type": "integer",
@@ -187,13 +177,6 @@ SEGMENT_TYPE_SCHEMAS = {
             "choices": ["RJ45", "SFP", "SFP+", "QSFP+", "QSFP28", "QSFP56", "OSFP", "CFP", "CFP2", "CFP4"],
             "required": False,
             "help_text": "Physical interface form factor",
-        },
-        "service_level": {
-            "type": "choice",
-            "label": "Service Level",
-            "choices": ["Best Effort", "Bronze", "Silver", "Gold", "Platinum", "Mission Critical"],
-            "required": False,
-            "help_text": "Quality of service level",
         },
         "mtu_size": {
             "type": "integer",

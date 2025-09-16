@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal
 from circuits.models import Circuit, Provider
 from dcim.models import Location, Site
 from django import forms
@@ -201,6 +202,13 @@ class SegmentForm(NetBoxModelForm):
         except Exception as e:
             raise ValidationError(f"Error processing file '{uploaded_file.name}': {str(e)}")
 
+    def _convert_to_json_serializable(self, value):
+        """Convert value to JSON serializable format"""
+        if isinstance(value, Decimal):
+            # Convert Decimal to float for JSON serialization
+            return float(value)
+        return value
+
     def clean(self):
         super().clean()
 
@@ -232,7 +240,8 @@ class SegmentForm(NetBoxModelForm):
 
                 # Only include non-empty values
                 if value is not None and value != "":
-                    type_specific_data[field_name] = value
+                    # Convert to JSON serializable format
+                    type_specific_data[field_name] = self._convert_to_json_serializable(value)
                 elif field_config.get("required", False):
                     self.add_error(form_field_name, "This field is required for this segment type.")
 
