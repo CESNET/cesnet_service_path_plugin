@@ -10,6 +10,8 @@ from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 
+logger = logging.getLogger(__name__)
+
 
 class SegmentFilterSet(NetBoxModelFilterSet):
     q = django_filters.CharFilter(
@@ -113,15 +115,15 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Fiber Type",
     )
 
-    fiber_attenuation_max = django_filters.RangeFilter(
-        method="_filter_type_specific_range", label="Fiber Attenuation Max (dB/km)"
+    fiber_attenuation_max = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="Fiber Attenuation Max (dB/km)"
     )
 
-    total_loss = django_filters.RangeFilter(method="_filter_type_specific_range", label="Total Loss (dB)")
+    total_loss = django_filters.CharFilter(method="_filter_smart_numeric", label="Total Loss (dB)")
 
-    total_length = django_filters.RangeFilter(method="_filter_type_specific_range", label="Total Length (km)")
+    total_length = django_filters.CharFilter(method="_filter_smart_numeric", label="Total Length (km)")
 
-    number_of_fibers = django_filters.RangeFilter(method="_filter_type_specific_range", label="Number of Fibers")
+    number_of_fibers = django_filters.CharFilter(method="_filter_smart_numeric", label="Number of Fibers")
 
     connector_type = django_filters.MultipleChoiceFilter(
         choices=[
@@ -140,13 +142,11 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     )
 
     # Optical Spectrum specific filters
-    wavelength = django_filters.RangeFilter(method="_filter_type_specific_range", label="Wavelength (nm)")
+    wavelength = django_filters.CharFilter(method="_filter_smart_numeric", label="Wavelength (nm)")
 
-    spectral_slot_width = django_filters.RangeFilter(
-        method="_filter_type_specific_range", label="Spectral Slot Width (GHz)"
-    )
+    spectral_slot_width = django_filters.CharFilter(method="_filter_smart_numeric", label="Spectral Slot Width (GHz)")
 
-    itu_grid_position = django_filters.RangeFilter(method="_filter_type_specific_range", label="ITU Grid Position")
+    itu_grid_position = django_filters.CharFilter(method="_filter_smart_numeric", label="ITU Grid Position")
 
     modulation_format = django_filters.MultipleChoiceFilter(
         choices=[
@@ -163,9 +163,11 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     )
 
     # Ethernet Service specific filters
-    port_speed = django_filters.RangeFilter(method="_filter_type_specific_range", label="Port Speed / Bandwidth (Mbps)")
+    port_speed = django_filters.CharFilter(method="_filter_smart_numeric", label="Port Speed / Bandwidth (Mbps)")
 
-    vlan_id = django_filters.RangeFilter(method="_filter_type_specific_range", label="Primary VLAN ID")
+    vlan_id = django_filters.CharFilter(method="_filter_smart_numeric", label="Primary VLAN ID")
+
+    mtu_size = django_filters.CharFilter(method="_filter_smart_numeric", label="MTU Size (bytes)")
 
     encapsulation_type = django_filters.MultipleChoiceFilter(
         choices=[
@@ -197,8 +199,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         method="_filter_type_specific_choice",
         label="Interface Type",
     )
-
-    mtu_size = django_filters.RangeFilter(method="_filter_type_specific_range", label="MTU Size (bytes)")
 
     class Meta:
         model = Segment
@@ -272,6 +272,169 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             # Fallback: show all segments
             return queryset
 
+    def _parse_smart_numeric_value(self, value, field_type="float"):
+        """
+        Parse smart numeric input into structured format
+        """
+        if not value:
+            return None
+
+        value = str(value).strip()
+        convert_func = float if field_type == "float" else int
+
+        try:
+            # Handle different formats
+            if value.startswith(">="):
+                return {"operation": "gte", "value": convert_func(value[2:].strip())}
+            elif value.startswith("<="):
+                return {"operation": "lte", "value": convert_func(value[2:].strip())}
+            elif value.startswith(">"):
+                return {"operation": "gt", "value": convert_func(value[1:].strip())}
+            elif value.startswith("<"):
+                return {"operation": "lt", "value": convert_func(value[1:].strip())}
+            elif value.startswith("="):
+                return {"operation": "exact", "value": convert_func(value[1:].strip())}
+            elif "-" in value and value.count("-") == 1 and not value.startswith("-"):
+                # Range format "10-100"
+                min_val, max_val = value.split("-")
+                return {
+                    "operation": "range",
+                    "min": convert_func(min_val.strip()) if min_val.strip() else None,
+                    "max": convert_func(max_val.strip()) if max_val.strip() else None,
+                }
+            else:
+                # Exact value (default)
+                return {"operation": "exact", "value": convert_func(value)}
+
+        except (ValueError, TypeError) as e:
+            logger.error(f"🔍 Error parsing numeric value '{value}': {e}")
+            return None
+
+    def _get_field_type(self, field_name):
+        """
+        Determine the appropriate type for a field based on its name
+        """
+        float_fields = ["fiber_attenuation_max", "total_loss", "total_length", "wavelength", "spectral_slot_width"]
+        return "float" if field_name in float_fields else "int"
+
+    def _filter_smart_numeric(self, queryset, name, value):
+        """
+        Smart numeric filter that handles exact, range, and comparison operations
+        Uses raw SQL to handle numeric comparisons in JSON fields properly
+        """
+        if not value:
+            return queryset
+
+        logger.debug(f"🔍 Smart numeric filter called for {name} with raw value: '{value}' (type: {type(value)})")
+
+        # Parse the value if it's still a string
+        if isinstance(value, str):
+            field_type = self._get_field_type(name)
+            parsed_value = self._parse_smart_numeric_value(value, field_type)
+            if not parsed_value:
+                logger.warning(f"🔍 Could not parse value '{value}' for {name}")
+                return queryset
+        elif isinstance(value, dict):
+            parsed_value = value
+        else:
+            logger.warning(f"🔍 Unexpected value type for {name}: {type(value)}")
+            return queryset
+
+        logger.debug(f"🔍 Parsed value for {name}: {parsed_value}")
+
+        operation = parsed_value.get("operation")
+
+        try:
+            # Base condition: field must exist and not be null
+            conditions = Q(type_specific_data__has_key=name)
+
+            if operation == "exact":
+                field_value = parsed_value.get("value")
+                # Use raw SQL to cast JSON value to numeric for exact comparison
+                conditions &= Q(
+                    pk__in=queryset.extra(
+                        where=["(type_specific_data->>%s)::decimal = %s"], params=[name, field_value]
+                    ).values("pk")
+                )
+                logger.debug(f"🔍 Exact match using SQL CAST: {name} = {field_value}")
+
+            elif operation == "range":
+                min_val = parsed_value.get("min")
+                max_val = parsed_value.get("max")
+
+                where_clauses = []
+                params = []
+
+                if min_val is not None:
+                    where_clauses.append("(type_specific_data->>%s)::decimal >= %s")
+                    params.extend([name, min_val])
+
+                if max_val is not None:
+                    where_clauses.append("(type_specific_data->>%s)::decimal <= %s")
+                    params.extend([name, max_val])
+
+                if where_clauses:
+                    conditions &= Q(
+                        pk__in=queryset.extra(where=[" AND ".join(where_clauses)], params=params).values("pk")
+                    )
+                logger.debug(f"🔍 Range using SQL CAST: {min_val} <= {name} <= {max_val}")
+
+            elif operation == "gt":
+                field_value = parsed_value.get("value")
+                conditions &= Q(
+                    pk__in=queryset.extra(
+                        where=["(type_specific_data->>%s)::decimal > %s"], params=[name, field_value]
+                    ).values("pk")
+                )
+                logger.debug(f"🔍 Greater than using SQL CAST: {name} > {field_value}")
+
+            elif operation == "gte":
+                field_value = parsed_value.get("value")
+                conditions &= Q(
+                    pk__in=queryset.extra(
+                        where=["(type_specific_data->>%s)::decimal >= %s"], params=[name, field_value]
+                    ).values("pk")
+                )
+                logger.debug(f"🔍 Greater than or equal using SQL CAST: {name} >= {field_value}")
+
+            elif operation == "lt":
+                field_value = parsed_value.get("value")
+                conditions &= Q(
+                    pk__in=queryset.extra(
+                        where=["(type_specific_data->>%s)::decimal < %s"], params=[name, field_value]
+                    ).values("pk")
+                )
+                logger.debug(f"🔍 Less than using SQL CAST: {name} < {field_value}")
+
+            elif operation == "lte":
+                field_value = parsed_value.get("value")
+                conditions &= Q(
+                    pk__in=queryset.extra(
+                        where=["(type_specific_data->>%s)::decimal <= %s"], params=[name, field_value]
+                    ).values("pk")
+                )
+                logger.debug(f"🔍 Less than or equal using SQL CAST: {name} <= {field_value}")
+
+            else:
+                logger.warning(f"🔍 Unknown operation '{operation}' for {name}")
+                return queryset
+
+            # Apply the filter
+            original_count = queryset.count()
+            filtered_queryset = queryset.filter(conditions)
+            filtered_count = filtered_queryset.count()
+
+            logger.debug(f"🔍 Filtered from {original_count} to {filtered_count} segments")
+
+            return filtered_queryset
+
+        except Exception as e:
+            logger.error(f"🔍 Error in smart numeric filter for {name}: {e}")
+            import traceback
+
+            logger.error(f"🔍 Traceback: {traceback.format_exc()}")
+            return queryset
+
     def _filter_type_specific_choice(self, queryset, name, value):
         """
         Filter by type-specific choice fields
@@ -293,32 +456,32 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
         return queryset.filter(q_conditions)
 
-    def _filter_type_specific_range(self, queryset, name, value):
-        """
-        Filter by type-specific range fields (min/max values)
+    # def _filter_type_specific_range(self, queryset, name, value):
+    #     """
+    #     Filter by type-specific range fields (min/max values)
 
-        Args:
-            queryset: Current queryset
-            name: Field name (matches the filter name)
-            value: Range object with start and stop values
-        """
-        if not value:
-            return queryset
+    #     Args:
+    #         queryset: Current queryset
+    #         name: Field name (matches the filter name)
+    #         value: Range object with start and stop values
+    #     """
+    #     if not value:
+    #         return queryset
 
-        conditions = Q()
-        json_field = f"type_specific_data__{name}"
-        if value.start is not None:
-            # Greater than or equal to start value
-            conditions &= Q(**{f"{json_field}__gte": value.start})
+    #     conditions = Q()
+    #     json_field = f"type_specific_data__{name}"
+    #     if value.start is not None:
+    #         # Greater than or equal to start value
+    #         conditions &= Q(**{f"{json_field}__gte": value.start})
 
-        if value.stop is not None:
-            # Less than or equal to stop value
-            conditions &= Q(**{f"{json_field}__lte": value.stop})
+    #     if value.stop is not None:
+    #         # Less than or equal to stop value
+    #         conditions &= Q(**{f"{json_field}__lte": value.stop})
 
-        # Only return segments that have this field defined (not null)
-        conditions &= Q(**{f"{json_field}__isnull": False})
+    #     # Only return segments that have this field defined (not null)
+    #     conditions &= Q(**{f"{json_field}__isnull": False})
 
-        return queryset.filter(conditions)
+    #     return queryset.filter(conditions)
 
     def search(self, queryset, name, value):
         site_a = Q(site_a__name__icontains=value)

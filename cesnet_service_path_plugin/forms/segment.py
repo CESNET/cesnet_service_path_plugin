@@ -20,6 +20,8 @@ from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices, SEGMENT_TYPE_SCHEMAS
 from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
 
+logger = logging.getLogger(__name__)
+
 
 class SegmentForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
@@ -171,6 +173,9 @@ class SegmentForm(NetBoxModelForm):
                         try:
                             converted_value = Decimal(str(value))
                         except (ValueError, TypeError) as e:
+                            logger.warning(
+                                f"Failed to convert value '{value}' to Decimal for field '{form_field_name}': {e}"
+                            )
                             converted_value = value
 
                 elif isinstance(field, forms.IntegerField):
@@ -179,6 +184,9 @@ class SegmentForm(NetBoxModelForm):
                         try:
                             converted_value = int(value)
                         except (ValueError, TypeError) as e:
+                            logger.warning(
+                                f"Failed to convert value '{value}' to int for field '{form_field_name}': {e}"
+                            )
                             converted_value = value
 
                 # Set initial value
@@ -448,7 +456,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     )
 
     # =============================================================================
-    # TYPE-SPECIFIC FILTER FIELDS
+    # TYPE-SPECIFIC FILTER FIELDS - SIMPLIFIED (NO SmartNumericField needed)
     # =============================================================================
 
     # Dark Fiber specific filters
@@ -469,19 +477,31 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     )
 
     fiber_attenuation_max = forms.CharField(
-        required=False, label=_("Fiber Attenuation Max (dB/km)"), help_text="Range format: min-max (e.g., 0.2-0.4)"
+        required=False,
+        label=_("Fiber Attenuation Max (dB/km)"),
+        help_text="Formats: exact '0.5', range '0.2-0.8', '>0.3', '<1.0', '>=0.2', '<=0.8'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >0.5 or 0.2-0.8"}),
     )
 
     total_loss = forms.CharField(
-        required=False, label=_("Total Loss (dB)"), help_text="Range format: min-max (e.g., 5-15)"
+        required=False,
+        label=_("Total Loss (dB)"),
+        help_text="Formats: exact '10', range '5-15', '>10', '<20', '>=5', '<=15'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >10 or 5-20"}),
     )
 
     total_length = forms.CharField(
-        required=False, label=_("Total Length (km)"), help_text="Range format: min-max (e.g., 10-100)"
+        required=False,
+        label=_("Total Length (km)"),
+        help_text="Formats: exact '50', range '10-100', '>20', '<200', '>=10', '<=100'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >20 or 10-100"}),
     )
 
     number_of_fibers = forms.CharField(
-        required=False, label=_("Number of Fibers"), help_text="Range format: min-max (e.g., 24-144)"
+        required=False,
+        label=_("Number of Fibers"),
+        help_text="Formats: exact '48', range '24-144', '>48', '<100', '>=24', '<=144'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >48 or 24-144"}),
     )
 
     connector_type = forms.MultipleChoiceField(
@@ -502,15 +522,24 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     # Optical Spectrum specific filters
     wavelength = forms.CharField(
-        required=False, label=_("Wavelength (nm)"), help_text="Range format: min-max (e.g., 1530-1565)"
+        required=False,
+        label=_("Wavelength (nm)"),
+        help_text="Formats: exact '1550', range '1530-1565', '>1540', '<1560'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >1540 or 1530-1565"}),
     )
 
     spectral_slot_width = forms.CharField(
-        required=False, label=_("Spectral Slot Width (GHz)"), help_text="Range format: min-max (e.g., 25-100)"
+        required=False,
+        label=_("Spectral Slot Width (GHz)"),
+        help_text="Formats: exact '50', range '25-100', '>40', '<80'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >40 or 25-100"}),
     )
 
     itu_grid_position = forms.CharField(
-        required=False, label=_("ITU Grid Position"), help_text="Range format: min-max (e.g., -50-50)"
+        required=False,
+        label=_("ITU Grid Position"),
+        help_text="Formats: exact '0', range '-10-10', '>0', '<20'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >0 or -10-10"}),
     )
 
     modulation_format = forms.MultipleChoiceField(
@@ -529,11 +558,17 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     # Ethernet Service specific filters
     port_speed = forms.CharField(
-        required=False, label=_("Port Speed / Bandwidth (Mbps)"), help_text="Range format: min-max (e.g., 1000-10000)"
+        required=False,
+        label=_("Port Speed / Bandwidth (Mbps)"),
+        help_text="Formats: exact '1000', range '100-10000', '>1000', '<5000'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >1000 or 100-10000"}),
     )
 
     vlan_id = forms.CharField(
-        required=False, label=_("Primary VLAN ID"), help_text="Range format: min-max (e.g., 100-4000)"
+        required=False,
+        label=_("Primary VLAN ID"),
+        help_text="Formats: exact '100', range '100-4000', '>500', '<3000'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >500 or 100-4000"}),
     )
 
     encapsulation_type = forms.MultipleChoiceField(
@@ -568,7 +603,10 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     )
 
     mtu_size = forms.CharField(
-        required=False, label=_("MTU Size (bytes)"), help_text="Range format: min-max (e.g., 1500-9000)"
+        required=False,
+        label=_("MTU Size (bytes)"),
+        help_text="Formats: exact '1500', range '1500-9000', '>1500', '<8000'",
+        widget=forms.TextInput(attrs={"placeholder": "e.g., >1500 or 1500-9000"}),
     )
 
     fieldsets = (
