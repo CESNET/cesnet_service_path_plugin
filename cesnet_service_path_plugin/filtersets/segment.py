@@ -456,33 +456,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
         return queryset.filter(q_conditions)
 
-    # def _filter_type_specific_range(self, queryset, name, value):
-    #     """
-    #     Filter by type-specific range fields (min/max values)
-
-    #     Args:
-    #         queryset: Current queryset
-    #         name: Field name (matches the filter name)
-    #         value: Range object with start and stop values
-    #     """
-    #     if not value:
-    #         return queryset
-
-    #     conditions = Q()
-    #     json_field = f"type_specific_data__{name}"
-    #     if value.start is not None:
-    #         # Greater than or equal to start value
-    #         conditions &= Q(**{f"{json_field}__gte": value.start})
-
-    #     if value.stop is not None:
-    #         # Less than or equal to stop value
-    #         conditions &= Q(**{f"{json_field}__lte": value.stop})
-
-    #     # Only return segments that have this field defined (not null)
-    #     conditions &= Q(**{f"{json_field}__isnull": False})
-
-    #     return queryset.filter(conditions)
-
     def search(self, queryset, name, value):
         site_a = Q(site_a__name__icontains=value)
         site_b = Q(site_b__name__icontains=value)
@@ -492,7 +465,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         network_label = Q(network_label__icontains=value)
         provider_segment_id = Q(provider_segment_id__icontains=value)
         status = Q(status__iexact=value)
-        segment_type = Q(segment_type__iexact=value)  # Added segment_type to search
+        segment_type = Q(segment_type__iexact=value)
 
         return queryset.filter(
             site_a
