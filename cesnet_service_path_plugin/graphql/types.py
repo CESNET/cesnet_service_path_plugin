@@ -1,6 +1,3 @@
-# 1. First, let's update your types.py to ensure it's importing correctly
-# cesnet_service_path_plugin/graphql/types.py
-
 from typing import Annotated, List, Optional
 
 from circuits.graphql.types import CircuitType, ProviderType
@@ -45,6 +42,11 @@ class SegmentType(NetBoxObjectType):
     install_date: auto
     termination_date: auto
     status: auto
+
+    # Segment type fields
+    segment_type: auto
+    type_specific_data: auto
+
     provider: Annotated["ProviderType", lazy("circuits.graphql.types")] | None
     provider_segment_id: auto
     provider_segment_name: auto
@@ -71,6 +73,36 @@ class SegmentType(NetBoxObjectType):
             return self.has_path_data()
         # Fallback: check if path_geometry field has data
         return bool(self.path_geometry)
+
+    @field
+    def segment_type_display(self) -> Optional[str]:
+        """Display name for segment type"""
+        if hasattr(self, "get_segment_type_display"):
+            return self.get_segment_type_display()
+        return None
+
+    @field
+    def type_specific_display(self) -> Optional[strawberry.scalars.JSON]:
+        """Formatted display of type-specific data"""
+        if hasattr(self, "get_type_specific_display"):
+            return self.get_type_specific_display()
+        return None
+
+    @field
+    def type_specific_schema(self) -> Optional[strawberry.scalars.JSON]:
+        """Schema for the segment's type"""
+        from cesnet_service_path_plugin.models.segment_types import SEGMENT_TYPE_SCHEMAS
+
+        if self.segment_type:
+            return SEGMENT_TYPE_SCHEMAS.get(self.segment_type, {})
+        return None
+
+    @field
+    def has_type_specific_data(self) -> bool:
+        """Whether this segment has type-specific data"""
+        if hasattr(self, "has_type_specific_data"):
+            return self.has_type_specific_data()
+        return bool(self.type_specific_data)
 
     @field
     def path_geometry_geojson(self) -> Optional[strawberry.scalars.JSON]:

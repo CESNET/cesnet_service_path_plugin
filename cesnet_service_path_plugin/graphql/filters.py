@@ -42,7 +42,10 @@ class SegmentFilter(NetBoxModelFilterMixin):
     provider_segment_contract: FilterLookup[str] | None = strawberry_django.filter_field()
     comments: FilterLookup[str] | None = strawberry_django.filter_field()
 
-    # Path geometry fields - these are the key ones you're missing
+    # Segment type field
+    segment_type: FilterLookup[str] | None = strawberry_django.filter_field()
+
+    # Path geometry fields
     path_length_km: FilterLookup[float] | None = strawberry_django.filter_field()
     path_source_format: FilterLookup[str] | None = strawberry_django.filter_field()
     path_notes: FilterLookup[str] | None = strawberry_django.filter_field()
