@@ -82,13 +82,6 @@ class SegmentType(NetBoxObjectType):
         return None
 
     @field
-    def type_specific_display(self) -> Optional[strawberry.scalars.JSON]:
-        """Formatted display of type-specific data"""
-        if hasattr(self, "get_type_specific_display"):
-            return self.get_type_specific_display()
-        return None
-
-    @field
     def type_specific_schema(self) -> Optional[strawberry.scalars.JSON]:
         """Schema for the segment's type"""
         from cesnet_service_path_plugin.models.segment_types import SEGMENT_TYPE_SCHEMAS
