@@ -98,27 +98,28 @@ class SegmentFilter(NetBoxModelFilterMixin):
         strawberry_django.filter_field()
     )
 
-    # Custom filter for checking if segment has path data
-    has_path_data: Optional[bool] = None
+    # Custom filter methods with decorator approach
+    @strawberry_django.filter_field
+    def has_path_data(self, value: bool, prefix: str) -> Q:
+        """Filter segments based on whether they have path geometry data"""
 
-    # Custom filter for checking if segment has type-specific data
-    has_type_specific_data: Optional[bool] = None
-
-    def filter_has_path_data(self, queryset, info):
-        if self.has_path_data is None:
-            return queryset
-        if self.has_path_data:
-            return queryset.filter(path_geometry__isnull=False)
+        if value:
+            # Filter for segments WITH path data
+            return Q(**{f"{prefix}path_geometry__isnull": False})
         else:
-            return queryset.filter(path_geometry__isnull=True)
+            # Filter for segments WITHOUT path data
+            return Q(**{f"{prefix}path_geometry__isnull": True})
 
-    def filter_has_type_specific_data(self, queryset, info):
-        if self.has_type_specific_data is None:
-            return queryset
-        if self.has_type_specific_data:
-            return queryset.exclude(type_specific_data={})
+    @strawberry_django.filter_field
+    def has_type_specific_data(self, value: bool, prefix: str) -> Q:
+        """Filter segments based on whether they have type-specific data"""
+        if value:
+            # Has type-specific data: JSON field is not empty and not null
+            # Return Q object that excludes empty dict and null values
+            return ~Q(**{f"{prefix}type_specific_data": {}}) & ~Q(**{f"{prefix}type_specific_data__isnull": True})
         else:
-            return queryset.filter(type_specific_data={})
+            # No type-specific data: JSON field is empty or null
+            return Q(**{f"{prefix}type_specific_data": {}}) | Q(**{f"{prefix}type_specific_data__isnull": True})
 
 
 @strawberry_django.filter(ServicePath, lookups=True)

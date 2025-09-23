@@ -1,12 +1,11 @@
 from typing import Annotated, List, Optional
-import logging
+
 from circuits.graphql.types import CircuitType, ProviderType
 from dcim.graphql.types import LocationType, SiteType
 from netbox.graphql.types import NetBoxObjectType
 from strawberry import auto, lazy, field
 from strawberry_django import type as strawberry_django_type
 import strawberry
-
 
 from cesnet_service_path_plugin.models import (
     Segment,
@@ -22,9 +21,6 @@ from .filters import (
     ServicePathFilter,
     ServicePathSegmentMappingFilter,
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 # Custom scalar types for path geometry data
@@ -74,8 +70,6 @@ class SegmentType(NetBoxObjectType):
         """Whether this segment has type-specific data"""
         if hasattr(self, "has_type_specific_data"):
             return self.has_type_specific_data()
-        logger.warning("Segment has no type-specific data")
-        logger.debug(f"Type-specific data: {self.type_specific_data}")
         return bool(self.type_specific_data)
 
     @field
@@ -91,22 +85,6 @@ class SegmentType(NetBoxObjectType):
         if hasattr(self, "get_segment_type_display"):
             return self.get_segment_type_display()
         return None
-
-    @field
-    def type_specific_schema(self) -> Optional[strawberry.scalars.JSON]:
-        """Schema for the segment's type"""
-        from cesnet_service_path_plugin.models.segment_types import SEGMENT_TYPE_SCHEMAS
-
-        if self.segment_type:
-            return SEGMENT_TYPE_SCHEMAS.get(self.segment_type, {})
-        return None
-
-    @field
-    def has_type_specific_data(self) -> bool:
-        """Whether this segment has type-specific data"""
-        if hasattr(self, "has_type_specific_data"):
-            return self.has_type_specific_data()
-        return bool(self.type_specific_data)
 
     @field
     def path_geometry_geojson(self) -> Optional[strawberry.scalars.JSON]:
@@ -154,20 +132,6 @@ class SegmentType(NetBoxObjectType):
             if bounds and len(bounds) >= 4:
                 return PathBounds(xmin=bounds[0], ymin=bounds[1], xmax=bounds[2], ymax=bounds[3])
         return None
-
-    @field
-    def path_segment_count(self) -> int:
-        """Number of path segments in the MultiLineString"""
-        if hasattr(self, "get_path_segment_count"):
-            return self.get_path_segment_count()
-        return 0
-
-    @field
-    def path_total_points(self) -> int:
-        """Total number of coordinate points across all segments"""
-        if hasattr(self, "get_total_points"):
-            return self.get_total_points()
-        return 0
 
 
 @strawberry_django_type(SegmentCircuitMapping, filters=SegmentCircuitMappingFilter)
