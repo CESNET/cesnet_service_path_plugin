@@ -27,6 +27,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version |
 |----------------|----------------|
+|     4.4        |      5.1.x     |
 |     4.3        |      5.0.x     |
 |     4.2        |      4.0.x     |
 |     3.7        |      0.1.0     |
@@ -46,9 +47,10 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - Link circuits to segments
 - Automatic status tracking based on dates
 - **Geographic path visualization with actual route data**
+- segment types (dark fiber, optical spectrum, ethernet) with type specific data
 
 ### Geographic Features
-- **Interactive map visualization** with multiple tile layers (OpenStreetMap, satellite, topographic)
+- **Interactive map visualization** with multiple tile layers (OpenStreetMap, satellite, topographic) and multiple color schema (status, provider, segment type)
 - **Path data upload** supporting KML, KMZ, and GeoJSON formats
 - **Automatic path length calculation** in kilometers
 - **Multi-segment path support** with complex routing
