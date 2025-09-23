@@ -1,11 +1,12 @@
 from typing import Annotated, List, Optional
-
+import logging
 from circuits.graphql.types import CircuitType, ProviderType
 from dcim.graphql.types import LocationType, SiteType
 from netbox.graphql.types import NetBoxObjectType
 from strawberry import auto, lazy, field
 from strawberry_django import type as strawberry_django_type
 import strawberry
+
 
 from cesnet_service_path_plugin.models import (
     Segment,
@@ -21,6 +22,9 @@ from .filters import (
     ServicePathFilter,
     ServicePathSegmentMappingFilter,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 # Custom scalar types for path geometry data
@@ -66,12 +70,19 @@ class SegmentType(NetBoxObjectType):
     circuits: List[Annotated["CircuitType", lazy("circuits.graphql.types")]]
 
     @field
+    def has_type_specific_data(self) -> bool:
+        """Whether this segment has type-specific data"""
+        if hasattr(self, "has_type_specific_data"):
+            return self.has_type_specific_data()
+        logger.warning("Segment has no type-specific data")
+        logger.debug(f"Type-specific data: {self.type_specific_data}")
+        return bool(self.type_specific_data)
+
+    @field
     def has_path_data(self) -> bool:
         """Whether this segment has path geometry data"""
-        # Make sure this method exists on your model
         if hasattr(self, "has_path_data") and callable(getattr(self, "has_path_data")):
             return self.has_path_data()
-        # Fallback: check if path_geometry field has data
         return bool(self.path_geometry)
 
     @field
