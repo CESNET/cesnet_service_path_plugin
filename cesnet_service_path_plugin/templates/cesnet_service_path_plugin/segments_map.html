@@ -73,7 +73,7 @@
                         <i class="mdi mdi-table" aria-hidden="true"></i> Table View
                     </a>
                     
-                    <!-- Color Scheme Selector -->
+                    <!-- Color Scheme Selector -->                    
                     <div class="btn-group ms-2" role="group">
                         <button type="button" class="btn btn-outline-info btn-sm dropdown-toggle" data-bs-toggle="dropdown" id="colorSchemeButton">
                             <i class="mdi mdi-palette" aria-hidden="true"></i> <span id="currentColorScheme">Status</span>
@@ -84,6 +84,9 @@
                             </a></li>
                             <li><a class="dropdown-item" href="#" data-scheme="provider">
                                 <i class="mdi mdi-circle-medium" style="color: #e74c3c;"></i> By Provider
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-scheme="segment_type">
+                                <i class="mdi mdi-circle-medium" style="color: #9c27b0;"></i> By Segment Type
                             </a></li>
                         </ul>
                     </div>
@@ -162,20 +165,20 @@
                     const mapBounds = mapData.mapBounds;
                     const mapCenter = mapData.mapCenter;
                     const apiUrl = mapData.apiUrl;
-                    
+
                     // Create map
                     const map = L.map('map').setView([mapCenter.lat, mapCenter.lng], mapCenter.zoom);
-                    
+
                     // Initialize layers using common function
                     initializeMapLayers(map);
-                    
+
                     // Layer groups for different types
                     const pathLayers = L.layerGroup().addTo(map);
                     const siteLayers = L.layerGroup().addTo(map);
-                    
+
                     // Color schemes
                     let currentColorScheme = 'status';
-                    
+
                     // Status color mapping
                     const statusColorsLine = {
                         "Active": "#198754",       // Dark Green
@@ -194,7 +197,14 @@
 
                     // Provider color mapping - generate colors dynamically
                     const providerColors = {};
-                    
+
+                    // NEW: Segment type color mapping
+                    const segmentTypeColors = {
+                        "Dark Fiber": "#9c27b0",      // Purple (matches your SegmentTypeChoices)
+                        "Optical Spectrum": "#ff9800", // Orange (matches your SegmentTypeChoices)  
+                        "Ethernet Service": "#4caf50"  // Green (matches your SegmentTypeChoices)
+                    };
+
                     // Generate color palette for providers
                     const colorPalette = [
                         '#d32f2f', // strong red    
@@ -217,9 +227,8 @@
                         '#0d47a1', // navy blue
                         '#ad1457', // dark pink
                         '#4a148c'  // very dark purple
-                        ];
-                   
-                    
+                    ];
+
                     // Build provider color mappings from segments data
                     function buildProviderColors() {
                         const uniqueProviders = [...new Set(segmentsData.map(s => s.provider).filter(p => p))];
@@ -227,23 +236,25 @@
                             providerColors[provider] = colorPalette[index % colorPalette.length];
                         });
                     }
-                    
+
                     // Initialize provider colors
                     buildProviderColors();
 
                     // Store all segments with their layers
                     let segmentLayers = new Map(); // segmentId -> layer
-                    
+
                     // Function to get segment color based on current scheme
                     function getSegmentColor(segment) {
                         if (currentColorScheme === 'status') {
                             return statusColorsLine[segment.status] || '#dc3545';
                         } else if (currentColorScheme === 'provider') {
                             return providerColors[segment.provider] || '#6c757d';
+                        } else if (currentColorScheme === 'segment_type') {
+                            return segmentTypeColors[segment.segment_type] || '#6c757d';
                         }
                         return '#dc3545';
                     }
-                    
+
                     // Function to get status badge color 
                     function getStatusBadgeColor(segment) {
                         return statusBadge[segment.status] || 'secondary';
@@ -255,7 +266,7 @@
                             ? '<span class="badge text-bg-success">Has Path Data</span>'
                             : '<span class="badge text-bg-warning">No Path Data</span>';
                     }
-                    
+
                     // Function to update legend based on current color scheme
                     function updateLegend() {
                         const legendDropdown = document.getElementById('legendDropdown');
@@ -281,6 +292,16 @@
                                 </span>`;
                                 legendDropdown.appendChild(li);
                             });
+                        } else if (currentColorScheme === 'segment_type') {
+                            // NEW: Segment type legend
+                            Object.entries(segmentTypeColors).forEach(([segmentType, color]) => {
+                                const li = document.createElement('li');
+                                li.innerHTML = `<span class="dropdown-item-text small">
+                                    <span style="display: inline-block; width: 20px; height: 3px; background-color: ${color}; margin-right: 8px;"></span>
+                                    ${segmentType}
+                                </span>`;
+                                legendDropdown.appendChild(li);
+                            });
                         }
                         
                         // Add common legend items
@@ -295,14 +316,20 @@
                         </span>`;
                         legendDropdown.appendChild(pathInfo);
                     }
-                    
+
                     // Function to switch color scheme
                     function switchColorScheme(scheme) {
                         currentColorScheme = scheme;
                         
                         // Update button text
                         const schemeButton = document.getElementById('currentColorScheme');
-                        schemeButton.textContent = scheme === 'status' ? 'Status' : 'Provider';
+                        if (scheme === 'status') {
+                            schemeButton.textContent = 'Status';
+                        } else if (scheme === 'provider') {
+                            schemeButton.textContent = 'Provider';
+                        } else if (scheme === 'segment_type') {
+                            schemeButton.textContent = 'Segment Type';
+                        }
                         
                         // Update legend
                         updateLegend();
@@ -310,6 +337,7 @@
                         // Reload segments with new colors
                         loadSegmentsWithOverlapHandling();
                     }
+
                     
                     // Function to show segment info in the info panel under the map
                     function showSegmentInfo(segment) {
@@ -756,13 +784,13 @@
                             });
                         });
                     });
-                    
+
                     // Initialize layer switching functionality
                     initializeLayerSwitching(map);
-                    
+
                     // Initialize legend
                     updateLegend();
-                    
+
                     // Load segments on page load with overlap handling
                     loadSegmentsWithOverlapHandling();
                     </script>
