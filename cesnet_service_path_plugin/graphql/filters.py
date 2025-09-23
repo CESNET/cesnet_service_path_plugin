@@ -28,32 +28,6 @@ __all__ = (
 )
 
 
-@strawberry.input
-class TypeSpecificNumericFilter:
-    """Input type for filtering type-specific numeric fields"""
-
-    exact: Optional[float] = None
-    gt: Optional[float] = None
-    gte: Optional[float] = None
-    lt: Optional[float] = None
-    lte: Optional[float] = None
-    range_min: Optional[float] = None
-    range_max: Optional[float] = None
-
-
-@strawberry.input
-class TypeSpecificIntegerFilter:
-    """Input type for filtering type-specific integer fields"""
-
-    exact: Optional[int] = None
-    gt: Optional[int] = None
-    gte: Optional[int] = None
-    lt: Optional[int] = None
-    lte: Optional[int] = None
-    range_min: Optional[int] = None
-    range_max: Optional[int] = None
-
-
 @strawberry_django.filter(Segment, lookups=True)
 class SegmentFilter(NetBoxModelFilterMixin):
     """GraphQL filter for Segment model"""
