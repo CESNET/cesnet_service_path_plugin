@@ -144,6 +144,15 @@ class SegmentForm(NetBoxModelForm):
                         help_text=field_config.get("help_text", ""),
                         widget=forms.Select(attrs={"class": "form-select", "data-type-field": segment_type}),
                     )
+                elif field_config["type"] == "multichoice":
+                    choices = [(c, c) for c in field_config.get("choices", [])]
+                    field = forms.MultipleChoiceField(
+                        label=field_config["label"],
+                        required=False,
+                        choices=choices,
+                        help_text=field_config.get("help_text", ""),
+                        widget=forms.SelectMultiple(attrs={"class": "form-select", "data-type-field": segment_type}),
+                    )
                 else:  # string
                     field = forms.CharField(
                         label=field_config["label"],

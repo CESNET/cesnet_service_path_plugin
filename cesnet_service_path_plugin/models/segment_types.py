@@ -23,7 +23,7 @@ class SegmentTypeChoices(ChoiceSet):
 SEGMENT_TYPE_SCHEMAS = {
     SegmentTypeChoices.DARK_FIBER: {
         "fiber_type": {
-            "type": "choice",
+            "type": "multichoice",
             "label": "Fiber Type",
             "choices": ["G.652D", "G.655", "G.657A1", "G.657A2", "G.652B", "G.652C", "G.653", "G.654E"],
             "required": False,
@@ -67,9 +67,16 @@ SEGMENT_TYPE_SCHEMAS = {
             "required": False,
             "help_text": "Total number of fiber strands in the cable",
         },
-        "connector_type": {
+        "connector_type_side_a": {
             "type": "choice",
-            "label": "Connector Type",
+            "label": "Connector Type Side A",
+            "choices": ["LC/APC", "LC/UPC", "SC/APC", "SC/UPC", "FC/APC", "FC/UPC", "ST/UPC", "E2000/APC", "MTP/MPO"],
+            "required": False,
+            "help_text": "Optical connector type and polish",
+        },
+        "connector_type_side_b": {
+            "type": "choice",
+            "label": "Connector Type Side B",
             "choices": ["LC/APC", "LC/UPC", "SC/APC", "SC/UPC", "FC/APC", "FC/UPC", "ST/UPC", "E2000/APC", "MTP/MPO"],
             "required": False,
             "help_text": "Optical connector type and polish",
