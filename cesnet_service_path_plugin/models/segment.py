@@ -7,6 +7,11 @@ from django.utils import timezone
 from netbox.models import NetBoxModel
 
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
+from cesnet_service_path_plugin.models.segment_types import (
+    SegmentTypeChoices,
+    SEGMENT_TYPE_SCHEMAS,
+    validate_segment_type_data,
+)
 
 
 class Segment(NetBoxModel):
@@ -21,6 +26,19 @@ class Segment(NetBoxModel):
         blank=False,
         null=False,
     )
+
+    # New segment type field
+    segment_type = models.CharField(
+        max_length=30,
+        choices=SegmentTypeChoices,
+        default=SegmentTypeChoices.DARK_FIBER,
+        blank=False,
+        null=False,
+        help_text="Type of network segment",
+    )
+
+    # JSON field for type-specific technical parameters
+    type_specific_data = models.JSONField(default=dict, blank=True, help_text="Type-specific technical parameters")
 
     provider = models.ForeignKey(
         "circuits.provider",
@@ -125,6 +143,17 @@ class Segment(NetBoxModel):
                     }
                 )
 
+        # Validate type-specific data against schema
+        if self.segment_type and self.type_specific_data:
+            self.validate_type_specific_data()
+
+    def validate_type_specific_data(self):
+        """Validate type_specific_data against the schema for this segment type"""
+        errors = validate_segment_type_data(self.segment_type, self.type_specific_data)
+
+        if errors:
+            raise ValidationError({"type_specific_data": errors})
+
     def save(self, *args, **kwargs):
         # Auto-calculate path length if geometry is provided
         if self.path_geometry:
@@ -138,6 +167,38 @@ class Segment(NetBoxModel):
 
     def get_status_color(self):
         return StatusChoices.colors.get(self.status, "gray")
+
+    def get_segment_type_color(self):
+        """Get color for segment type badge"""
+        return SegmentTypeChoices.colors.get(self.segment_type, "gray")
+
+    def get_type_specific_display(self):
+        """Get formatted display of type-specific data for templates"""
+        if not self.type_specific_data:
+            return {}
+
+        schema = SEGMENT_TYPE_SCHEMAS.get(self.segment_type, {})
+        display_data = {}
+
+        for field_name, value in self.type_specific_data.items():
+            if value is not None and value != "":
+                field_config = schema.get(field_name, {})
+                label = field_config.get("label", field_name.replace("_", " ").title())
+
+                # Format the value based on type
+                if field_config.get("type") == "decimal" and isinstance(value, (int, float)):
+                    # Add units if available in label
+                    if "(" in label and ")" in label:
+                        # Units are already in the label, just format the number
+                        display_data[label] = f"{value:g}"  # Remove trailing zeros
+                    else:
+                        display_data[label] = f"{value:g}"
+                elif field_config.get("type") == "integer":
+                    display_data[label] = str(value)
+                else:
+                    display_data[label] = str(value)
+
+        return display_data
 
     def get_date_status(self):
         """Returns the date status and color for progress bar"""
@@ -251,3 +312,7 @@ class Segment(NetBoxModel):
         if self.path_geometry:
             return sum(len(line.coords) for line in self.path_geometry)
         return 0
+
+    def has_type_specific_data(self):
+        """Check if segment has any type-specific data"""
+        return bool(self.type_specific_data)

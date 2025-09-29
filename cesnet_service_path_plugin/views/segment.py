@@ -50,6 +50,8 @@ class SegmentEditView(generic.ObjectEditView):
     queryset = Segment.objects.all()
     form = SegmentForm
 
+    template_name = "cesnet_service_path_plugin/segment_edit.html"
+
 
 class SegmentDeleteView(generic.ObjectDeleteView):
     queryset = Segment.objects.all()
@@ -266,9 +268,12 @@ class SegmentsMapView(generic.ObjectListView):
                 "id": segment.pk,
                 "name": segment.name,
                 "provider": str(segment.provider) if segment.provider else None,
-                "provider_id": segment.provider.pk if segment.provider else None,  # NEW: Add provider ID
+                "provider_id": segment.provider.pk if segment.provider else None,
                 "status": segment.get_status_display(),
                 "status_color": segment.get_status_color(),
+                # NEW: Add segment type information
+                "segment_type": segment.get_segment_type_display(),
+                "segment_type_color": segment.get_segment_type_color(),
                 "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
                 "site_a": site_a_data,
                 "site_b": site_b_data,
@@ -318,7 +323,6 @@ class SegmentsMapView(generic.ObjectListView):
         return context
 
 
-# Keep your existing function-based API view
 def segments_map_api(request):
     """
     API endpoint to return filtered segments as GeoJSON for map display
@@ -352,6 +356,9 @@ def segments_map_api(request):
                         "provider": str(segment.provider) if segment.provider else None,
                         "status": segment.get_status_display(),
                         "status_color": segment.get_status_color(),
+                        # NEW: Add segment type information
+                        "segment_type": segment.get_segment_type_display(),
+                        "segment_type_color": segment.get_segment_type_color(),
                         "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
                         "site_a": str(segment.site_a),
                         "site_b": str(segment.site_b),
@@ -384,6 +391,9 @@ def segments_map_api(request):
                         "provider": str(segment.provider) if segment.provider else None,
                         "status": segment.get_status_display(),
                         "status_color": segment.get_status_color(),
+                        # NEW: Add segment type information
+                        "segment_type": segment.get_segment_type_display(),
+                        "segment_type_color": segment.get_segment_type_color(),
                         "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
                         "site_a": str(segment.site_a),
                         "site_b": str(segment.site_b),

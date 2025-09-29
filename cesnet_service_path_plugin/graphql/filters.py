@@ -1,4 +1,5 @@
-from typing import Annotated, TYPE_CHECKING
+# cesnet_service_path_plugin/graphql/filters.py
+from typing import Annotated, TYPE_CHECKING, Optional
 
 import strawberry
 import strawberry_django
@@ -42,7 +43,10 @@ class SegmentFilter(NetBoxModelFilterMixin):
     provider_segment_contract: FilterLookup[str] | None = strawberry_django.filter_field()
     comments: FilterLookup[str] | None = strawberry_django.filter_field()
 
-    # Path geometry fields - these are the key ones you're missing
+    # Segment type field
+    segment_type: FilterLookup[str] | None = strawberry_django.filter_field()
+
+    # Path geometry fields
     path_length_km: FilterLookup[float] | None = strawberry_django.filter_field()
     path_source_format: FilterLookup[str] | None = strawberry_django.filter_field()
     path_notes: FilterLookup[str] | None = strawberry_django.filter_field()
@@ -67,6 +71,29 @@ class SegmentFilter(NetBoxModelFilterMixin):
     circuits: Annotated["CircuitFilter", strawberry.lazy("circuits.graphql.filters")] | None = (
         strawberry_django.filter_field()
     )
+
+    # Custom filter methods with decorator approach
+    @strawberry_django.filter_field
+    def has_path_data(self, value: bool, prefix: str) -> Q:
+        """Filter segments based on whether they have path geometry data"""
+
+        if value:
+            # Filter for segments WITH path data
+            return Q(**{f"{prefix}path_geometry__isnull": False})
+        else:
+            # Filter for segments WITHOUT path data
+            return Q(**{f"{prefix}path_geometry__isnull": True})
+
+    @strawberry_django.filter_field
+    def has_type_specific_data(self, value: bool, prefix: str) -> Q:
+        """Filter segments based on whether they have type-specific data"""
+        if value:
+            # Has type-specific data: JSON field is not empty and not null
+            # Return Q object that excludes empty dict and null values
+            return ~Q(**{f"{prefix}type_specific_data": {}}) & ~Q(**{f"{prefix}type_specific_data__isnull": True})
+        else:
+            # No type-specific data: JSON field is empty or null
+            return Q(**{f"{prefix}type_specific_data": {}}) | Q(**{f"{prefix}type_specific_data__isnull": True})
 
 
 @strawberry_django.filter(ServicePath, lookups=True)

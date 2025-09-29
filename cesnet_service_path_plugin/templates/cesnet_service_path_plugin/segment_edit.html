@@ -1,0 +1,10 @@
+{% extends 'generic/object_edit.html' %}
+{% load i18n %}
+{% load static %}
+{% block title %}
+    TEST
+    <link rel="stylesheet"
+          href="{% static 'cesnet_service_path_plugin/css/segment_form.css' %}">
+    <script src="{% static 'cesnet_service_path_plugin/js/segment_form.js' %}"></script>
+    {{ block.super }}
+{% endblock title %}

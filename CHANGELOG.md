@@ -5,7 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.0.2] - 2025-01-XX
+## [5.1.0] - 2025-09-23
+
+### Added
+- **Segment Type System**: Complete implementation of segment type classification
+  - `segment_type` field with Dark Fiber, Optical Spectrum, and Ethernet Service types
+  - Type-specific data fields stored as JSON with dynamic schemas
+  - Smart numeric filtering for type-specific fields with operators (>, <, >=, <=, ranges)
+  - Dynamic form generation based on selected segment type
+  - Type-specific field validation and conversion (Decimal, Integer)
+  - Enhanced GraphQL API with type-specific data filtering (`has_type_specific_data`)
+
+- **Enhanced Map Visualization**: Advanced mapping features
+  - Segment type-based coloring and legend in map views
+  - Color schemes: by status and by provider
+  - Improved overlapping segment detection and selection
+  - Multiple background map layers (OpenStreetMap, satellite, topographic, CartoDB)
+
+- **Smart Filtering System**: Advanced filtering capabilities
+  - Smart numeric filters for JSON fields with operator support
+  - Type-specific field filters (fiber_type, connector_type, modulation_format, etc.)
+  - Range filters for numeric fields (fiber_attenuation_max, wavelength, port_speed, etc.)
+  - Boolean value parsing improvements
+  - Enhanced search functionality including segment_type
+
+### Changed
+- Updated segment form to preserve type-specific field values during type changes
+- Enhanced JavaScript form handling to hide fields without clearing values
+- Improved field initialization and population logic
+- Updated segment table to include segment_type column
+- Modified API serializers to handle path file uploads
+- Removed unnecessary SegmentListSerializer, unified with SegmentSerializer
+
+### Fixed
+- Fixed form rendering issues with type-specific fields
+- Improved value preservation when switching segment types
+- Enhanced JSON field conversion for Decimal types
+- Fixed smart numeric filtering edge cases
+- Resolved issues with dynamic field visibility
+
+
+## [5.0.3] - 2025-08-29
+
+### Fixed
+- **Critical**: Added save_m2m() call to SegmentForm to properly save tags
+  - Fixed missing many-to-many relationship saving (tags were being lost)
+  - Ensured proper persistence of all many-to-many fields
+
+### Changed
+- Updated documentation with sample map in README
+- Added Apache 2.0 License (same as NetBox)
+- Updated pyproject.toml with repository information
+
+## [5.0.2] - 2025-08-21
+
+### Added
+- **Documentation Improvements**: Enhanced README and licensing
+  - Apache 2.0 License badge and full license file
+  - Sample map visualization in README
+  - Updated repository information in pyproject.toml
+
+### Changed
+- Repository metadata and documentation updates
+- Warning about work-in-progress status
+
+## [5.0.1] - 2025-08-04
+
+### Added
+- **Comprehensive Segment Map**: Interactive map view for all segments
+  - Map utilizes list view filtering capabilities
+  - Multiple background layer options
+  - Improved navigation and user experience
+
+### Fixed
+- Fixed button types to prevent form submission when changing map layers
+- Enhanced map layer switching controls
+
+## [5.0.0] - 2025-08-01
 
 ### Added
 - **Geographic Path Visualization**: Complete interactive map system with Leaflet
@@ -74,6 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved date validation with better error messaging
 - Enhanced KMZ file processing for complex archive structures
 - Fixed coordinate system handling for accurate length calculations
+- Fixed segment detail view table rendering and typos
 
 ### Technical Details
 - Added `geopandas`, `fiona`, and `shapely` as core dependencies
@@ -82,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created reusable template components for map functionality
 - Enhanced error handling and logging for geographic operations
 - Implemented proper geometric validation and sanitization
+- Replaced setup.py with pyproject.toml for modern Python packaging
 
 ### Migration Notes
 - **Database Migration Required**: New geographic fields require PostGIS
@@ -89,12 +167,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Configuration Updates**: May need GeoDjango configuration updates
 - **Data Migration**: Existing installations will have empty path geometry fields
 
+## [4.3.0] - 2025-05-16
+
+### Added
+- **NetBox 4.3 Compatibility**: Updated for NetBox 4.3 support
+  - New URL patterns for bulk operations on service paths, segment mappings, and circuit mappings
+  - Enhanced Meta classes for filter consistency
+  - Improved import structure for better maintainability
+
+### Changed
+- Updated imports in filters.py for better readability
+- Changed `model` to `models` in template_content.py for multi-model compatibility
+- Removed unused imports and decorators for cleaner code
+- Updated plugin version to 4.3.0
+
+## [4.0.1] - 2025-02-24
+
+### Fixed
+- **Bookmark and Subscription Issues**: Resolved non-functional bookmark and subscription features
+- Updated plugin configuration and version management
+- Removed unused imports for cleaner codebase
+
+## [4.0.0] - 2025-02-19
+
+### Added
+- **Enhanced Service Management**: Comprehensive service path and segment management
+  - Ability to assign segments to circuits or service paths from segment detail view
+  - Improved ServicePath kind field with ChoiceSet system
+  - Enhanced date validation logic in SegmentForm
+  - Date status display in table and detail views with color-coded progress bars
+
+### Changed
+- **Breaking**: Refactored from "Komora" to "CESNET" branding throughout
+  - Plugin renamed from `komora_service_path_plugin` to `cesnet_service_path_plugin`
+  - Database table names changed from `komora_*` to `cesnet_*`
+  - URL patterns and configuration updated
+  - All references and documentation updated
+
+- **Model Improvements**:
+  - Replaced `state` field with `status` field in ServicePath and Segment models
+  - Added StatusChoices for consistent status options
+  - Made provider field required in SegmentForm
+  - Enhanced date validation with install_date/termination_date constraints
+
+- **Data Cleanup**:
+  - Removed sync_status from all models
+  - Removed device_ and port_ fields from Segment model
+  - Merged segment notes (note_a, note_b) into unified comments field
+  - Removed imported_data and komora_id fields
+  - Removed unnecessary db_table options from models
+
+### Fixed
+- Fixed link for adding segment to a circuit
+- Fixed EditForm for SegmentCircuitMapping model
+- Enabled ID linkify for mapping tables
+- Fixed date status logic and display
+- Enhanced form validation and error handling
+
+### Migration Notes
+- **Breaking**: Database table renaming requires careful migration
+- **Data Migration**: Existing installations need to migrate from old table names
+- **Configuration**: Update plugin configuration from komora to cesnet references
+
 ## [0.1.0] - 2024-04-23
 
 ### Added
-- Initial release on PyPI
+- **Initial Release**: First version published on PyPI
 - Basic segment and service path management
-- Provider and circuit relationship tracking
+- Provider and circuit relationship tracking  
 - Simple filtering and table views
 - REST API endpoints
 - NetBox 3.7 compatibility

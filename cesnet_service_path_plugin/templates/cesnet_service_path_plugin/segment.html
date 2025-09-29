@@ -21,6 +21,14 @@
                             <td>{{ object.name|placeholder }}</td>
                         </tr>
                         <tr>
+                            <th scope="row">Segment Type</th>
+                            <td>
+                                <span class="badge text-bg-{{ object.get_segment_type_color }}">
+                                    {{ object.get_segment_type_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
                             <th scope="row">Network Label</th>
                             <td>{{ object.network_label|placeholder }}</td>
                         </tr>
@@ -146,6 +154,45 @@
             {% plugin_right_page object %}
         </div>
     </div>
+    
+    <!-- Technical Specifications Card - Full Width -->
+    {% if object.has_type_specific_data %}
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card">
+                    <h5 class="card-header">
+                        <i class="mdi mdi-cog" aria-hidden="true"></i>
+                        Technical Specifications
+                        <span class="badge text-bg-{{ object.get_segment_type_color }} ms-2">
+                            {{ object.get_segment_type_display }}
+                        </span>
+                    </h5>
+                    <div class="card-body">
+                        {% with type_data=object.get_type_specific_display %}
+                            {% if type_data %}
+                                <div class="row">
+                                    {% for label, value in type_data.items %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">{{ label }}</small>
+                                                <strong>{{ value }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-muted">
+                                    <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+                                    No technical specifications configured for this segment.
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
     <!-- A and B cards in full width row -->
     <div class="row mb-3">
         <div class="col-md-6">
