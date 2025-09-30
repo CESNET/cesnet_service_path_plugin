@@ -78,7 +78,6 @@ class SegmentFilter(NetBoxModelFilterMixin):
     @strawberry_django.filter_field
     def has_path_data(self, value: bool, prefix: str) -> Q:
         """Filter segments based on whether they have path geometry data"""
-        logging.debug(f"Filtering segments with has_path_data={value}")
         if value:
             # Filter for segments WITH path data
             return Q(**{f"{prefix}path_geometry__isnull": False})

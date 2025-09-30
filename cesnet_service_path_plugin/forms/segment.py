@@ -454,14 +454,26 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         label=_("Circuits"),
     )
 
-    has_path_data = forms.MultipleChoiceField(
+    has_path_data = forms.ChoiceField(
         required=False,
         choices=[
+            ("", "Any"),
             (True, "Yes"),
             (False, "No"),
         ],
         label=_("Has Path Data"),
         help_text="Filter segments that have path geometry data",
+    )
+
+    has_type_specific_data = forms.ChoiceField(
+        required=False,
+        choices=[
+            ("", "Any"),
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        label=_("Has Type-Specific Data"),
+        help_text="Filter segments that have type-specific data defined",
     )
 
     # =============================================================================
@@ -620,7 +632,9 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     fieldsets = (
         FieldSet("q", "tag", "filter_id", name="General"),
-        FieldSet("name", "status", "segment_type", "network_label", "has_path_data", name="Basic"),
+        FieldSet(
+            "name", "status", "segment_type", "network_label", "has_path_data", "has_type_specific_data", name="Basic"
+        ),
         FieldSet(
             "provider_id",
             "provider_segment_id",
