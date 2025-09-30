@@ -159,9 +159,6 @@ def segment_map_view(request, pk):
     # if hasattr(segment, "status") and hasattr(segment, "get_status_display"):
     #    segment_style["color"] = status_colors.get(segment.get_status_display(), "#dc3545")
 
-    print("has path data:", segment.has_path_data())
-    print("has fallback line:", has_fallback_line)
-
     context = {
         "object": segment,
         "segment": segment,
