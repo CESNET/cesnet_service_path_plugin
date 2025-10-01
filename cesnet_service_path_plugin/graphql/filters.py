@@ -6,6 +6,8 @@ import strawberry_django
 from strawberry_django import FilterLookup
 from django.db.models import Q
 
+import logging
+
 from netbox.graphql.filter_mixins import NetBoxModelFilterMixin
 
 if TYPE_CHECKING:
@@ -76,7 +78,6 @@ class SegmentFilter(NetBoxModelFilterMixin):
     @strawberry_django.filter_field
     def has_path_data(self, value: bool, prefix: str) -> Q:
         """Filter segments based on whether they have path geometry data"""
-
         if value:
             # Filter for segments WITH path data
             return Q(**{f"{prefix}path_geometry__isnull": False})

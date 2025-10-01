@@ -6,6 +6,7 @@ from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
+
 from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
@@ -86,13 +87,23 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     )
 
     # Path data filter
-    has_path_data = django_filters.MultipleChoiceFilter(
+    has_path_data = django_filters.ChoiceFilter(
         choices=[
             (True, "Yes"),
             (False, "No"),
         ],
         method="_has_path_data",
         label="Has Path Data",
+    )
+
+    # Type specific data filter
+    has_type_specific_data = django_filters.ChoiceFilter(
+        choices=[
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        method="_has_type_specific_data",
+        label="Has Type Specific Data",
     )
 
     # =============================================================================
@@ -218,6 +229,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "site_b",
             "location_b",
             "has_path_data",
+            "has_type_specific_data",
         ]
 
     def _at_any_site(self, queryset, name, value):
@@ -239,38 +251,33 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     def _has_path_data(self, queryset, name, value):
         """
         Filter segments based on whether they have path data or not
-
-        Args:
-            value: List of selected values from choices
-                   [True] - show only segments with path data
-                   [False] - show only segments without path data
-                   [True, False] - show all segments (both with and without)
-                   [] - show all segments (nothing selected)
         """
-        if not value:
+        if value in (None, "", []):
             # Nothing selected, show all segments
             return queryset
 
-        # Convert string values to boolean (django-filter sometimes passes strings)
-        bool_values = []
-        for v in value:
-            if v is True or v == "True" or v:
-                bool_values.append(True)
-            elif v is False or v == "False" or not v:
-                bool_values.append(False)
+        has_data = value in [True, "True", "true", "1"]
 
-        if True in bool_values and False in bool_values:
-            # Both selected, show all segments
-            return queryset
-        elif True in bool_values:
+        if has_data:
             # Only "Yes" selected, show segments with path data
             return queryset.filter(path_geometry__isnull=False)
-        elif False in bool_values:
+        else:
             # Only "No" selected, show segments without path data
             return queryset.filter(path_geometry__isnull=True)
+
+    def _has_type_specific_data(self, queryset, name, value):
+        """Filter segments by whether they have type-specific data"""
+        if value == "" or value is None:
+            return queryset  # No filtering
+
+        has_data = value in [True, "True", "true", "1"]
+
+        if has_data:
+            # Has data: exclude null and empty dict
+            return queryset.exclude(Q(type_specific_data__isnull=True) | Q(type_specific_data={}))
         else:
-            # Fallback: show all segments
-            return queryset
+            # No data: include null or empty dict
+            return queryset.filter(Q(type_specific_data__isnull=True) | Q(type_specific_data={}))
 
     def _parse_smart_numeric_value(self, value, field_type="float"):
         """
