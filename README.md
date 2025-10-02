@@ -13,6 +13,9 @@ Use this code **at your own risk** and only for testing or development purposes.
 A NetBox plugin for managing service paths and segments in network infrastructure with advanced geographic path visualization.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
+[![Python versions](https://img.shields.io/pypi/pyversions/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
+[![NetBox compatibility](https://img.shields.io/badge/NetBox-4.4-green.svg)](https://github.com/netbox-community/netbox)
 
 ## Overview
 
