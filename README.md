@@ -112,7 +112,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 Before installing the plugin, ensure you have:
 
 1. **PostgreSQL with PostGIS extension** (version 3.0 or higher recommended)
-2. **System libraries**: GDAL, GEOS, and PROJ
+2. **System libraries**: GDAL, GEOS, and PROJ runtime binaries
 3. **NetBox 4.2 or higher**
 
 #### Installing System Dependencies
@@ -120,8 +120,10 @@ Before installing the plugin, ensure you have:
 **Ubuntu/Debian:**
 ```bash
 sudo apt-get update
-sudo apt-get install postgresql-15-postgis-3 gdal-bin libgdal-dev libgeos-dev libproj-dev
+sudo apt-get install postgresql-15-postgis-3 gdal-bin libgdal34 libgeos-c1t64 libproj25
 ```
+
+**Note**: Package names may vary by Ubuntu/Debian version. Use `apt-cache search libgdal` to find the correct version for your system.
 
 **macOS:**
 ```bash
@@ -204,8 +206,9 @@ RUN apt-get update && apt-get install -y \
 RUN /usr/local/bin/uv pip install \
     psycopg2-binary \
     -r /opt/netbox/plugin_requirements.txt
-
 ```
+
+**Note**: Library package names (like `libgdal34`) may vary depending on the base image's Ubuntu/Debian version. Check available packages if you encounter errors.
 
 Then create a `plugin_requirements.txt` file:
 ```
@@ -422,8 +425,8 @@ pip install -e ".[dev]"
 
 4. Install geographic dependencies:
 ```bash
-# Ubuntu/Debian
-sudo apt-get install gdal-bin libgdal-dev libgeos-dev libproj-dev
+# Ubuntu/Debian - only runtime libraries needed
+sudo apt-get install gdal-bin libgdal34 libgeos-c1t64 libproj25
 
 # macOS
 brew install gdal geos proj
@@ -431,6 +434,8 @@ brew install gdal geos proj
 # Install Python packages
 pip install geopandas fiona shapely
 ```
+
+**Note**: For development, you typically only need the runtime libraries. The Python packages (geopandas, fiona, shapely) use precompiled wheels that already include the necessary bindings. Development headers (`-dev` packages) are only needed if you're compiling these libraries from source.
 
 ### Testing Geographic Features
 
@@ -461,9 +466,10 @@ Automatic integration with existing NetBox models:
 ### Common Issues
 
 1. **PostGIS not enabled**: Ensure PostGIS extension is installed in your database
-2. **GDAL library missing**: Install system GDAL libraries before Python packages
+2. **GDAL library missing**: Install system GDAL runtime libraries (`gdal-bin`, `libgdal34`) before Python packages
 3. **Path upload fails**: Check file format and ensure it contains LineString geometries
 4. **Map not loading**: Verify JavaScript console for tile layer errors
+5. **Library version mismatch**: If you encounter errors about missing libraries, check that library package names match your OS version (e.g., `libgdal34` vs `libgdal32`)
 
 ### Debug Mode
 
