@@ -1,13 +1,3 @@
-# 🚨 WARNING – Work in Progress! 🚨
-
-⚠️ This plugin is **under heavy development** and is **NOT production-ready**.  
-- Database changes that are required for the current implementation are **missing**.  
-- Documentation of the data model and functionality is **incomplete**.  
-- Expect breaking changes, unfinished features, and possible instability.  
-
-Use this code **at your own risk** and only for testing or development purposes.  
-
----
 # CESNET ServicePath Plugin for NetBox
 
 A NetBox plugin for managing service paths and segments in network infrastructure with advanced geographic path visualization.
@@ -197,21 +187,24 @@ Create a `Dockerfile` extending the official NetBox image:
 ```dockerfile
 FROM netboxcommunity/netbox:v4.4
 
-# Install PostGIS and geographic libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    postgresql-client \
-    postgis \
+# copy plugin requirements
+COPY ./plugin_requirements.txt /opt/netbox/
+
+# Install git and minimal PostGIS runtime dependencies
+RUN apt-get update && apt-get install -y \
+    git \
     gdal-bin \
-    libgdal-dev \
-    libgeos-dev \
-    libproj-dev \
-    python3-gdal \
+    libgdal34 \
+    libgeos-c1t64 \
+    libproj25 \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy plugin requirements
-COPY plugin_requirements.txt /opt/netbox/
-RUN /opt/netbox/venv/bin/pip install --no-cache-dir -r /opt/netbox/plugin_requirements.txt
+# Install PostGIS and geospatial Python dependencies
+RUN /usr/local/bin/uv pip install \
+    psycopg2-binary \
+    -r /opt/netbox/plugin_requirements.txt
+
 ```
 
 Then create a `plugin_requirements.txt` file:
