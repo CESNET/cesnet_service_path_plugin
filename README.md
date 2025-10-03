@@ -1,18 +1,31 @@
-# 🚨 WARNING – Work in Progress! 🚨
-
-⚠️ This plugin is **under heavy development** and is **NOT production-ready**.  
-- Database changes that are required for the current implementation are **missing**.  
-- Documentation of the data model and functionality is **incomplete**.  
-- Expect breaking changes, unfinished features, and possible instability.  
-
-Use this code **at your own risk** and only for testing or development purposes.  
-
----
 # CESNET ServicePath Plugin for NetBox
 
 A NetBox plugin for managing service paths and segments in network infrastructure with advanced geographic path visualization.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
+[![Python versions](https://img.shields.io/pypi/pyversions/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
+[![NetBox compatibility](https://img.shields.io/badge/NetBox-4.2%20|%204.3%20|%204.4-blue.svg)](https://github.com/netbox-community/netbox)
+
+## 📑 Table of Contents
+
+- [Overview](#overview)
+- [Compatibility Matrix](#compatibility-matrix)
+- [Features](#features)
+- [Data Model](#data-model)
+- [Installation and Configuration](#installation-and-configuration)
+  - [Prerequisites](#prerequisites)
+  - [Step-by-Step Installation](#step-1-enable-postgis-in-postgresql)
+- [Additional Configuration](#additional-configuration)
+  - [Custom Status Choices](#custom-status-choices)
+  - [Custom Kind Choices](#custom-kind-choices)
+- [Geographic Path Data](#geographic-path-data)
+- [API Usage](#api-usage)
+- [Development](#development)
+- [Navigation and UI](#navigation-and-ui)
+- [Troubleshooting](#troubleshooting)
+- [Credits](#credits)
+- [License](#license)
 
 ## Overview
 
@@ -90,17 +103,153 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Length calculation** using projected coordinates
 - **Source format tracking** (KML, KMZ, GeoJSON, manual)
 
-## Quick Start
+## Installation and Configuration
 
-1. Install the plugin:
+⚠️ **Important**: This plugin requires PostGIS and geographic libraries. Standard NetBox installations need additional setup steps.
+
+### Prerequisites
+
+Before installing the plugin, ensure you have:
+
+1. **PostgreSQL with PostGIS extension** (version 3.0 or higher recommended)
+2. **System libraries**: GDAL, GEOS, and PROJ runtime binaries
+3. **NetBox 4.2 or higher**
+
+#### Installing System Dependencies
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install postgresql-15-postgis-3 gdal-bin libgdal34 libgeos-c1t64 libproj25
+```
+
+**Note**: Package names may vary by Ubuntu/Debian version. Use `apt-cache search libgdal` to find the correct version for your system.
+
+**macOS:**
+```bash
+brew install postgresql postgis gdal geos proj
+```
+
+**Docker users**: The official `netboxcommunity/netbox` images do **NOT** include PostGIS and GDAL libraries by default. You will need to create a custom Docker image. See the Docker-specific instructions below.
+
+### Step 1: Enable PostGIS in PostgreSQL
+
+Connect to your NetBox database and enable the PostGIS extension:
+
+```sql
+-- Connect to your NetBox database
+\c netbox
+
+-- Enable PostGIS extension
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- Verify installation
+SELECT PostGIS_version();
+```
+
+### Step 2: Configure NetBox Database Engine
+
+**CRITICAL**: Update your NetBox `configuration.py` to use the PostGIS database engine:
+
+```python
+# Set the database engine to PostGIS
+DATABASE_ENGINE = "django.contrib.gis.db.backends.postgis"
+
+# PostgreSQL database configuration
+DATABASE = {
+    "ENGINE": DATABASE_ENGINE,  # Must use PostGIS engine
+    "NAME": environ.get("DB_NAME", "netbox"),
+    "USER": environ.get("DB_USER", ""),
+    "PASSWORD": read_secret("db_password", environ.get("DB_PASSWORD", "")),
+    "HOST": environ.get("DB_HOST", "localhost"),
+    "PORT": environ.get("DB_PORT", ""),
+    "OPTIONS": {"sslmode": environ.get("DB_SSLMODE", "prefer")},
+    "CONN_MAX_AGE": int(environ.get("DB_CONN_MAX_AGE", "300")),
+}
+```
+
+**Note**: This is just an example. If you're using NetBox Docker, this can be configured via environment variables in your `docker-compose.yml` or similar configuration files.
+
+### Step 3: Install the Plugin
+
+#### Standard Installation (pip)
+
 ```bash
 pip install cesnet_service_path_plugin
 ```
 
-2. Enable the plugin in your NetBox configuration:
+#### Docker Installation
+
+The official NetBox Docker images do not include the required geographic libraries. You need to create a custom Docker image.
+
+**Option 1: Create a Custom Dockerfile**
+
+Create a `Dockerfile` extending the official NetBox image:
+
+```dockerfile
+FROM netboxcommunity/netbox:v4.4
+
+# copy plugin requirements
+COPY ./plugin_requirements.txt /opt/netbox/
+
+# Install git and minimal PostGIS runtime dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    gdal-bin \
+    libgdal34 \
+    libgeos-c1t64 \
+    libproj25 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PostGIS and geospatial Python dependencies
+RUN /usr/local/bin/uv pip install \
+    psycopg2-binary \
+    -r /opt/netbox/plugin_requirements.txt
+```
+
+**Note**: Library package names (like `libgdal34`) may vary depending on the base image's Ubuntu/Debian version. Check available packages if you encounter errors.
+
+Then create a `plugin_requirements.txt` file:
+```
+cesnet_service_path_plugin
+```
+
+Build your custom image:
+```bash
+docker build -t netbox-with-gis:latest .
+```
+
+Update your `docker-compose.yml` to use the custom image:
+```yaml
+services:
+  netbox:
+    image: netbox-with-gis:latest
+    # ... rest of your configuration
+```
+
+**Option 2: Use docker-compose override**
+
+Add a `docker-compose.override.yml` file:
+
+```yaml
+version: '3.8'
+services:
+  netbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.custom
+```
+
+For detailed Docker setup instructions, see [using netbox-docker with plugins](https://github.com/netbox-community/netbox-docker/wiki/Using-Netbox-Plugins).
+
+### Step 4: Enable the Plugin
+
+Add the plugin to your NetBox `configuration.py`:
+
 ```python
 PLUGINS = [
-    'cesnet_service_path_plugin'
+    'cesnet_service_path_plugin',
 ]
 
 PLUGINS_CONFIG = {
@@ -108,48 +257,52 @@ PLUGINS_CONFIG = {
 }
 ```
 
-3. Run NetBox migrations:
+### Step 5: Run Database Migrations
+
+Apply the plugin's database migrations:
+
 ```bash
-python manage.py migrate
+cd /opt/netbox/netbox
+source venv/bin/activate
+python manage.py migrate cesnet_service_path_plugin
 ```
 
-4. **Configure GeoDjango** (required for geographic features):
-   - Install GDAL, GEOS, and PROJ libraries
-   - Configure PostGIS extension in PostgreSQL
-   - See [GeoDjango installation guide](https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/)
-
-## Installation
-
-### Prerequisites
-
-For geographic features, you need:
-- **PostGIS-enabled PostgreSQL database**
-- **GDAL, GEOS, and PROJ libraries**
-- **Python packages**: `geopandas`, `fiona`, `shapely`
-
-### Using pip
+**Docker users:**
 ```bash
-pip install cesnet_service_path_plugin
+docker exec -it netbox python /opt/netbox/netbox/manage.py migrate cesnet_service_path_plugin
 ```
 
-### Using Docker
-For NetBox Docker installations, add to your `plugin_requirements.txt`:
+### Step 6: Restart NetBox
+
+Restart your NetBox services to load the plugin:
+
 ```bash
-cesnet_service_path_plugin
+sudo systemctl restart netbox netbox-rq
 ```
 
-**Docker users**: Ensure your NetBox Docker image includes PostGIS and GDAL libraries.
-
-For detailed Docker setup instructions, see [using netbox-docker with plugins](https://github.com/netbox-community/netbox-docker/wiki/Using-Netbox-Plugins).
-
-## Configuration
-
-### Database Configuration
-
-Ensure your NetBox database has PostGIS enabled:
-```sql
-CREATE EXTENSION IF NOT EXISTS postgis;
+**Docker users:**
+```bash
+docker-compose restart netbox netbox-worker
 ```
+
+### Verification
+
+To verify the installation:
+
+1. Log into NetBox
+2. Check that "Service Paths" appears in the navigation menu
+3. Navigate to **Service Paths → Segments** to confirm the plugin is working
+
+For geographic feature verification, you can use the diagnostic function in the Django shell:
+
+```python
+python manage.py nbshell
+
+from cesnet_service_path_plugin.utils import check_gis_environment
+check_gis_environment()
+```
+
+## Additional Configuration
 
 ### Custom Status Choices
 
@@ -272,8 +425,8 @@ pip install -e ".[dev]"
 
 4. Install geographic dependencies:
 ```bash
-# Ubuntu/Debian
-sudo apt-get install gdal-bin libgdal-dev libgeos-dev libproj-dev
+# Ubuntu/Debian - only runtime libraries needed
+sudo apt-get install gdal-bin libgdal34 libgeos-c1t64 libproj25
 
 # macOS
 brew install gdal geos proj
@@ -281,6 +434,8 @@ brew install gdal geos proj
 # Install Python packages
 pip install geopandas fiona shapely
 ```
+
+**Note**: For development, you typically only need the runtime libraries. The Python packages (geopandas, fiona, shapely) use precompiled wheels that already include the necessary bindings. Development headers (`-dev` packages) are only needed if you're compiling these libraries from source.
 
 ### Testing Geographic Features
 
@@ -311,9 +466,10 @@ Automatic integration with existing NetBox models:
 ### Common Issues
 
 1. **PostGIS not enabled**: Ensure PostGIS extension is installed in your database
-2. **GDAL library missing**: Install system GDAL libraries before Python packages
+2. **GDAL library missing**: Install system GDAL runtime libraries (`gdal-bin`, `libgdal34`) before Python packages
 3. **Path upload fails**: Check file format and ensure it contains LineString geometries
 4. **Map not loading**: Verify JavaScript console for tile layer errors
+5. **Library version mismatch**: If you encounter errors about missing libraries, check that library package names match your OS version (e.g., `libgdal34` vs `libgdal32`)
 
 ### Debug Mode
 
