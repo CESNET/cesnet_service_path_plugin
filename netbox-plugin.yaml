@@ -1,0 +1,33 @@
+version: 0.1
+package_name: cesnet-service-path-plugin
+compatibility:
+  - release: 5.1.2
+    netbox_min: 4.4.0
+    netbox_max: 4.4.99
+  - release: 5.1.1
+    netbox_min: 4.4.0
+    netbox_max: 4.4.99
+  - release: 5.1.0
+    netbox_min: 4.4.0
+    netbox_max: 4.4.99
+  - release: 5.0.3
+    netbox_min: 4.3.0
+    netbox_max: 4.3.99
+  - release: 5.0.2
+    netbox_min: 4.3.0
+    netbox_max: 4.3.99
+  - release: 5.0.1
+    netbox_min: 4.3.0
+    netbox_max: 4.3.99
+  - release: 5.0.0
+    netbox_min: 4.3.0
+    netbox_max: 4.3.99
+  - release: 4.0.1
+    netbox_min: 4.2.0
+    netbox_max: 4.2.99
+  - release: 4.0.0
+    netbox_min: 4.2.0
+    netbox_max: 4.2.99
+  - release: 0.1.0
+    netbox_min: 3.7.0
+    netbox_max: 3.7.99

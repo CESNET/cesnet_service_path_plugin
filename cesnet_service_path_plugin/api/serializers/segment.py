@@ -1,4 +1,5 @@
 import json
+import logging
 from circuits.api.serializers import CircuitSerializer, ProviderSerializer
 from dcim.api.serializers import (
     LocationSerializer,
@@ -12,6 +13,9 @@ from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
 
 from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
 from django.core.exceptions import ValidationError as DjangoValidationError
+
+
+logger = logging.getLogger(__name__)
 
 
 class SegmentSerializer(NetBoxModelSerializer):
@@ -100,9 +104,11 @@ class SegmentSerializer(NetBoxModelSerializer):
                 instance.save()
 
             except DjangoValidationError as e:
-                raise serializers.ValidationError(f"Path file error: {str(e)}")
+                logger.warning(f"Validation Path file error: {str(e)}")
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
             except Exception as e:
-                raise serializers.ValidationError(f"Error processing file '{path_file.name}': {str(e)}")
+                logger.error(f"Error processing file '{path_file.name}': {str(e)}")
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
 
         return instance
 
@@ -129,11 +135,13 @@ class SegmentSerializer(NetBoxModelSerializer):
             except DjangoValidationError as e:
                 # Clean up created instance if path processing fails
                 instance.delete()
-                raise serializers.ValidationError(f"Path file error: {str(e)}")
+                logger.warning(f"Validation Path file error: {str(e)}")
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
             except Exception as e:
                 # Clean up created instance if path processing fails
                 instance.delete()
-                raise serializers.ValidationError(f"Error processing file '{path_file.name}': {str(e)}")
+                logger.error(f"Error processing file '{path_file.name}': {str(e)}")
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
 
         return instance
 

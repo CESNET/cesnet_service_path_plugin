@@ -5,7 +5,7 @@ A NetBox plugin for managing service paths and segments in network infrastructur
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![PyPI version](https://img.shields.io/pypi/v/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
 [![Python versions](https://img.shields.io/pypi/pyversions/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
-[![NetBox compatibility](https://img.shields.io/badge/NetBox-4.2%20|%204.3%20|%204.4-blue.svg)](https://github.com/netbox-community/netbox)
+[![NetBox compatibility](https://img.shields.io/badge/NetBox-4.4-blue.svg)](https://github.com/netbox-community/netbox)
 
 ## 📑 Table of Contents
 
