@@ -11,13 +11,17 @@ class SegmentIndex(SearchIndex):
         ("name", 100),
         ("network_label", 100),
         ("provider_segment_id", 200),
+        ("comments", 500),
     )
-    display_attrs = ("provider", "site_a", "site_b")
+    display_attrs = ("provider", "site_a", "site_b", "segment_type", "status")
 
 
 @register_search
 class ServicePathIndex(SearchIndex):
     model = ServicePath
 
-    fields = (("name", 100),)
+    fields = (
+        ("name", 100),
+        ("comments", 500),
+    )
     display_attrs = ("status", "kind")
