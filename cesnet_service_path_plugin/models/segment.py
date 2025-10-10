@@ -62,8 +62,8 @@ class Segment(NetBoxModel):
         "dcim.location",
         on_delete=models.PROTECT,
         related_name="+",
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
     )
 
     site_b = models.ForeignKey(
@@ -77,8 +77,8 @@ class Segment(NetBoxModel):
         "dcim.location",
         on_delete=models.PROTECT,
         related_name="+",
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
     )
 
     # GIS fields for storing network segment path

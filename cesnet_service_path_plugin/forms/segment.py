@@ -56,6 +56,7 @@ class SegmentForm(NetBoxModelForm):
             "site_id": "$site_a",
         },
         label=_("Location A"),
+        required=False,
     )
     site_b = DynamicModelChoiceField(
         queryset=Site.objects.all(),
@@ -68,6 +69,7 @@ class SegmentForm(NetBoxModelForm):
             "site_id": "$site_b",
         },
         label=_("Location B"),
+        required=False,
     )
 
     # GIS Fields

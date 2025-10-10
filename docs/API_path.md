@@ -56,7 +56,8 @@ curl -X PATCH "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segm
 2. **Content-Type**: Use `multipart/form-data` (automatic with `-F` flag) when uploading files
 3. **File Path**: Use absolute paths for the `path_file` parameter
 4. **Required Fields**: For POST requests, ensure all required fields are included:
-   - `name`, `status`, `provider`, `site_a`, `location_a`, `site_b`, `location_b`
+   - `name`, `status`, `provider`, `site_a`, `site_b`
+   - Optional: `location_a`, `location_b` (must belong to their respective sites if provided)
 5. **Field IDs**: Use numeric IDs for foreign key fields (provider, sites, locations)
 6. **Path Processing**: Files are automatically processed and geometry is calculated
 7. **Error Handling**: Invalid files will return detailed error messages
