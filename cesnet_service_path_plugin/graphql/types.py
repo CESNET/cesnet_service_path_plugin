@@ -1,9 +1,10 @@
 from typing import Annotated, List, Optional
 
+import strawberry
 from circuits.graphql.types import CircuitType, ProviderType
 from dcim.graphql.types import LocationType, SiteType
 from netbox.graphql.types import NetBoxObjectType
-from strawberry import auto, lazy, field
+from strawberry import auto, field, lazy
 from strawberry_django import type as strawberry_django_type
 import strawberry
 from decimal import Decimal
@@ -18,8 +19,8 @@ from cesnet_service_path_plugin.models import (
 
 # Import the GraphQL filters
 from .filters import (
-    SegmentFilter,
     SegmentCircuitMappingFilter,
+    SegmentFilter,
     ServicePathFilter,
     ServicePathSegmentMappingFilter,
 )
@@ -80,8 +81,6 @@ class SegmentType(NetBoxObjectType):
 
     provider: Annotated["ProviderType", lazy("circuits.graphql.types")] | None
     provider_segment_id: auto
-    provider_segment_name: auto
-    provider_segment_contract: auto
     site_a: Annotated["SiteType", lazy("dcim.graphql.types")] | None
     location_a: Annotated["LocationType", lazy("dcim.graphql.types")] | None
     site_b: Annotated["SiteType", lazy("dcim.graphql.types")] | None
@@ -154,8 +153,9 @@ class SegmentType(NetBoxObjectType):
 
         try:
             # Check if the utility function exists
-            from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
             import json
+
+            from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
 
             geojson_str = export_segment_paths_as_geojson([self])
             geojson_data = json.loads(geojson_str)
@@ -190,7 +190,9 @@ class SegmentType(NetBoxObjectType):
         if hasattr(self, "get_path_bounds"):
             bounds = self.get_path_bounds()
             if bounds and len(bounds) >= 4:
-                return PathBounds(xmin=bounds[0], ymin=bounds[1], xmax=bounds[2], ymax=bounds[3])
+                return PathBounds(
+                    xmin=bounds[0], ymin=bounds[1], xmax=bounds[2], ymax=bounds[3]
+                )
         return None
 
 
@@ -211,7 +213,9 @@ class ServicePathType(NetBoxObjectType):
     comments: auto
 
 
-@strawberry_django_type(ServicePathSegmentMapping, filters=ServicePathSegmentMappingFilter)
+@strawberry_django_type(
+    ServicePathSegmentMapping, filters=ServicePathSegmentMappingFilter
+)
 class ServicePathSegmentMappingType(NetBoxObjectType):
     id: auto
     service_path: Annotated["ServicePathType", lazy(".types")]

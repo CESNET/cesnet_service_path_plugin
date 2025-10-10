@@ -16,8 +16,6 @@ curl -X POST "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segme
   -F "location_b=24" \
   -F "network_label=API-TEST-01" \
   -F "provider_segment_id=API-TEST-SEGMENT-001" \
-  -F "provider_segment_name=Test Provider Segment" \
-  -F "provider_segment_contract=CONTRACT-2024-001" \
   -F "path_file=@/path/to/your/segment_path.kmz" \
   -F "path_notes=Path data uploaded via API" \
   -F "install_date=2024-01-15" \
@@ -46,7 +44,6 @@ curl -X PATCH "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segm
 curl -X PATCH "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segments/10/" \
   -H "Authorization: Token YOUR_API_TOKEN" \
   -F "network_label=UPDATED-LABEL" \
-  -F "provider_segment_name=Updated Provider Name" \
   -F "status=planned" \
   -F "path_file=@/path/to/updated_path.geojson" \
   -F "path_notes=Updated both metadata and path geometry" \

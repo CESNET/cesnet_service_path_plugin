@@ -1,11 +1,11 @@
 import logging
+
 import django_filters
 from circuits.models import Circuit, Provider
 from dcim.models import Location, Site
 from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
-
 
 from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
@@ -40,8 +40,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Provider (ID)",
     )
     provider_segment_id = django_filters.CharFilter(lookup_expr="icontains")
-    provider_segment_name = django_filters.CharFilter(lookup_expr="icontains")
-    provider_segment_contract = django_filters.CharFilter(lookup_expr="icontains")
 
     site_a_id = django_filters.ModelMultipleChoiceFilter(
         field_name="site_a__id",
@@ -140,11 +138,17 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         method="_filter_smart_numeric", label="Fiber Attenuation Max (dB/km)"
     )
 
-    total_loss = django_filters.CharFilter(method="_filter_smart_numeric", label="Total Loss (dB)")
+    total_loss = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="Total Loss (dB)"
+    )
 
-    total_length = django_filters.CharFilter(method="_filter_smart_numeric", label="Total Length (km)")
+    total_length = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="Total Length (km)"
+    )
 
-    number_of_fibers = django_filters.CharFilter(method="_filter_smart_numeric", label="Number of Fibers")
+    number_of_fibers = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="Number of Fibers"
+    )
 
     connector_type = django_filters.MultipleChoiceFilter(
         choices=[
@@ -163,11 +167,17 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     )
 
     # Optical Spectrum specific filters
-    wavelength = django_filters.CharFilter(method="_filter_smart_numeric", label="Wavelength (nm)")
+    wavelength = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="Wavelength (nm)"
+    )
 
-    spectral_slot_width = django_filters.CharFilter(method="_filter_smart_numeric", label="Spectral Slot Width (GHz)")
+    spectral_slot_width = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="Spectral Slot Width (GHz)"
+    )
 
-    itu_grid_position = django_filters.CharFilter(method="_filter_smart_numeric", label="ITU Grid Position")
+    itu_grid_position = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="ITU Grid Position"
+    )
 
     modulation_format = django_filters.MultipleChoiceFilter(
         choices=[
@@ -184,11 +194,17 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     )
 
     # Ethernet Service specific filters
-    port_speed = django_filters.CharFilter(method="_filter_smart_numeric", label="Port Speed / Bandwidth (Mbps)")
+    port_speed = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="Port Speed / Bandwidth (Mbps)"
+    )
 
-    vlan_id = django_filters.CharFilter(method="_filter_smart_numeric", label="Primary VLAN ID")
+    vlan_id = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="Primary VLAN ID"
+    )
 
-    mtu_size = django_filters.CharFilter(method="_filter_smart_numeric", label="MTU Size (bytes)")
+    mtu_size = django_filters.CharFilter(
+        method="_filter_smart_numeric", label="MTU Size (bytes)"
+    )
 
     encapsulation_type = django_filters.MultipleChoiceFilter(
         choices=[
@@ -232,8 +248,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "termination_date",
             "provider",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             "site_a",
             "location_a",
             "site_b",
@@ -316,10 +330,14 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
         if has_data:
             # Has data: exclude null and empty dict
-            return queryset.exclude(Q(type_specific_data__isnull=True) | Q(type_specific_data={}))
+            return queryset.exclude(
+                Q(type_specific_data__isnull=True) | Q(type_specific_data={})
+            )
         else:
             # No data: include null or empty dict
-            return queryset.filter(Q(type_specific_data__isnull=True) | Q(type_specific_data={}))
+            return queryset.filter(
+                Q(type_specific_data__isnull=True) | Q(type_specific_data={})
+            )
 
     def _parse_smart_numeric_value(self, value, field_type="float"):
         """
@@ -363,7 +381,13 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         """
         Determine the appropriate type for a field based on its name
         """
-        float_fields = ["fiber_attenuation_max", "total_loss", "total_length", "wavelength", "spectral_slot_width"]
+        float_fields = [
+            "fiber_attenuation_max",
+            "total_loss",
+            "total_length",
+            "wavelength",
+            "spectral_slot_width",
+        ]
         return "float" if field_name in float_fields else "int"
 
     def _filter_smart_numeric(self, queryset, name, value):
@@ -374,7 +398,9 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         if not value:
             return queryset
 
-        logger.debug(f"🔍 Smart numeric filter called for {name} with raw value: '{value}' (type: {type(value)})")
+        logger.debug(
+            f"🔍 Smart numeric filter called for {name} with raw value: '{value}' (type: {type(value)})"
+        )
 
         # Parse the value if it's still a string
         if isinstance(value, str):
@@ -402,7 +428,8 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                 # Use raw SQL to cast JSON value to numeric for exact comparison
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal = %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal = %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
                 logger.debug(f"🔍 Exact match using SQL CAST: {name} = {field_value}")
@@ -424,15 +451,20 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
                 if where_clauses:
                     conditions &= Q(
-                        pk__in=queryset.extra(where=[" AND ".join(where_clauses)], params=params).values("pk")
+                        pk__in=queryset.extra(
+                            where=[" AND ".join(where_clauses)], params=params
+                        ).values("pk")
                     )
-                logger.debug(f"🔍 Range using SQL CAST: {min_val} <= {name} <= {max_val}")
+                logger.debug(
+                    f"🔍 Range using SQL CAST: {min_val} <= {name} <= {max_val}"
+                )
 
             elif operation == "gt":
                 field_value = parsed_value.get("value")
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal > %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal > %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
                 logger.debug(f"🔍 Greater than using SQL CAST: {name} > {field_value}")
@@ -441,16 +473,20 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                 field_value = parsed_value.get("value")
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal >= %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal >= %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
-                logger.debug(f"🔍 Greater than or equal using SQL CAST: {name} >= {field_value}")
+                logger.debug(
+                    f"🔍 Greater than or equal using SQL CAST: {name} >= {field_value}"
+                )
 
             elif operation == "lt":
                 field_value = parsed_value.get("value")
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal < %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal < %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
                 logger.debug(f"🔍 Less than using SQL CAST: {name} < {field_value}")
@@ -459,10 +495,13 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                 field_value = parsed_value.get("value")
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal <= %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal <= %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
-                logger.debug(f"🔍 Less than or equal using SQL CAST: {name} <= {field_value}")
+                logger.debug(
+                    f"🔍 Less than or equal using SQL CAST: {name} <= {field_value}"
+                )
 
             else:
                 logger.warning(f"🔍 Unknown operation '{operation}' for {name}")
@@ -473,7 +512,9 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             filtered_queryset = queryset.filter(conditions)
             filtered_count = filtered_queryset.count()
 
-            logger.debug(f"🔍 Filtered from {original_count} to {filtered_count} segments")
+            logger.debug(
+                f"🔍 Filtered from {original_count} to {filtered_count} segments"
+            )
 
             return filtered_queryset
 

@@ -31,8 +31,6 @@ query SegmentDetails($id: ID!) {
       name
     }
     provider_segment_id
-    provider_segment_name
-    provider_segment_contract
     site_a {
       id
       name

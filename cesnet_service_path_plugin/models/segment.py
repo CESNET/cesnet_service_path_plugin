@@ -1,6 +1,6 @@
 from circuits.models import Circuit
-from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models as gis_models
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -8,8 +8,8 @@ from netbox.models import NetBoxModel
 
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 from cesnet_service_path_plugin.models.segment_types import (
-    SegmentTypeChoices,
     SEGMENT_TYPE_SCHEMAS,
+    SegmentTypeChoices,
     validate_segment_type_data,
 )
 
@@ -38,7 +38,9 @@ class Segment(NetBoxModel):
     )
 
     # JSON field for type-specific technical parameters
-    type_specific_data = models.JSONField(default=dict, blank=True, help_text="Type-specific technical parameters")
+    type_specific_data = models.JSONField(
+        default=dict, blank=True, help_text="Type-specific technical parameters"
+    )
 
     provider = models.ForeignKey(
         "circuits.provider",
@@ -48,8 +50,6 @@ class Segment(NetBoxModel):
         related_name="+",
     )
     provider_segment_id = models.CharField(max_length=255, null=True, blank=True)
-    provider_segment_name = models.CharField(max_length=255, null=True, blank=True)
-    provider_segment_contract = models.CharField(max_length=255, null=True, blank=True)
 
     site_a = models.ForeignKey(
         "dcim.site",
@@ -105,10 +105,16 @@ class Segment(NetBoxModel):
 
     # Optional: Store metadata about the path
     path_length_km = models.DecimalField(
-        max_digits=10, decimal_places=3, null=True, blank=True, help_text="Calculated path length in kilometers"
+        max_digits=10,
+        decimal_places=3,
+        null=True,
+        blank=True,
+        help_text="Calculated path length in kilometers",
     )
 
-    path_notes = models.TextField(blank=True, help_text="Additional notes about the path geometry")
+    path_notes = models.TextField(
+        blank=True, help_text="Additional notes about the path geometry"
+    )
 
     # Circuit
     circuits = models.ManyToManyField(Circuit, through="SegmentCircuitMapping")
@@ -186,7 +192,9 @@ class Segment(NetBoxModel):
                 label = field_config.get("label", field_name.replace("_", " ").title())
 
                 # Format the value based on type
-                if field_config.get("type") == "decimal" and isinstance(value, (int, float)):
+                if field_config.get("type") == "decimal" and isinstance(
+                    value, (int, float)
+                ):
                     # Add units if available in label
                     if "(" in label and ")" in label:
                         # Units are already in the label, just format the number

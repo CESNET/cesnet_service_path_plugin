@@ -1,18 +1,21 @@
 import json
 import logging
+
 from circuits.api.serializers import CircuitSerializer, ProviderSerializer
 from dcim.api.serializers import (
     LocationSerializer,
     SiteSerializer,
 )
+from django.core.exceptions import ValidationError as DjangoValidationError
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 
 from cesnet_service_path_plugin.models.segment import Segment
-from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
-
-from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
-from django.core.exceptions import ValidationError as DjangoValidationError
+from cesnet_service_path_plugin.utils import (
+    determine_file_format_from_extension,
+    export_segment_paths_as_geojson,
+    process_path_data,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +23,9 @@ logger = logging.getLogger(__name__)
 class SegmentSerializer(NetBoxModelSerializer):
     """Default serializer Segment - now with file upload support"""
 
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
+    url = serializers.HyperlinkedIdentityField(
+        view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail"
+    )
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
     location_a = LocationSerializer(required=True, nested=True)
@@ -54,8 +59,6 @@ class SegmentSerializer(NetBoxModelSerializer):
             "termination_date",
             "provider",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             "site_a",
             "location_a",
             "site_b",
@@ -135,10 +138,14 @@ class SegmentSerializer(NetBoxModelSerializer):
 
             except DjangoValidationError as e:
                 logger.warning(f"Validation Path file error: {str(e)}")
-                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
+                raise serializers.ValidationError(
+                    f"Error processing file '{path_file.name}'"
+                )
             except Exception as e:
                 logger.error(f"Error processing file '{path_file.name}': {str(e)}")
-                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
+                raise serializers.ValidationError(
+                    f"Error processing file '{path_file.name}'"
+                )
 
         return instance
 
@@ -166,12 +173,16 @@ class SegmentSerializer(NetBoxModelSerializer):
                 # Clean up created instance if path processing fails
                 instance.delete()
                 logger.warning(f"Validation Path file error: {str(e)}")
-                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
+                raise serializers.ValidationError(
+                    f"Error processing file '{path_file.name}'"
+                )
             except Exception as e:
                 # Clean up created instance if path processing fails
                 instance.delete()
                 logger.error(f"Error processing file '{path_file.name}': {str(e)}")
-                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
+                raise serializers.ValidationError(
+                    f"Error processing file '{path_file.name}'"
+                )
 
         return instance
 
@@ -180,7 +191,9 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
     """Full serializer with all geometry data for detail views"""
 
     # This is your existing SegmentSerializer - just rename it
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
+    url = serializers.HyperlinkedIdentityField(
+        view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail"
+    )
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
     location_a = LocationSerializer(required=True, nested=True)
@@ -208,8 +221,6 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
             "termination_date",
             "provider",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             "site_a",
             "location_a",
             "site_b",
@@ -245,7 +256,6 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
             return None
 
         try:
-
             geojson_str = export_segment_paths_as_geojson([obj])
             geojson_data = json.loads(geojson_str)
 

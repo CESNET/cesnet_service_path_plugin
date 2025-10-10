@@ -11,8 +11,6 @@ class SegmentIndex(SearchIndex):
         ("name", 100),
         ("network_label", 100),
         ("provider_segment_id", 200),
-        ("provider_segment_name", 200),
-        ("provider_segment_contract", 200),
     )
     display_attrs = ("provider", "site_a", "site_b")
 
