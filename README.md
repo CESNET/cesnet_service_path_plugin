@@ -243,9 +243,9 @@ services:
 
 For detailed Docker setup instructions, see [using netbox-docker with plugins](https://github.com/netbox-community/netbox-docker/wiki/Using-Netbox-Plugins).
 
-### Step 4: Enable the Plugin
+### Step 4: Enable and configure the Plugin
 
-Add the plugin to your NetBox `configuration.py`:
+Add the plugin to your NetBox `configuration/plugins.py`:
 
 ```python
 PLUGINS = [
@@ -253,7 +253,14 @@ PLUGINS = [
 ]
 
 PLUGINS_CONFIG = {
-    "cesnet_service_path_plugin": {},
+    "cesnet_service_path_plugin": {
+        'currencies': [
+            ('CZK', 'Czech Koruna'),
+            ('EUR', 'Euro'),
+            ('USD', 'US Dollar'),
+        ],
+        'default_currency': 'EUR',
+    },
 }
 ```
 
