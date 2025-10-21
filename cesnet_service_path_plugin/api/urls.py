@@ -8,5 +8,7 @@ router.register("segments", views.SegmentViewSet)
 router.register("service-paths", views.ServicePathViewSet)
 router.register("service-path-segment-mappings", views.ServicePathSegmentMappingViewSet)
 router.register("segment-circuit-mappings", views.SegmnetCircuitMappingViewSet)
+router.register("segment-financial-info", views.SegmentFinancialInfoViewSet)
+
 
 urlpatterns = router.urls

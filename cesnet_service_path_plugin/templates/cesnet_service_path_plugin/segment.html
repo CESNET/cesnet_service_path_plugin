@@ -151,6 +151,95 @@
                     </table>
                 </div>
             </div>
+            <!-- Financial Information Card -->
+            {% if has_financial_view_perm %}
+                <div class="card">
+                    <h5 class="card-header">
+                        Financial Information
+                        {% if financial_info %}
+                            <div class="card-actions">
+                                {% if has_financial_change_perm %}
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_edit' pk=financial_info.pk %}" 
+                                       class="btn btn-outline-warning btn-sm">
+                                        <i class="mdi mdi-pencil" aria-hidden="true"></i> Edit
+                                    </a>
+                                {% endif %}
+                                {% if has_financial_delete_perm %}
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_delete' pk=financial_info.pk %}" 
+                                       class="btn btn-outline-danger btn-sm">
+                                        <i class="mdi mdi-delete" aria-hidden="true"></i> Delete
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="card-actions">
+                                {% if has_financial_add_perm %}
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}" 
+                                       class="btn btn-outline-success btn-sm">
+                                        <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add Financial Info
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </h5>
+                    <div class="card-body">
+                        {% if financial_info %}
+                            <table class="table table-hover attr-table">
+                                <tr>
+                                    <th scope="row">Monthly Charge</th>
+                                    <td>
+                                        <strong>{{ financial_info.monthly_charge|floatformat:2 }} {{ financial_info.charge_currency }}</strong>
+                                    </td>
+                                </tr>
+                                {% if financial_info.non_recurring_charge %}
+                                    <tr>
+                                        <th scope="row">Non-Recurring Charge</th>
+                                        <td>{{ financial_info.non_recurring_charge|floatformat:2 }} {{ financial_info.charge_currency }}</td>
+                                    </tr>
+                                {% endif %}
+                                {% if financial_info.commitment_period_months %}
+                                    <tr>
+                                        <th scope="row">Commitment Period</th>
+                                        <td>{{ financial_info.commitment_period_months }} months</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Total Commitment Cost</th>
+                                        <td>
+                                            <strong>{{ financial_info.total_commitment_cost|floatformat:2 }} {{ financial_info.charge_currency }}</strong>
+                                        </td>
+                                    </tr>
+                                    {% if financial_info.non_recurring_charge %}
+                                        <tr>
+                                            <th scope="row">Total Cost (incl. Setup)</th>
+                                            <td>
+                                                <strong class="text-primary">
+                                                    {{ financial_info.total_cost_including_setup|floatformat:2 }} {{ financial_info.charge_currency }}
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endif %}
+                                {% if financial_info.notes %}
+                                    <tr>
+                                        <th scope="row">Notes</th>
+                                        <td>{{ financial_info.notes|linebreaks }}</td>
+                                    </tr>
+                                {% endif %}
+                            </table>
+                        {% else %}
+                            <div class="text-muted">
+                                <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+                                No financial information available for this segment.
+                                {% if has_financial_add_perm %}
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}">
+                                        Add financial information
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
             {% plugin_right_page object %}
         </div>
     </div>

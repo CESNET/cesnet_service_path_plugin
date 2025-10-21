@@ -14,7 +14,6 @@ from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
 from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -38,6 +37,8 @@ class SegmentSerializer(NetBoxModelSerializer):
 
     # Only include lightweight path info
     has_path_data = serializers.SerializerMethodField(read_only=True)
+
+    financial_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Segment
@@ -66,7 +67,8 @@ class SegmentSerializer(NetBoxModelSerializer):
             "path_source_format",
             "path_notes",
             "has_path_data",
-            "path_file",  # Add the file field
+            "path_file",
+            "financial_info",
             "tags",
         )
         brief_fields = (
@@ -82,6 +84,34 @@ class SegmentSerializer(NetBoxModelSerializer):
 
     def get_has_path_data(self, obj):
         return obj.has_path_data()
+
+    def get_financial_info(self, obj):
+        """
+        Only include financial info if the user has permission to view it
+        """
+        request = self.context.get("request")
+        if not request:
+            return None
+        from cesnet_service_path_plugin.api.serializers.segment_financial_info import (
+            SegmentFinancialInfoSerializer,
+        )
+
+        # Check if user has permission to view financial info
+        has_financial_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
+
+        # Check if user has permission to view financial info
+        if not has_financial_view_perm:
+            return None
+
+        # Try to get financial info if user has permission
+        financial_info = None
+        if has_financial_view_perm:
+            financial_info = getattr(obj, "financial_info", None)
+
+        if financial_info:
+            return SegmentFinancialInfoSerializer(financial_info, context=self.context).data
+        else:
+            return None
 
     def update(self, instance, validated_data):
         """Handle file upload during update"""

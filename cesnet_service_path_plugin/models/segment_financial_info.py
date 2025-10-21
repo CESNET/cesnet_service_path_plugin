@@ -64,3 +64,6 @@ class SegmentFinancialInfo(NetBoxModel):
         if self.non_recurring_charge:
             total += self.non_recurring_charge
         return total if total > 0 else None
+
+    class Meta:
+        ordering = ("segment",)

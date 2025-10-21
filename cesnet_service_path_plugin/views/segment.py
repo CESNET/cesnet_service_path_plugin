@@ -32,9 +32,26 @@ class SegmentView(generic.ObjectView):
         service_paths_table = ServicePathTable(service_paths)
         service_paths_table.configure(request)
 
+        # Check if user has permission to view financial info
+        has_financial_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
+
+        # Try to get financial info if user has permission
+        financial_info = None
+        if has_financial_view_perm:
+            financial_info = getattr(instance, "financial_info", None)
+
         return {
             "circuits_table": circuits_table,
             "service_paths_table": service_paths_table,
+            "financial_info": financial_info,
+            "has_financial_view_perm": has_financial_view_perm,
+            "has_financial_add_perm": request.user.has_perm("cesnet_service_path_plugin.add_segmentfinancialinfo"),
+            "has_financial_change_perm": request.user.has_perm(
+                "cesnet_service_path_plugin.change_segmentfinancialinfo"
+            ),
+            "has_financial_delete_perm": request.user.has_perm(
+                "cesnet_service_path_plugin.delete_segmentfinancialinfo"
+            ),
         }
 
 
