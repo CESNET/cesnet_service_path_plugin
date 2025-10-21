@@ -1,5 +1,5 @@
 version: 0.1
-package_name: cesnet-service-path-plugin
+package_name: cesnet_service_path_plugin
 compatibility:
   - release: 5.1.2
     netbox_min: 4.4.0
