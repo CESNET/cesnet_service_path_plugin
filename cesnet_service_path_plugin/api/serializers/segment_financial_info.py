@@ -5,13 +5,24 @@ from netbox.api.serializers import NetBoxModelSerializer
 from cesnet_service_path_plugin.models import SegmentFinancialInfo
 
 
+class SegmentPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    """
+    Custom field that provides queryset dynamically to avoid circular imports
+    """
+
+    def get_queryset(self):
+        from cesnet_service_path_plugin.models import Segment
+
+        return Segment.objects.all()
+
+
 class SegmentFinancialInfoSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="plugins-api:cesnet_service_path_plugin-api:segmentfinancialinfo-detail"
     )
 
-    # Nested representation of the segment
-    segment = serializers.SerializerMethodField(read_only=True)
+    # Writable segment field (accepts ID for write operations)
+    segment = SegmentPrimaryKeyRelatedField(required=True)
 
     # Read-only computed fields
     total_commitment_cost = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -45,8 +56,18 @@ class SegmentFinancialInfoSerializer(NetBoxModelSerializer):
             "charge_currency",
         ]
 
-    def get_segment(self, obj):
-        """Return nested segment information"""
+    def to_representation(self, instance):
+        """
+        Customize the output representation to show detailed segment info
+        """
+        ret = super().to_representation(instance)
+        # Replace segment ID with detailed info in the output
+        if instance.segment:
+            ret["segment"] = self.get_segment_detail(instance)
+        return ret
+
+    def get_segment_detail(self, obj):
+        """Return nested segment information for read operations"""
         if obj.segment:
             # Check if we have a request in context
             request = self.context.get("request")
