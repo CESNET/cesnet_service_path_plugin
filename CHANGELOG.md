@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - TBD
+
+### Added
+- **Financial Information Management**: New segment financial tracking system
+  - `SegmentFinancialInfo` model for tracking segment costs and commitments
+  - Monthly charge and non-recurring charge fields
+  - Multi-currency support with configurable currency list
+  - Commitment period tracking (months)
+  - Automatic cost calculations (total commitment cost, total with setup)
+  - Permission-based access control for financial data
+  - Integration with segment detail view
+  - REST API support with nested serialization in segment endpoints
+  - Financial info displayed only to users with view permissions
+
+- **Plugin Configuration**: Enhanced configuration options
+  - Configurable currency list in plugin settings
+  - Default currency selection
+  - Example configuration in README
+
+- **Plugin Metadata**: Added `netbox-plugin.yaml`
+  - Official plugin metadata file for NetBox plugin registry
+  - Compatibility matrix with NetBox versions
+  - Package information and versioning
+
+### Changed
+- **API Enhancements**:
+  - Improved error handling in segment serializer with detailed logging
+  - Financial info included in segment API responses (permission-based)
+  - Cleaner error messages for path file upload failures
+  - Better separation of validation and processing errors
+
+- **Permission System**:
+  - Financial data visibility controlled by Django permissions
+  - View, add, change, and delete permissions for financial info
+  - Automatic permission checks in views and API
+
+- **Documentation Updates**:
+  - Updated plugin configuration examples with currency settings
+  - Corrected file path references (configuration.py → configuration/plugins.py)
+  - Updated compatibility badge to reflect NetBox 4.4 support
+
+- **Development Dependencies**:
+  - Unpinned development dependency versions for flexibility
+  - Updated Python version requirement to >= 3.10
+  - Corrected license classifier to Apache 2.0
+
+### Technical Details
+- Financial info uses one-to-one relationship with Segment model
+- Currency choices are dynamically loaded from plugin configuration
+- Financial data is optional - segments can exist without financial info
+- API serializer uses method field for conditional financial data inclusion
+- Redirect-based views for better UX (financial detail redirects to segment detail)
+- Custom return URL handling for create/edit/delete operations
+
+### Migration Notes
+- **New Model**: `SegmentFinancialInfo` table will be created
+- **Permissions**: Four new permissions added for financial info management
+- **Configuration**: Optional currency configuration can be added to plugin settings
+- **API Change**: Segment API responses now include `financial_info` field (null if no data or no permission)
+
 ## [5.1.0] - 2025-09-23
 
 ### Added
