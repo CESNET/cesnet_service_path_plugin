@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cesnet_service_path_plugin"
-version = "5.2.0"
+version = "5.2.0b1"
 description = "Adds ability to create, edit and view service paths in the CESNET network."
 authors = [
     {name = "Jan Krupa", email = "jan.krupa@cesnet.cz"},
