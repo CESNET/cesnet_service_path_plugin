@@ -48,11 +48,21 @@ class SegmentFinancialInfoSerializer(NetBoxModelSerializer):
     def get_segment(self, obj):
         """Return nested segment information"""
         if obj.segment:
+            # Check if we have a request in context
+            request = self.context.get("request")
+
+            if request:
+                # API context - build absolute URI
+                segment_url = request.build_absolute_uri(
+                    f"/api/plugins/cesnet-service-path-plugin/segments/{obj.segment.id}/"
+                )
+            else:
+                # Non-API context (e.g., form validation) - use relative URL
+                segment_url = f"/api/plugins/cesnet-service-path-plugin/segments/{obj.segment.id}/"
+
             return {
                 "id": obj.segment.id,
-                "url": self.context["request"].build_absolute_uri(
-                    f"/api/plugins/cesnet-service-path-plugin/segments/{obj.segment.id}/"
-                ),
+                "url": segment_url,
                 "display": str(obj.segment),
                 "name": obj.segment.name,
             }
