@@ -4,6 +4,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.text import slugify
 from netbox.views import generic
+from utilities.views import register_model_view
 import json
 
 from cesnet_service_path_plugin.filtersets import SegmentFilterSet
@@ -17,6 +18,7 @@ from cesnet_service_path_plugin.tables import SegmentTable, ServicePathTable
 from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
 
 
+@register_model_view(Segment)
 class SegmentView(generic.ObjectView):
     queryset = Segment.objects.all()
 
@@ -55,6 +57,7 @@ class SegmentView(generic.ObjectView):
         }
 
 
+@register_model_view(Segment, 'list', path='', detail=False)
 class SegmentListView(generic.ObjectListView):
     queryset = Segment.objects.all()
     table = SegmentTable
@@ -63,6 +66,8 @@ class SegmentListView(generic.ObjectListView):
     template_name = "cesnet_service_path_plugin/segment_list.html"
 
 
+@register_model_view(Segment, 'add', detail=False)
+@register_model_view(Segment, 'edit')
 class SegmentEditView(generic.ObjectEditView):
     queryset = Segment.objects.all()
     form = SegmentForm
@@ -70,11 +75,34 @@ class SegmentEditView(generic.ObjectEditView):
     template_name = "cesnet_service_path_plugin/segment_edit.html"
 
 
+@register_model_view(Segment, 'delete')
 class SegmentDeleteView(generic.ObjectDeleteView):
     queryset = Segment.objects.all()
 
 
-# New view for downloading segment path as GeoJSON
+@register_model_view(Segment, 'bulk_edit', path='edit', detail=False)
+class SegmentBulkEditView(generic.BulkEditView):
+    queryset = Segment.objects.all()
+    filterset = SegmentFilterSet
+    table = SegmentTable
+    form = SegmentForm
+
+
+@register_model_view(Segment, 'bulk_delete', path='delete', detail=False)
+class SegmentBulkDeleteView(generic.BulkDeleteView):
+    queryset = Segment.objects.all()
+    filterset = SegmentFilterSet
+    table = SegmentTable
+
+
+@register_model_view(Segment, 'bulk_import', path='import', detail=False)
+class SegmentBulkImportView(generic.BulkImportView):
+    queryset = Segment.objects.all()
+    model_form = SegmentForm
+    table = SegmentTable
+
+
+# GeoJSON download view (function-based, registered via urls.py)
 def segment_geojson_download(request, pk):
     """
     Download segment path as GeoJSON file
@@ -104,7 +132,7 @@ def segment_geojson_download(request, pk):
     return response
 
 
-# New view for clearing segment path data
+# Clear path data view (not registered - function-based view)
 def segment_path_clear(request, pk):
     """
     Clear path data from a segment
@@ -130,17 +158,12 @@ def segment_path_clear(request, pk):
     return render(request, "cesnet_service_path_plugin/segment_path_clear_confirm.html", {"object": segment})
 
 
-# Map view for visualizing segment path
+# Individual segment map view (function-based, registered via urls.py)
 def segment_map_view(request, pk):
     """
     Display segment path on an interactive map with enhanced features
     """
-    import json
-    from django.shortcuts import get_object_or_404, render
-
     segment = get_object_or_404(Segment, pk=pk)
-
-    # Prepare site data for endpoints
 
     has_fallback_line = False
 
@@ -190,6 +213,7 @@ def segment_map_view(request, pk):
     return render(request, "cesnet_service_path_plugin/segment_map.html", context)
 
 
+# GeoJSON API for individual segment (function-based, registered via urls.py)
 def segment_geojson_api(request, pk):
     """
     Return segment path as GeoJSON for map display
@@ -225,6 +249,7 @@ def segment_geojson_api(request, pk):
 # In cesnet_service_path_plugin/views/segment.py
 
 
+@register_model_view(Segment, 'map', path='map', detail=False)
 class SegmentsMapView(generic.ObjectListView):
     """
     Display multiple segments on an interactive map with filtering support
@@ -337,13 +362,11 @@ class SegmentsMapView(generic.ObjectListView):
         return context
 
 
+# GeoJSON API for multiple segments map (function-based, registered via urls.py)
 def segments_map_api(request):
     """
     API endpoint to return filtered segments as GeoJSON for map display
     """
-    import json
-    from django.http import JsonResponse
-
     # Use the same filterset as the table view
     filterset = SegmentFilterSet(request.GET, queryset=Segment.objects.all())
     segments = filterset.qs
