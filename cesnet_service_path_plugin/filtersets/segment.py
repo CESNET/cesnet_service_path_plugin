@@ -86,6 +86,16 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Circuit (ID)",
     )
 
+    # Financial info filter
+    has_financial_info = django_filters.ChoiceFilter(
+        choices=[
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        method="_has_financial_info",
+        label="Has Financial Info",
+    )
+
     # Path data filter
     has_path_data = django_filters.ChoiceFilter(
         choices=[
@@ -247,6 +257,38 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         location_a = Q(location_a__in=value)
         location_b = Q(location_b__in=value)
         return queryset.filter(location_a | location_b)
+
+    def _has_financial_info(self, queryset, name, value):
+        """
+        Filter segments based on whether they have associated financial info
+        """
+        # Check permission first
+        if not self._check_financial_permission():
+            # Return all segments without applying filter (don't leak info about which have financial data)
+            return queryset
+
+        if value in (None, "", []):
+            # Nothing selected, show all segments
+            return queryset
+
+        has_info = value in [True, "True", "true", "1"]
+
+        if has_info:
+            # Only "Yes" selected, show segments with financial info
+            return queryset.filter(financial_info__isnull=False)
+        else:
+            # Only "No" selected, show segments without financial info
+            return queryset.filter(financial_info__isnull=True)
+
+    def _check_financial_permission(self):
+        """
+        Check if the current user has permission to view financial info.
+        Returns True if user has permission, False otherwise.
+        """
+        request = self.request
+        if not request or not hasattr(request, "user"):
+            return False
+        return request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
 
     def _has_path_data(self, queryset, name, value):
         """

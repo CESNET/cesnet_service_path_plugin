@@ -476,6 +476,17 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         help_text="Filter segments that have type-specific data defined",
     )
 
+    has_financial_info = forms.ChoiceField(
+        required=False,
+        choices=[
+            ("", "Any"),
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        label=_("Has Financial Info"),
+        help_text="Filter segments that have financial info defined",
+    )
+
     # =============================================================================
     # TYPE-SPECIFIC FILTER FIELDS - SIMPLIFIED (NO SmartNumericField needed)
     # =============================================================================
@@ -633,7 +644,14 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     fieldsets = (
         FieldSet("q", "tag", "filter_id", name="General"),
         FieldSet(
-            "name", "status", "segment_type", "network_label", "has_path_data", "has_type_specific_data", name="Basic"
+            "name",
+            "status",
+            "segment_type",
+            "network_label",
+            "has_path_data",
+            "has_type_specific_data",
+            "has_financial_info",
+            name="Basic",
         ),
         FieldSet(
             "provider_id",
