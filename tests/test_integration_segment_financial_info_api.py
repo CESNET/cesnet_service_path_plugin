@@ -1,3 +1,13 @@
+"""
+Integration tests for Segment Financial Info API endpoints.
+These tests cover creating, retrieving, updating, and deleting financial info
+associated with service path segments.
+
+Prerequisites:
+- A running NetBox instance with the cesnet_service_path_plugin installed.
+- An API token with appropriate permissions set in environment variables.
+"""
+
 import pytest
 import requests
 import os
