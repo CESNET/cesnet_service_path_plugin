@@ -9,6 +9,16 @@
 {% load plugins %}
 {% load custom_filters %}
 {% load render_table from django_tables2 %}
+
+{% block extra_controls %}
+    {# Add button to create Circuit from Segment data #}
+    {% if perms.circuits.add_circuit %}
+        <a href="{{ create_circuit_url }}" class="btn btn-success" title="Create a new Circuit pre-filled with Segment data">
+            <i class="mdi mdi-plus-circle" aria-hidden="true"></i> {% trans "Generate Circuit" %}
+        </a>
+    {% endif %}
+{% endblock extra_controls %}
+
 {% block content %}
 
     <div class="row mb-3">

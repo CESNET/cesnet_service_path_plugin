@@ -2,8 +2,9 @@ import json
 
 from circuits.tables import CircuitTable
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.text import slugify
 from netbox.views import generic
 from utilities.views import register_model_view
@@ -21,6 +22,56 @@ from cesnet_service_path_plugin.models import (
 )
 from cesnet_service_path_plugin.tables import SegmentTable, ServicePathTable
 from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
+
+
+def generate_circuit_creation_url(segment):
+    """
+    Generate a pre-filled Circuit creation URL from a Segment instance.
+
+    Args:
+        segment: Segment instance to extract data from
+
+    Returns:
+        str: URL with query parameters for Circuit creation form
+    """
+
+    circuit_add_url = reverse("circuits:circuit_add")
+    params = QueryDict(mutable=True)
+
+    # Set provider
+    if segment.provider:
+        params["provider"] = segment.provider.pk
+
+    # Set CID suggestion based on segment name
+    if segment.name:
+        params["cid"] = f"CIR-{segment.name}"
+
+    # Set description with segment information
+    description_parts = []
+    if segment.network_label:
+        description_parts.append(f"Network: {segment.network_label}")
+    if segment.site_a and segment.site_b:
+        description_parts.append(f"Route: {segment.site_a} → {segment.site_b}")
+    if description_parts:
+        params["description"] = " | ".join(description_parts)
+
+    # Set install/termination dates
+    if segment.install_date:
+        params["install_date"] = segment.install_date.strftime("%Y-%m-%d")
+    if segment.termination_date:
+        params["termination_date"] = segment.termination_date.strftime("%Y-%m-%d")
+
+    # Add comments reference
+    if segment.comments:
+        params["comments"] = f"Created from Segment: {segment.name}\n\n{segment.comments}"
+    else:
+        params["comments"] = f"Created from Segment: {segment.name}"
+
+    # Add return URL to come back to this segment
+    params["return_url"] = segment.get_absolute_url()
+
+    # Build the full URL with query parameters
+    return f"{circuit_add_url}?{params.urlencode()}"
 
 
 @register_model_view(Segment)
@@ -50,6 +101,7 @@ class SegmentView(generic.ObjectView):
         return {
             "circuits_table": circuits_table,
             "service_paths_table": service_paths_table,
+            "create_circuit_url": generate_circuit_creation_url(instance),
             "financial_info": financial_info,
             "has_financial_view_perm": has_financial_view_perm,
             "has_financial_add_perm": request.user.has_perm("cesnet_service_path_plugin.add_segmentfinancialinfo"),
