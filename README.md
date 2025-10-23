@@ -62,6 +62,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - Monitor installation and termination dates
 - Manage provider relationships and contracts
 - Link circuits to segments
+- **One-click Circuit generation** from Segment data with auto-filled forms
 - Automatic status tracking based on dates
 - **Geographic path visualization with actual route data**
 - Segment types (dark fiber, optical spectrum, ethernet) with type specific data
@@ -95,7 +96,9 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Custom table columns** showing segment relationships
 - **Advanced filtering** including path data availability
 - **REST API endpoints** with geographic data support
-- **GraphQL schema** with geometry field support
+- **GraphQL API** with full geometry field support and complex filtering
+- **Quick action buttons** in navigation menu (Add/Import)
+- **Modernized views** using NetBox 4.x @register_model_view pattern
 
 ## Data Model
 
@@ -519,12 +522,54 @@ Segment API responses include a `financial_info` field:
 - **GeoJSON export** endpoints
 - **Path bounds and coordinates** in API responses
 
-### GraphQL Support
+### GraphQL API
 
-Full GraphQL schema with:
-- **Geographic field support** for path geometry
-- **Filtering capabilities** on all geographic fields
-- **Nested relationship queries**
+Access the GraphQL API at `/graphql/` with full support for:
+
+#### Query Examples
+
+```graphql
+# Query segments with path data
+query {
+  segment_list(filters: {hasPathData: true}) {
+    id
+    name
+    networkLabel
+    pathLengthKm
+    pathGeometryGeojson
+    provider {
+      name
+    }
+    siteA {
+      name
+    }
+    siteB {
+      name
+    }
+  }
+}
+
+# Query service paths with segments
+query {
+  service_path_list(filters: {status: "active"}) {
+    id
+    name
+    kind
+    segments {
+      name
+      pathLengthKm
+    }
+  }
+}
+```
+
+#### GraphQL Features
+
+- **Full model access**: Query Segments, ServicePaths, and all mapping types
+- **Geographic fields**: GeoJSON geometry, path coordinates, bounding boxes
+- **Advanced filtering**: Status, dates, providers, sites, path data availability
+- **Nested relationships**: Query related circuits, providers, locations in single request
+- **Type-specific data**: Query segment type information and technical specifications
 
 ## Development
 
@@ -574,10 +619,22 @@ check_gis_environment()
 ## Navigation and UI
 
 The plugin adds a **Service Paths** menu with:
-- **Segments** - List and manage network segments
+- **Segments** - List and manage network segments with quick Add/Import buttons
 - **Segments Map** - Interactive map view of all segments
-- **Service Paths** - Manage service path definitions
-- **Mappings** - Relationship management tools
+- **Service Paths** - Manage service path definitions with quick Add/Import buttons
+- **Mappings** - Relationship management tools with quick Add/Import buttons
+
+### UI Features
+
+- **Generate Circuit button**: One-click Circuit creation from Segment with auto-filled:
+  - Provider and CID (suggested as CIR-{segment_name})
+  - Network label and route description
+  - Installation and termination dates
+  - Comments with Segment reference
+  - Return URL to navigate back after creation
+- **Quick action buttons**: Add and Import shortcuts in navigation menu
+- **Bulk operations**: Edit, delete, and import multiple records at once
+- **Advanced search**: Full-text search across names, comments, network labels, and path notes
 
 ### Template Extensions
 
