@@ -1,3 +1,5 @@
+import json
+
 from circuits.tables import CircuitTable
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
@@ -5,10 +7,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.text import slugify
 from netbox.views import generic
 from utilities.views import register_model_view
-import json
 
 from cesnet_service_path_plugin.filtersets import SegmentFilterSet
-from cesnet_service_path_plugin.forms import SegmentFilterForm, SegmentForm
+from cesnet_service_path_plugin.forms import (
+    SegmentBulkEditForm,
+    SegmentFilterForm,
+    SegmentForm,
+)
 from cesnet_service_path_plugin.models import (
     Segment,
     ServicePath,
@@ -57,7 +62,7 @@ class SegmentView(generic.ObjectView):
         }
 
 
-@register_model_view(Segment, 'list', path='', detail=False)
+@register_model_view(Segment, "list", path="", detail=False)
 class SegmentListView(generic.ObjectListView):
     queryset = Segment.objects.all()
     table = SegmentTable
@@ -66,8 +71,8 @@ class SegmentListView(generic.ObjectListView):
     template_name = "cesnet_service_path_plugin/segment_list.html"
 
 
-@register_model_view(Segment, 'add', detail=False)
-@register_model_view(Segment, 'edit')
+@register_model_view(Segment, "add", detail=False)
+@register_model_view(Segment, "edit")
 class SegmentEditView(generic.ObjectEditView):
     queryset = Segment.objects.all()
     form = SegmentForm
@@ -75,27 +80,27 @@ class SegmentEditView(generic.ObjectEditView):
     template_name = "cesnet_service_path_plugin/segment_edit.html"
 
 
-@register_model_view(Segment, 'delete')
+@register_model_view(Segment, "delete")
 class SegmentDeleteView(generic.ObjectDeleteView):
     queryset = Segment.objects.all()
 
 
-@register_model_view(Segment, 'bulk_edit', path='edit', detail=False)
+@register_model_view(Segment, "bulk_edit", path="edit", detail=False)
 class SegmentBulkEditView(generic.BulkEditView):
     queryset = Segment.objects.all()
     filterset = SegmentFilterSet
     table = SegmentTable
-    form = SegmentForm
+    form = SegmentBulkEditForm
 
 
-@register_model_view(Segment, 'bulk_delete', path='delete', detail=False)
+@register_model_view(Segment, "bulk_delete", path="delete", detail=False)
 class SegmentBulkDeleteView(generic.BulkDeleteView):
     queryset = Segment.objects.all()
     filterset = SegmentFilterSet
     table = SegmentTable
 
 
-@register_model_view(Segment, 'bulk_import', path='import', detail=False)
+@register_model_view(Segment, "bulk_import", path="import", detail=False)
 class SegmentBulkImportView(generic.BulkImportView):
     queryset = Segment.objects.all()
     model_form = SegmentForm
@@ -155,7 +160,11 @@ def segment_path_clear(request, pk):
         return redirect(segment.get_absolute_url())
 
     # For GET requests, show confirmation page
-    return render(request, "cesnet_service_path_plugin/segment_path_clear_confirm.html", {"object": segment})
+    return render(
+        request,
+        "cesnet_service_path_plugin/segment_path_clear_confirm.html",
+        {"object": segment},
+    )
 
 
 # Individual segment map view (function-based, registered via urls.py)
@@ -191,7 +200,11 @@ def segment_map_view(request, pk):
         has_fallback_line = True
 
     # Prepare segment styling data
-    segment_style = {"color": "#dc3545", "weight": 4, "opacity": 0.8}  # Red color for better visibility
+    segment_style = {
+        "color": "#dc3545",
+        "weight": 4,
+        "opacity": 0.8,
+    }  # Red color for better visibility
 
     # Adjust styling based on status if needed
     # status_colors = {"Active": "#28a745", "Planned": "#ffc107", "Offline": "#dc3545"}
@@ -249,7 +262,7 @@ def segment_geojson_api(request, pk):
 # In cesnet_service_path_plugin/views/segment.py
 
 
-@register_model_view(Segment, 'map', path='map', detail=False)
+@register_model_view(Segment, "map", path="map", detail=False)
 class SegmentsMapView(generic.ObjectListView):
     """
     Display multiple segments on an interactive map with filtering support
@@ -419,7 +432,10 @@ def segments_map_api(request):
                     "type": "Feature",
                     "geometry": {
                         "type": "LineString",
-                        "coordinates": [[site_a_lng, site_a_lat], [site_b_lng, site_b_lat]],
+                        "coordinates": [
+                            [site_a_lng, site_a_lat],
+                            [site_b_lng, site_b_lat],
+                        ],
                     },
                     "properties": {
                         "id": segment.pk,

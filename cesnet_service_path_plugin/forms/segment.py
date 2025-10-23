@@ -6,7 +6,12 @@ from dcim.models import Location, Site
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
-from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
+from netbox.forms import (
+    NetBoxModelBulkEditForm,
+    NetBoxModelFilterSetForm,
+    NetBoxModelForm,
+)
+from utilities.forms import add_blank_choice
 from utilities.forms.fields import (
     CommentField,
     DynamicModelChoiceField,
@@ -33,9 +38,7 @@ logger = logging.getLogger(__name__)
 class SegmentForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
     status = forms.ChoiceField(required=True, choices=StatusChoices, initial=None)
-    provider_segment_id = forms.CharField(
-        label=" ID", required=False, help_text="Provider Segment ID"
-    )
+    provider_segment_id = forms.CharField(label=" ID", required=False, help_text="Provider Segment ID")
     provider = DynamicModelChoiceField(
         queryset=Provider.objects.all(),
         required=True,
@@ -112,9 +115,7 @@ class SegmentForm(NetBoxModelForm):
 
         # If editing existing segment with path data, show some info
         if self.instance.pk and self.instance.path_geometry:
-            help_text = (
-                f"Current path: {self.instance.path_source_format or 'Unknown format'}"
-            )
+            help_text = f"Current path: {self.instance.path_source_format or 'Unknown format'}"
             if self.instance.path_length_km:
                 help_text += f" ({self.instance.path_length_km} km)"
             help_text += ". Upload a new file to replace the current path."
@@ -159,9 +160,7 @@ class SegmentForm(NetBoxModelForm):
                         ),
                     )
                 elif field_config["type"] == "choice":
-                    choices = [("", "--------")] + [
-                        (c, c) for c in field_config.get("choices", [])
-                    ]
+                    choices = [("", "--------")] + [(c, c) for c in field_config.get("choices", [])]
                     field = forms.ChoiceField(
                         label=field_config["label"],
                         required=False,
@@ -247,20 +246,14 @@ class SegmentForm(NetBoxModelForm):
                 self.initial[form_field_name] = converted_value
 
             else:
-                logging.warning(
-                    f"DEBUG: Form field {form_field_name} not found in self.fields"
-                )
+                logging.warning(f"DEBUG: Form field {form_field_name} not found in self.fields")
                 logging.debug(
                     f"DEBUG: Available form fields starting with 'type_': {[f for f in self.fields.keys() if f.startswith('type_')]}"
                 )
 
     def get_initial_for_field(self, field, field_name):
         """Override to ensure our type-specific initial values are used"""
-        if (
-            field_name.startswith("type_")
-            and hasattr(self, "initial")
-            and field_name in self.initial
-        ):
+        if field_name.startswith("type_") and hasattr(self, "initial") and field_name in self.initial:
             return self.initial[field_name]
         return super().get_initial_for_field(field, field_name)
 
@@ -298,9 +291,7 @@ class SegmentForm(NetBoxModelForm):
         except ValidationError:
             raise
         except Exception as e:
-            raise ValidationError(
-                f"Error processing file '{uploaded_file.name}': {str(e)}"
-            )
+            raise ValidationError(f"Error processing file '{uploaded_file.name}': {str(e)}")
 
     def _convert_to_json_serializable(self, value):
         """Convert value to JSON serializable format"""
@@ -341,13 +332,9 @@ class SegmentForm(NetBoxModelForm):
                 # Only include non-empty values
                 if value is not None and value != "":
                     # Convert to JSON serializable format
-                    type_specific_data[field_name] = self._convert_to_json_serializable(
-                        value
-                    )
+                    type_specific_data[field_name] = self._convert_to_json_serializable(value)
                 elif field_config.get("required", False):
-                    self.add_error(
-                        form_field_name, "This field is required for this segment type."
-                    )
+                    self.add_error(form_field_name, "This field is required for this segment type.")
 
             self.cleaned_data["type_specific_data"] = type_specific_data
 
@@ -424,11 +411,7 @@ class SegmentForm(NetBoxModelForm):
         # Dynamic fieldset for type-specific fields (removed 'classes' parameter)
         FieldSet(
             # Fields will be dynamically shown/hidden via JavaScript
-            *[
-                f"type_{field}"
-                for schema in SEGMENT_TYPE_SCHEMAS.values()
-                for field in schema.keys()
-            ],
+            *[f"type_{field}" for schema in SEGMENT_TYPE_SCHEMAS.values() for field in schema.keys()],
             name="Segment Type Technical Specifications",
         ),
         FieldSet(
@@ -448,9 +431,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     model = Segment
 
     name = forms.CharField(required=False)
-    status = forms.MultipleChoiceField(
-        required=False, choices=StatusChoices, initial=None
-    )
+    status = forms.MultipleChoiceField(required=False, choices=StatusChoices, initial=None)
     network_label = forms.CharField(required=False)
 
     # Basic segment type filter
@@ -463,9 +444,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     tag = TagFilterField(model)
 
-    site_a_id = DynamicModelMultipleChoiceField(
-        queryset=Site.objects.all(), required=False, label=_("Site A")
-    )
+    site_a_id = DynamicModelMultipleChoiceField(queryset=Site.objects.all(), required=False, label=_("Site A"))
     location_a_id = DynamicModelMultipleChoiceField(
         queryset=Location.objects.all(),
         required=False,
@@ -475,9 +454,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         label=_("Location A"),
     )
 
-    site_b_id = DynamicModelMultipleChoiceField(
-        queryset=Site.objects.all(), required=False, label=_("Site B")
-    )
+    site_b_id = DynamicModelMultipleChoiceField(queryset=Site.objects.all(), required=False, label=_("Site B"))
     location_b_id = DynamicModelMultipleChoiceField(
         queryset=Location.objects.all(),
         required=False,
@@ -487,25 +464,13 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         label=_("Location B"),
     )
 
-    install_date__gte = forms.DateTimeField(
-        required=False, label=("Install Date From"), widget=DatePicker()
-    )
-    install_date__lte = forms.DateTimeField(
-        required=False, label=("Install Date Till"), widget=DatePicker()
-    )
-    termination_date__gte = forms.DateTimeField(
-        required=False, label=("Termination Date From"), widget=DatePicker()
-    )
-    termination_date__lte = forms.DateTimeField(
-        required=False, label=("Termination Date Till"), widget=DatePicker()
-    )
+    install_date__gte = forms.DateTimeField(required=False, label=("Install Date From"), widget=DatePicker())
+    install_date__lte = forms.DateTimeField(required=False, label=("Install Date Till"), widget=DatePicker())
+    termination_date__gte = forms.DateTimeField(required=False, label=("Termination Date From"), widget=DatePicker())
+    termination_date__lte = forms.DateTimeField(required=False, label=("Termination Date Till"), widget=DatePicker())
 
-    provider_id = DynamicModelMultipleChoiceField(
-        queryset=Provider.objects.all(), required=False, label=_("Provider")
-    )
-    provider_segment_id = forms.CharField(
-        required=False, label=_("Provider Segment ID")
-    )
+    provider_id = DynamicModelMultipleChoiceField(queryset=Provider.objects.all(), required=False, label=_("Provider"))
+    provider_segment_id = forms.CharField(required=False, label=_("Provider Segment ID"))
 
     at_any_site = DynamicModelMultipleChoiceField(
         queryset=Site.objects.all(),
@@ -765,3 +730,27 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
             name="Ethernet Service Technical Specs",
         ),
     )
+
+
+class SegmentBulkEditForm(NetBoxModelBulkEditForm):
+    status = forms.ChoiceField(
+        choices=add_blank_choice(StatusChoices),
+        required=False,
+        initial="",
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    provider = DynamicModelChoiceField(
+        queryset=Provider.objects.all(),
+        required=False,
+        label=_("Provider"),
+    )
+    segment_type = forms.ChoiceField(
+        choices=add_blank_choice(SegmentTypeChoices),
+        required=False,
+        initial="",
+    )
+    comments = CommentField()
+
+    model = Segment
+    fieldsets = (FieldSet("provider", "status", "segment_type", name="Segment"),)
+    nullable_fields = ("comments",)

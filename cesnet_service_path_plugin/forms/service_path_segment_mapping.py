@@ -1,5 +1,9 @@
 from django.utils.translation import gettext as _
-from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
+from netbox.forms import (
+    NetBoxModelBulkEditForm,
+    NetBoxModelFilterSetForm,
+    NetBoxModelForm,
+)
 from utilities.forms.fields import (
     DynamicModelChoiceField,
     DynamicModelMultipleChoiceField,
@@ -19,9 +23,7 @@ class ServicePathSegmentMappingFilterForm(NetBoxModelFilterSetForm):
 
     tag = TagFilterField(model)
 
-    segment_id = DynamicModelMultipleChoiceField(
-        queryset=Segment.objects.all(), required=False, label=_("Segment")
-    )
+    segment_id = DynamicModelMultipleChoiceField(queryset=Segment.objects.all(), required=False, label=_("Segment"))
     service_path_id = DynamicModelMultipleChoiceField(
         queryset=ServicePath.objects.all(), required=False, label=_("Service Path")
     )
@@ -33,13 +35,18 @@ class ServicePathSegmentMappingFilterForm(NetBoxModelFilterSetForm):
 
 
 class ServicePathSegmentMappingForm(NetBoxModelForm):
-    segment = DynamicModelChoiceField(
-        queryset=Segment.objects.all(), required=True, selector=True
-    )
-    service_path = DynamicModelChoiceField(
-        queryset=ServicePath.objects.all(), required=True, selector=True
-    )
+    segment = DynamicModelChoiceField(queryset=Segment.objects.all(), required=True, selector=True)
+    service_path = DynamicModelChoiceField(queryset=ServicePath.objects.all(), required=True, selector=True)
 
     class Meta:
         model = ServicePathSegmentMapping
         fields = ("segment", "service_path")
+
+
+class ServicePathSegmentMappingBulkEditForm(NetBoxModelBulkEditForm):
+    segment = DynamicModelChoiceField(queryset=Segment.objects.all(), required=False)
+    service_path = DynamicModelChoiceField(queryset=ServicePath.objects.all(), required=False)
+
+    model = ServicePathSegmentMapping
+    fieldsets = (FieldSet("segment", "service_path", name="Service Path Segment Mapping"),)
+    nullable_fields = ()
