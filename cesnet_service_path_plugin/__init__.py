@@ -1,6 +1,7 @@
 """Top-level package for Cesnet ServicePath Plugin."""
 
 from importlib import metadata
+
 from netbox.plugins import PluginConfig
 
 # Get package metadata from pyproject.toml
@@ -19,6 +20,7 @@ class CesnetServicePathPluginConfig(PluginConfig):
     version = __version__
     base_url = "cesnet-service-path-plugin"
     author = __email__
+    graphql_schema = "graphql.schema"
 
 
 config = CesnetServicePathPluginConfig
