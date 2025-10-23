@@ -7,8 +7,10 @@
 {% load i18n %}
 {% load perms %}
 {% load plugins %}
+{% load custom_filters %}
 {% load render_table from django_tables2 %}
 {% block content %}
+
     <div class="row mb-3">
         <div class="col col-md-6">
             <!-- Segment card -->
@@ -188,13 +190,13 @@
                                 <tr>
                                     <th scope="row">Monthly Charge</th>
                                     <td>
-                                        <strong>{{ financial_info.monthly_charge|floatformat:2 }} {{ financial_info.charge_currency }}</strong>
+                                        <strong>{{ financial_info.monthly_charge|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</strong>
                                     </td>
                                 </tr>
                                 {% if financial_info.non_recurring_charge %}
                                     <tr>
                                         <th scope="row">Non-Recurring Charge</th>
-                                        <td>{{ financial_info.non_recurring_charge|floatformat:2 }} {{ financial_info.charge_currency }}</td>
+                                        <td>{{ financial_info.non_recurring_charge|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</td>
                                     </tr>
                                 {% endif %}
                                 {% if financial_info.commitment_period_months %}
@@ -205,7 +207,7 @@
                                     <tr>
                                         <th scope="row">Total Commitment Cost</th>
                                         <td>
-                                            <strong>{{ financial_info.total_commitment_cost|floatformat:2 }} {{ financial_info.charge_currency }}</strong>
+                                            <strong>{{ financial_info.total_commitment_cost|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</strong>
                                         </td>
                                     </tr>
                                     {% if financial_info.non_recurring_charge %}
@@ -213,7 +215,7 @@
                                             <th scope="row">Total Cost (incl. Setup)</th>
                                             <td>
                                                 <strong class="text-primary">
-                                                    {{ financial_info.total_cost_including_setup|floatformat:2 }} {{ financial_info.charge_currency }}
+                                                    {{ financial_info.total_cost_including_setup|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}
                                                 </strong>
                                             </td>
                                         </tr>
