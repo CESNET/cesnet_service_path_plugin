@@ -41,6 +41,8 @@ dev = [
     "autopep8",
     "pip",
     "check-manifest",
+    "pytest",
+    "python-dotenv",
 ]
 
 [tool.setuptools.packages.find]
