@@ -1,12 +1,11 @@
 # cesnet_service_path_plugin/graphql/filters.py
-from typing import Annotated, TYPE_CHECKING, Optional
+from typing import Annotated, TYPE_CHECKING
 
 import strawberry
 import strawberry_django
 from strawberry_django import FilterLookup
 from django.db.models import Q
 
-import logging
 
 from netbox.graphql.filter_mixins import NetBoxModelFilterMixin
 
@@ -73,6 +72,16 @@ class SegmentFilter(NetBoxModelFilterMixin):
     circuits: Annotated["CircuitFilter", strawberry.lazy("circuits.graphql.filters")] | None = (
         strawberry_django.filter_field()
     )
+
+    @strawberry_django.filter_field
+    def has_financial_info(self, value: bool, prefix: str) -> Q:
+        """Filter segments based on whether they have associated financial info"""
+        if value:
+            # Filter for segments WITH financial info
+            return Q(**{f"{prefix}financial_info__isnull": False})
+        else:
+            # Filter for segments WITHOUT financial info
+            return Q(**{f"{prefix}financial_info__isnull": True})
 
     # Custom filter methods with decorator approach
     @strawberry_django.filter_field

@@ -2,7 +2,13 @@ import strawberry
 import strawberry_django
 from strawberry_django.optimizer import DjangoOptimizerExtension
 
-from .types import SegmentType, SegmentCircuitMappingType, ServicePathType, ServicePathSegmentMappingType
+from .types import (
+    SegmentType,
+    SegmentCircuitMappingType,
+    SegmentFinancialInfoType,
+    ServicePathType,
+    ServicePathSegmentMappingType,
+)
 
 
 @strawberry.type(name="Query")
@@ -12,6 +18,9 @@ class CesnetServicePathQuery:
 
     segment_circuit_mapping: SegmentCircuitMappingType = strawberry_django.field()
     segment_circuit_mapping_list: list[SegmentCircuitMappingType] = strawberry_django.field()
+
+    segment_financial_info: SegmentFinancialInfoType = strawberry_django.field()
+    segment_financial_info_list: list[SegmentFinancialInfoType] = strawberry_django.field()
 
     service_path: ServicePathType = strawberry_django.field()
     service_path_list: list[ServicePathType] = strawberry_django.field()
