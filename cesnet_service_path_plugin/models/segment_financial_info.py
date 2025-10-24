@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.urls import reverse
 from netbox.models import NetBoxModel
 
 
@@ -48,6 +49,15 @@ class SegmentFinancialInfo(NetBoxModel):
 
     notes = models.TextField(blank=True, help_text="Additional financial notes")
 
+    class Meta:
+        ordering = ("segment",)
+
+    def __str__(self):
+        return f"{self.segment.name} - Financial Info"
+
+    def get_absolute_url(self):
+        return reverse("plugins:cesnet_service_path_plugin:segmentfinancialinfo", args=[self.pk])
+
     @property
     def total_commitment_cost(self):
         """Calculate total cost over commitment period."""
@@ -64,6 +74,3 @@ class SegmentFinancialInfo(NetBoxModel):
         if self.non_recurring_charge:
             total += self.non_recurring_charge
         return total if total > 0 else None
-
-    class Meta:
-        ordering = ("segment",)
