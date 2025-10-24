@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0025_alter_segment_path_geometry'),
+        ("cesnet_service_path_plugin", "0025_alter_segment_path_geometry"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='segment',
-            name='segment_type',
-            field=models.CharField(default='dark_fiber', max_length=30),
+            model_name="segment",
+            name="segment_type",
+            field=models.CharField(default="dark_fiber", max_length=30),
         ),
         migrations.AddField(
-            model_name='segment',
-            name='type_specific_data',
+            model_name="segment",
+            name="type_specific_data",
             field=models.JSONField(blank=True, default=dict),
         ),
     ]

@@ -1,6 +1,5 @@
 import django_filters
 from django.db.models import Q
-from django.utils.translation import gettext as _
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
@@ -18,7 +17,6 @@ class ServicePathFilterSet(NetBoxModelFilterSet):
     status = django_filters.MultipleChoiceFilter(choices=StatusChoices, null_value=None)
     kind = django_filters.MultipleChoiceFilter(choices=KindChoices, null_value=None)
     tag = TagFilter()
-
 
     class Meta:
         model = ServicePath

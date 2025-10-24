@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cesnet_service_path_plugin", "0007_segment_comments"),
     ]

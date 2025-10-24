@@ -53,3 +53,4 @@ include = ["cesnet_service_path_plugin*"]
 [tool.setuptools.package-data]
 # This replaces include_package_data=True
 "*" = ["*"]
+

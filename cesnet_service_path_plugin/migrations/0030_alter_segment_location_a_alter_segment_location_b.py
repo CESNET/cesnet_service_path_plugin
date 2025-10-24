@@ -5,21 +5,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0029_remove_segment_provider_segment_contract_and_more'),
-        ('dcim', '0215_rackreservation_status'),
+        ("cesnet_service_path_plugin", "0029_remove_segment_provider_segment_contract_and_more"),
+        ("dcim", "0215_rackreservation_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='segment',
-            name='location_a',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='+', to='dcim.location'),
+            model_name="segment",
+            name="location_a",
+            field=models.ForeignKey(
+                blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name="+", to="dcim.location"
+            ),
         ),
         migrations.AlterField(
-            model_name='segment',
-            name='location_b',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='+', to='dcim.location'),
+            model_name="segment",
+            name="location_b",
+            field=models.ForeignKey(
+                blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name="+", to="dcim.location"
+            ),
         ),
     ]

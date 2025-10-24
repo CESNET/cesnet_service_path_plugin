@@ -5,15 +5,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0024_segment_path_geometry_segment_path_length_km_and_more'),
+        ("cesnet_service_path_plugin", "0024_segment_path_geometry_segment_path_length_km_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='segment',
-            name='path_geometry',
+            model_name="segment",
+            name="path_geometry",
             field=django.contrib.gis.db.models.fields.MultiLineStringField(blank=True, null=True, srid=4326),
         ),
     ]

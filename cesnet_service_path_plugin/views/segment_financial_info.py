@@ -19,6 +19,7 @@ class SegmentFinancialInfoView(generic.ObjectView):
         # Redirect to the parent segment's detail view
         return redirect(obj.segment.get_absolute_url())
 
+
 @register_model_view(SegmentFinancialInfo, "add", detail=False)
 @register_model_view(SegmentFinancialInfo, "edit")
 class SegmentFinancialInfoEditView(generic.ObjectEditView):

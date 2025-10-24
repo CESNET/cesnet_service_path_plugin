@@ -53,16 +53,10 @@ class TenantProviderExtension(PluginTemplateExtension):
     models = ["tenancy.tenant"]
 
     def left_page(self):
-        provider = Provider.objects.filter(
-            custom_field_data__tenant=self.context["object"].pk
-        ).first()
+        provider = Provider.objects.filter(custom_field_data__tenant=self.context["object"].pk).first()
 
         provider_circuits_count = provider.circuits.count() if provider else None
-        provider_segments_count = (
-            Segment.objects.filter(provider_id=provider.id).count()
-            if provider
-            else None
-        )
+        provider_segments_count = Segment.objects.filter(provider_id=provider.id).count() if provider else None
 
         return self.render(
             "cesnet_service_path_plugin/tenant_provider_extension.html",

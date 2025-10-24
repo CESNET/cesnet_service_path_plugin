@@ -138,17 +138,11 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         method="_filter_smart_numeric", label="Fiber Attenuation Max (dB/km)"
     )
 
-    total_loss = django_filters.CharFilter(
-        method="_filter_smart_numeric", label="Total Loss (dB)"
-    )
+    total_loss = django_filters.CharFilter(method="_filter_smart_numeric", label="Total Loss (dB)")
 
-    total_length = django_filters.CharFilter(
-        method="_filter_smart_numeric", label="Total Length (km)"
-    )
+    total_length = django_filters.CharFilter(method="_filter_smart_numeric", label="Total Length (km)")
 
-    number_of_fibers = django_filters.CharFilter(
-        method="_filter_smart_numeric", label="Number of Fibers"
-    )
+    number_of_fibers = django_filters.CharFilter(method="_filter_smart_numeric", label="Number of Fibers")
 
     connector_type = django_filters.MultipleChoiceFilter(
         choices=[
@@ -167,17 +161,11 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     )
 
     # Optical Spectrum specific filters
-    wavelength = django_filters.CharFilter(
-        method="_filter_smart_numeric", label="Wavelength (nm)"
-    )
+    wavelength = django_filters.CharFilter(method="_filter_smart_numeric", label="Wavelength (nm)")
 
-    spectral_slot_width = django_filters.CharFilter(
-        method="_filter_smart_numeric", label="Spectral Slot Width (GHz)"
-    )
+    spectral_slot_width = django_filters.CharFilter(method="_filter_smart_numeric", label="Spectral Slot Width (GHz)")
 
-    itu_grid_position = django_filters.CharFilter(
-        method="_filter_smart_numeric", label="ITU Grid Position"
-    )
+    itu_grid_position = django_filters.CharFilter(method="_filter_smart_numeric", label="ITU Grid Position")
 
     modulation_format = django_filters.MultipleChoiceFilter(
         choices=[
@@ -194,17 +182,11 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     )
 
     # Ethernet Service specific filters
-    port_speed = django_filters.CharFilter(
-        method="_filter_smart_numeric", label="Port Speed / Bandwidth (Mbps)"
-    )
+    port_speed = django_filters.CharFilter(method="_filter_smart_numeric", label="Port Speed / Bandwidth (Mbps)")
 
-    vlan_id = django_filters.CharFilter(
-        method="_filter_smart_numeric", label="Primary VLAN ID"
-    )
+    vlan_id = django_filters.CharFilter(method="_filter_smart_numeric", label="Primary VLAN ID")
 
-    mtu_size = django_filters.CharFilter(
-        method="_filter_smart_numeric", label="MTU Size (bytes)"
-    )
+    mtu_size = django_filters.CharFilter(method="_filter_smart_numeric", label="MTU Size (bytes)")
 
     encapsulation_type = django_filters.MultipleChoiceFilter(
         choices=[
@@ -330,14 +312,10 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
         if has_data:
             # Has data: exclude null and empty dict
-            return queryset.exclude(
-                Q(type_specific_data__isnull=True) | Q(type_specific_data={})
-            )
+            return queryset.exclude(Q(type_specific_data__isnull=True) | Q(type_specific_data={}))
         else:
             # No data: include null or empty dict
-            return queryset.filter(
-                Q(type_specific_data__isnull=True) | Q(type_specific_data={})
-            )
+            return queryset.filter(Q(type_specific_data__isnull=True) | Q(type_specific_data={}))
 
     def _parse_smart_numeric_value(self, value, field_type="float"):
         """
@@ -398,9 +376,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         if not value:
             return queryset
 
-        logger.debug(
-            f"🔍 Smart numeric filter called for {name} with raw value: '{value}' (type: {type(value)})"
-        )
+        logger.debug(f"🔍 Smart numeric filter called for {name} with raw value: '{value}' (type: {type(value)})")
 
         # Parse the value if it's still a string
         if isinstance(value, str):
@@ -451,13 +427,9 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
                 if where_clauses:
                     conditions &= Q(
-                        pk__in=queryset.extra(
-                            where=[" AND ".join(where_clauses)], params=params
-                        ).values("pk")
+                        pk__in=queryset.extra(where=[" AND ".join(where_clauses)], params=params).values("pk")
                     )
-                logger.debug(
-                    f"🔍 Range using SQL CAST: {min_val} <= {name} <= {max_val}"
-                )
+                logger.debug(f"🔍 Range using SQL CAST: {min_val} <= {name} <= {max_val}")
 
             elif operation == "gt":
                 field_value = parsed_value.get("value")
@@ -477,9 +449,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                         params=[name, field_value],
                     ).values("pk")
                 )
-                logger.debug(
-                    f"🔍 Greater than or equal using SQL CAST: {name} >= {field_value}"
-                )
+                logger.debug(f"🔍 Greater than or equal using SQL CAST: {name} >= {field_value}")
 
             elif operation == "lt":
                 field_value = parsed_value.get("value")
@@ -499,9 +469,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                         params=[name, field_value],
                     ).values("pk")
                 )
-                logger.debug(
-                    f"🔍 Less than or equal using SQL CAST: {name} <= {field_value}"
-                )
+                logger.debug(f"🔍 Less than or equal using SQL CAST: {name} <= {field_value}")
 
             else:
                 logger.warning(f"🔍 Unknown operation '{operation}' for {name}")
@@ -512,9 +480,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             filtered_queryset = queryset.filter(conditions)
             filtered_count = filtered_queryset.count()
 
-            logger.debug(
-                f"🔍 Filtered from {original_count} to {filtered_count} segments"
-            )
+            logger.debug(f"🔍 Filtered from {original_count} to {filtered_count} segments")
 
             return filtered_queryset
 

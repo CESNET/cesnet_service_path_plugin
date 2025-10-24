@@ -4,18 +4,17 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0028_alter_segmentfinancialinfo_options'),
+        ("cesnet_service_path_plugin", "0028_alter_segmentfinancialinfo_options"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='segment',
-            name='provider_segment_contract',
+            model_name="segment",
+            name="provider_segment_contract",
         ),
         migrations.RemoveField(
-            model_name='segment',
-            name='provider_segment_name',
+            model_name="segment",
+            name="provider_segment_name",
         ),
     ]

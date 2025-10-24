@@ -23,9 +23,7 @@ logger = logging.getLogger(__name__)
 class SegmentSerializer(NetBoxModelSerializer):
     """Default serializer Segment - now with file upload support"""
 
-    url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail"
-    )
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
     location_a = LocationSerializer(required=False, nested=True)
@@ -138,14 +136,10 @@ class SegmentSerializer(NetBoxModelSerializer):
 
             except DjangoValidationError as e:
                 logger.warning(f"Validation Path file error: {str(e)}")
-                raise serializers.ValidationError(
-                    f"Error processing file '{path_file.name}'"
-                )
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
             except Exception as e:
                 logger.error(f"Error processing file '{path_file.name}': {str(e)}")
-                raise serializers.ValidationError(
-                    f"Error processing file '{path_file.name}'"
-                )
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
 
         return instance
 
@@ -173,16 +167,12 @@ class SegmentSerializer(NetBoxModelSerializer):
                 # Clean up created instance if path processing fails
                 instance.delete()
                 logger.warning(f"Validation Path file error: {str(e)}")
-                raise serializers.ValidationError(
-                    f"Error processing file '{path_file.name}'"
-                )
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
             except Exception as e:
                 # Clean up created instance if path processing fails
                 instance.delete()
                 logger.error(f"Error processing file '{path_file.name}': {str(e)}")
-                raise serializers.ValidationError(
-                    f"Error processing file '{path_file.name}'"
-                )
+                raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
 
         return instance
 
@@ -191,9 +181,7 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
     """Full serializer with all geometry data for detail views"""
 
     # This is your existing SegmentSerializer - just rename it
-    url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail"
-    )
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
     location_a = LocationSerializer(required=False, nested=True)

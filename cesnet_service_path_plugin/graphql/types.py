@@ -6,7 +6,6 @@ from dcim.graphql.types import LocationType, SiteType
 from netbox.graphql.types import NetBoxObjectType
 from strawberry import auto, field, lazy
 from strawberry_django import type as strawberry_django_type
-import strawberry
 from decimal import Decimal
 
 from cesnet_service_path_plugin.models import (
@@ -190,9 +189,7 @@ class SegmentType(NetBoxObjectType):
         if hasattr(self, "get_path_bounds"):
             bounds = self.get_path_bounds()
             if bounds and len(bounds) >= 4:
-                return PathBounds(
-                    xmin=bounds[0], ymin=bounds[1], xmax=bounds[2], ymax=bounds[3]
-                )
+                return PathBounds(xmin=bounds[0], ymin=bounds[1], xmax=bounds[2], ymax=bounds[3])
         return None
 
 
@@ -213,9 +210,7 @@ class ServicePathType(NetBoxObjectType):
     comments: auto
 
 
-@strawberry_django_type(
-    ServicePathSegmentMapping, filters=ServicePathSegmentMappingFilter
-)
+@strawberry_django_type(ServicePathSegmentMapping, filters=ServicePathSegmentMappingFilter)
 class ServicePathSegmentMappingType(NetBoxObjectType):
     id: auto
     service_path: Annotated["ServicePathType", lazy(".types")]

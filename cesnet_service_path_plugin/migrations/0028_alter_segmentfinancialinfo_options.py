@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0027_segmentfinancialinfo'),
+        ("cesnet_service_path_plugin", "0027_segmentfinancialinfo"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='segmentfinancialinfo',
-            options={'ordering': ('segment',)},
+            name="segmentfinancialinfo",
+            options={"ordering": ("segment",)},
         ),
     ]

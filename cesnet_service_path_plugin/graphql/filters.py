@@ -1,5 +1,5 @@
 # cesnet_service_path_plugin/graphql/filters.py
-from typing import TYPE_CHECKING, Annotated, Optional
+from typing import TYPE_CHECKING, Annotated
 
 import strawberry
 import strawberry_django
@@ -36,9 +36,7 @@ class SegmentFilter(NetBoxModelFilterMixin):
     # Basic fields
     name: FilterLookup[str] | None = strawberry_django.filter_field()
     network_label: FilterLookup[str] | None = strawberry_django.filter_field()
-    install_date: FilterLookup[str] | None = (
-        strawberry_django.filter_field()
-    )  # Date fields as string
+    install_date: FilterLookup[str] | None = strawberry_django.filter_field()  # Date fields as string
     termination_date: FilterLookup[str] | None = strawberry_django.filter_field()
     status: FilterLookup[str] | None = strawberry_django.filter_field()
     provider_segment_id: FilterLookup[str] | None = strawberry_django.filter_field()
@@ -53,30 +51,25 @@ class SegmentFilter(NetBoxModelFilterMixin):
     path_notes: FilterLookup[str] | None = strawberry_django.filter_field()
 
     # Related fields - using lazy imports to avoid circular dependencies
-    provider: (
-        Annotated["ProviderFilter", strawberry.lazy("circuits.graphql.filters")] | None
-    ) = strawberry_django.filter_field()
-
-    site_a: Annotated["SiteFilter", strawberry.lazy("dcim.graphql.filters")] | None = (
+    provider: Annotated["ProviderFilter", strawberry.lazy("circuits.graphql.filters")] | None = (
         strawberry_django.filter_field()
     )
 
-    location_a: (
-        Annotated["LocationFilter", strawberry.lazy("dcim.graphql.filters")] | None
-    ) = strawberry_django.filter_field()
+    site_a: Annotated["SiteFilter", strawberry.lazy("dcim.graphql.filters")] | None = strawberry_django.filter_field()
 
-    site_b: Annotated["SiteFilter", strawberry.lazy("dcim.graphql.filters")] | None = (
+    location_a: Annotated["LocationFilter", strawberry.lazy("dcim.graphql.filters")] | None = (
         strawberry_django.filter_field()
     )
 
-    location_b: (
-        Annotated["LocationFilter", strawberry.lazy("dcim.graphql.filters")] | None
-    ) = strawberry_django.filter_field()
+    site_b: Annotated["SiteFilter", strawberry.lazy("dcim.graphql.filters")] | None = strawberry_django.filter_field()
 
+    location_b: Annotated["LocationFilter", strawberry.lazy("dcim.graphql.filters")] | None = (
+        strawberry_django.filter_field()
+    )
 
-    circuits: (
-        Annotated["CircuitFilter", strawberry.lazy("circuits.graphql.filters")] | None
-    ) = strawberry_django.filter_field()
+    circuits: Annotated["CircuitFilter", strawberry.lazy("circuits.graphql.filters")] | None = (
+        strawberry_django.filter_field()
+    )
 
     @strawberry_django.filter_field
     def has_financial_info(self, value: bool, prefix: str, info: Info) -> Q:
@@ -127,14 +120,10 @@ class SegmentFilter(NetBoxModelFilterMixin):
         if value:
             # Has type-specific data: JSON field is not empty and not null
             # Return Q object that excludes empty dict and null values
-            return ~Q(**{f"{prefix}type_specific_data": {}}) & ~Q(
-                **{f"{prefix}type_specific_data__isnull": True}
-            )
+            return ~Q(**{f"{prefix}type_specific_data": {}}) & ~Q(**{f"{prefix}type_specific_data__isnull": True})
         else:
             # No type-specific data: JSON field is empty or null
-            return Q(**{f"{prefix}type_specific_data": {}}) | Q(
-                **{f"{prefix}type_specific_data__isnull": True}
-            )
+            return Q(**{f"{prefix}type_specific_data": {}}) | Q(**{f"{prefix}type_specific_data__isnull": True})
 
 
 @strawberry_django.filter(ServicePath, lookups=True)
@@ -147,32 +136,24 @@ class ServicePathFilter(NetBoxModelFilterMixin):
     comments: FilterLookup[str] | None = strawberry_django.filter_field()
 
     # Related segments
-    segments: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = (
-        strawberry_django.filter_field()
-    )
+    segments: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
 
 
 @strawberry_django.filter(SegmentCircuitMapping, lookups=True)
 class SegmentCircuitMappingFilter(NetBoxModelFilterMixin):
     """GraphQL filter for SegmentCircuitMapping model"""
 
-    segment: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = (
+    segment: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
+
+    circuit: Annotated["CircuitFilter", strawberry.lazy("circuits.graphql.filters")] | None = (
         strawberry_django.filter_field()
     )
-
-    circuit: (
-        Annotated["CircuitFilter", strawberry.lazy("circuits.graphql.filters")] | None
-    ) = strawberry_django.filter_field()
 
 
 @strawberry_django.filter(ServicePathSegmentMapping, lookups=True)
 class ServicePathSegmentMappingFilter(NetBoxModelFilterMixin):
     """GraphQL filter for ServicePathSegmentMapping model"""
 
-    service_path: Annotated["ServicePathFilter", strawberry.lazy(".filters")] | None = (
-        strawberry_django.filter_field()
-    )
+    service_path: Annotated["ServicePathFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
 
-    segment: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = (
-        strawberry_django.filter_field()
-    )
+    segment: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()

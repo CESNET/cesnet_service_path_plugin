@@ -38,9 +38,7 @@ class Segment(NetBoxModel):
     )
 
     # JSON field for type-specific technical parameters
-    type_specific_data = models.JSONField(
-        default=dict, blank=True, help_text="Type-specific technical parameters"
-    )
+    type_specific_data = models.JSONField(default=dict, blank=True, help_text="Type-specific technical parameters")
 
     provider = models.ForeignKey(
         "circuits.provider",
@@ -112,9 +110,7 @@ class Segment(NetBoxModel):
         help_text="Calculated path length in kilometers",
     )
 
-    path_notes = models.TextField(
-        blank=True, help_text="Additional notes about the path geometry"
-    )
+    path_notes = models.TextField(blank=True, help_text="Additional notes about the path geometry")
 
     # Circuit
     circuits = models.ManyToManyField(Circuit, through="SegmentCircuitMapping")
@@ -192,9 +188,7 @@ class Segment(NetBoxModel):
                 label = field_config.get("label", field_name.replace("_", " ").title())
 
                 # Format the value based on type
-                if field_config.get("type") == "decimal" and isinstance(
-                    value, (int, float)
-                ):
+                if field_config.get("type") == "decimal" and isinstance(value, (int, float)):
                     # Add units if available in label
                     if "(" in label and ")" in label:
                         # Units are already in the label, just format the number

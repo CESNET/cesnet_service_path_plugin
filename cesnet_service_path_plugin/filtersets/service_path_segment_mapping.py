@@ -47,10 +47,5 @@ class ServicePathSegmentMappingFilterSet(NetBoxModelFilterSet):
         service_path_name = Q(service_path__name__icontains=value)
 
         return queryset.filter(
-            segment_name
-            | segment_site_a
-            | segment_site_b
-            | segment_location_a
-            | segment_location_b
-            | service_path_name
+            segment_name | segment_site_a | segment_site_b | segment_location_a | segment_location_b | service_path_name
         )

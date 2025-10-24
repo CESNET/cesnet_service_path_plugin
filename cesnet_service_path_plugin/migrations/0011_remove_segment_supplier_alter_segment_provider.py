@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("circuits", "0043_circuittype_color"),
         ("cesnet_service_path_plugin", "0010_replace_supplier_with_provider"),
