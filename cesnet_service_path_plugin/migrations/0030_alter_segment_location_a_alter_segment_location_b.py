@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cesnet_service_path_plugin', '0027_remove_segment_provider_segment_contract_and_more'),
+        ('cesnet_service_path_plugin', '0029_remove_segment_provider_segment_contract_and_more'),
         ('dcim', '0215_rackreservation_status'),
     ]
 

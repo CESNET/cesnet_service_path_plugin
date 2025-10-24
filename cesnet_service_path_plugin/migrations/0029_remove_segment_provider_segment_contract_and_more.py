@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cesnet_service_path_plugin', '0026_segment_segment_type_segment_type_specific_data'),
+        ('cesnet_service_path_plugin', '0028_alter_segmentfinancialinfo_options'),
     ]
 
     operations = [
