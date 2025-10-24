@@ -1,10 +1,12 @@
 from django.shortcuts import redirect
 from netbox.views import generic
+from utilities.views import register_model_view
 
 from cesnet_service_path_plugin.forms import SegmentFinancialInfoForm
 from cesnet_service_path_plugin.models import SegmentFinancialInfo
 
 
+@register_model_view(SegmentFinancialInfo)
 class SegmentFinancialInfoView(generic.ObjectView):
     """
     Redirect to the parent segment's detail view instead of showing a separate detail page
@@ -17,7 +19,8 @@ class SegmentFinancialInfoView(generic.ObjectView):
         # Redirect to the parent segment's detail view
         return redirect(obj.segment.get_absolute_url())
 
-
+@register_model_view(SegmentFinancialInfo, "add", detail=False)
+@register_model_view(SegmentFinancialInfo, "edit")
 class SegmentFinancialInfoEditView(generic.ObjectEditView):
     queryset = SegmentFinancialInfo.objects.all()
     form = SegmentFinancialInfoForm
@@ -38,6 +41,7 @@ class SegmentFinancialInfoEditView(generic.ObjectEditView):
         return super().get_return_url(request, obj)
 
 
+@register_model_view(SegmentFinancialInfo, "delete")
 class SegmentFinancialInfoDeleteView(generic.ObjectDeleteView):
     queryset = SegmentFinancialInfo.objects.all()
 

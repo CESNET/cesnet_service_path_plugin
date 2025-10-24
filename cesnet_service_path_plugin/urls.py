@@ -8,9 +8,6 @@ from cesnet_service_path_plugin.views import (
     segment_map_view,
     segment_path_clear,
     segments_map_api,
-    SegmentFinancialInfoView,
-    SegmentFinancialInfoEditView,
-    SegmentFinancialInfoDeleteView,
 )
 
 urlpatterns = (
@@ -59,17 +56,13 @@ urlpatterns = (
         "segment-circuit-mappings/<int:pk>/",
         include(get_model_urls("cesnet_service_path_plugin", "segmentcircuitmapping")),
     ),
-    # SegmentFinancialInfo URLs
-    path("segment-financial-info/add/", SegmentFinancialInfoEditView.as_view(), name="segmentfinancialinfo_add"),
-    path("segment-financial-info/<int:pk>/", SegmentFinancialInfoView.as_view(), name="segmentfinancialinfo"),
+    # SegmentFinancialInfo views
     path(
-        "segment-financial-info/<int:pk>/edit/",
-        SegmentFinancialInfoEditView.as_view(),
-        name="segmentfinancialinfo_edit",
+        "segment-financial-info/",
+        include(get_model_urls("cesnet_service_path_plugin", "segmentfinancialinfo", detail=False)),
     ),
     path(
-        "segment-financial-info/<int:pk>/delete/",
-        SegmentFinancialInfoDeleteView.as_view(),
-        name="segmentfinancialinfo_delete",
+        "segment-financial-info/<int:pk>/",
+        include(get_model_urls("cesnet_service_path_plugin", "segmentfinancialinfo")),
     ),
 )
