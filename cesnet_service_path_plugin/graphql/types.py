@@ -1,23 +1,25 @@
 from typing import Annotated, List, Optional
 
+import strawberry
 from circuits.graphql.types import CircuitType, ProviderType
 from dcim.graphql.types import LocationType, SiteType
 from netbox.graphql.types import NetBoxObjectType
-from strawberry import auto, lazy, field
+from strawberry import auto, field, lazy
 from strawberry_django import type as strawberry_django_type
-import strawberry
+from decimal import Decimal
 
 from cesnet_service_path_plugin.models import (
     Segment,
     SegmentCircuitMapping,
+    SegmentFinancialInfo,
     ServicePath,
     ServicePathSegmentMapping,
 )
 
 # Import the GraphQL filters
 from .filters import (
-    SegmentFilter,
     SegmentCircuitMappingFilter,
+    SegmentFilter,
     ServicePathFilter,
     ServicePathSegmentMappingFilter,
 )
@@ -32,6 +34,35 @@ class PathBounds:
     ymin: float
     xmax: float
     ymax: float
+
+
+@strawberry_django_type(SegmentFinancialInfo)
+class SegmentFinancialInfoType(NetBoxObjectType):
+    """
+    GraphQL type for SegmentFinancialInfo with permission checking.
+    Financial data will only be exposed if user has view permission.
+    """
+
+    id: auto
+    monthly_charge: auto
+    charge_currency: auto
+    non_recurring_charge: auto
+    commitment_period_months: auto
+    notes: auto
+
+    # Related segment (simplified reference)
+    segment: Annotated["SegmentType", lazy(".types")]
+
+    @field
+    def total_commitment_cost(self, info) -> Optional[Decimal]:
+        """Calculate total cost over commitment period - only if user has permission"""
+        # Permission check happens at the query level, so if we're here, user has access
+        return self.total_commitment_cost
+
+    @field
+    def total_cost_including_setup(self, info) -> Optional[Decimal]:
+        """Total cost including non-recurring charge - only if user has permission"""
+        return self.total_cost_including_setup
 
 
 @strawberry_django_type(Segment, filters=SegmentFilter)
@@ -49,8 +80,6 @@ class SegmentType(NetBoxObjectType):
 
     provider: Annotated["ProviderType", lazy("circuits.graphql.types")] | None
     provider_segment_id: auto
-    provider_segment_name: auto
-    provider_segment_contract: auto
     site_a: Annotated["SiteType", lazy("dcim.graphql.types")] | None
     location_a: Annotated["LocationType", lazy("dcim.graphql.types")] | None
     site_b: Annotated["SiteType", lazy("dcim.graphql.types")] | None
@@ -64,6 +93,35 @@ class SegmentType(NetBoxObjectType):
 
     # Circuit relationships
     circuits: List[Annotated["CircuitType", lazy("circuits.graphql.types")]]
+
+    @field
+    def financial_info(self, info) -> Optional[Annotated["SegmentFinancialInfoType", lazy(".types")]]:
+        """
+        Return financial info only if user has permission to view it.
+        This mimics the REST API behavior.
+        """
+        request = info.context.get("request")
+
+        if not request:
+            return None
+
+        # Check if user has permission to view financial info
+        has_financial_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
+
+        if not has_financial_view_perm:
+            return None
+
+        # Try to get financial info if user has permission
+        financial_info = getattr(self, "financial_info", None)
+
+        return financial_info if financial_info else None
+
+    @field
+    def has_financial_info(self) -> bool:
+        """Whether this segment has associated financial info"""
+        if hasattr(self, "financial_info") and self.financial_info is not None:
+            return True
+        return False
 
     @field
     def has_type_specific_data(self) -> bool:
@@ -94,8 +152,9 @@ class SegmentType(NetBoxObjectType):
 
         try:
             # Check if the utility function exists
-            from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
             import json
+
+            from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
 
             geojson_str = export_segment_paths_as_geojson([self])
             geojson_data = json.loads(geojson_str)

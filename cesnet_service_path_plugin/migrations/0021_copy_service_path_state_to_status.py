@@ -43,6 +43,4 @@ class Migration(migrations.Migration):
         ),
     ]
 
-    operations = [
-        migrations.RunPython(copy_state_to_status, reverse_copy_state_to_status)
-    ]
+    operations = [migrations.RunPython(copy_state_to_status, reverse_copy_state_to_status)]

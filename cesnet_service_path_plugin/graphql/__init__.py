@@ -1,3 +1,3 @@
-from .schema import CesnetServicePathQuery
+from .schema import schema
 
-schema = [CesnetServicePathQuery]
+__all__ = ("schema",)

@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cesnet_service_path_plugin", "0013_alter_segment_table_and_more"),
     ]

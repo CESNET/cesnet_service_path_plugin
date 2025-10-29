@@ -16,8 +16,6 @@ curl -X POST "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segme
   -F "location_b=24" \
   -F "network_label=API-TEST-01" \
   -F "provider_segment_id=API-TEST-SEGMENT-001" \
-  -F "provider_segment_name=Test Provider Segment" \
-  -F "provider_segment_contract=CONTRACT-2024-001" \
   -F "path_file=@/path/to/your/segment_path.kmz" \
   -F "path_notes=Path data uploaded via API" \
   -F "install_date=2024-01-15" \
@@ -46,7 +44,6 @@ curl -X PATCH "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segm
 curl -X PATCH "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segments/10/" \
   -H "Authorization: Token YOUR_API_TOKEN" \
   -F "network_label=UPDATED-LABEL" \
-  -F "provider_segment_name=Updated Provider Name" \
   -F "status=planned" \
   -F "path_file=@/path/to/updated_path.geojson" \
   -F "path_notes=Updated both metadata and path geometry" \
@@ -59,7 +56,8 @@ curl -X PATCH "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segm
 2. **Content-Type**: Use `multipart/form-data` (automatic with `-F` flag) when uploading files
 3. **File Path**: Use absolute paths for the `path_file` parameter
 4. **Required Fields**: For POST requests, ensure all required fields are included:
-   - `name`, `status`, `provider`, `site_a`, `location_a`, `site_b`, `location_b`
+   - `name`, `status`, `provider`, `site_a`, `site_b`
+   - Optional: `location_a`, `location_b` (must belong to their respective sites if provided)
 5. **Field IDs**: Use numeric IDs for foreign key fields (provider, sites, locations)
 6. **Path Processing**: Files are automatically processed and geometry is calculated
 7. **Error Handling**: Invalid files will return detailed error messages

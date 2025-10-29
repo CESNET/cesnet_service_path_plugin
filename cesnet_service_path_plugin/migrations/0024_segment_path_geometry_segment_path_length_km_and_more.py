@@ -5,30 +5,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0023_alter_servicepath_kind'),
+        ("cesnet_service_path_plugin", "0023_alter_servicepath_kind"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='segment',
-            name='path_geometry',
+            model_name="segment",
+            name="path_geometry",
             field=django.contrib.gis.db.models.fields.LineStringField(blank=True, null=True, srid=4326),
         ),
         migrations.AddField(
-            model_name='segment',
-            name='path_length_km',
+            model_name="segment",
+            name="path_length_km",
             field=models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True),
         ),
         migrations.AddField(
-            model_name='segment',
-            name='path_notes',
+            model_name="segment",
+            name="path_notes",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='segment',
-            name='path_source_format',
+            model_name="segment",
+            name="path_source_format",
             field=models.CharField(blank=True, max_length=20, null=True),
         ),
     ]

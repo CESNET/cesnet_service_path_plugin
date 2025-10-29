@@ -1,14 +1,14 @@
 # cesnet_service_path_plugin/graphql/filters.py
-from typing import Annotated, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Annotated
 
 import strawberry
 import strawberry_django
-from strawberry_django import FilterLookup
 from django.db.models import Q
+from strawberry.types import Info
 
-import logging
 
 from netbox.graphql.filter_mixins import NetBoxModelFilterMixin
+from strawberry_django import FilterLookup
 
 if TYPE_CHECKING:
     from circuits.graphql.filters import CircuitFilter, ProviderFilter
@@ -20,7 +20,6 @@ from cesnet_service_path_plugin.models import (
     ServicePath,
     ServicePathSegmentMapping,
 )
-
 
 __all__ = (
     "SegmentFilter",
@@ -41,8 +40,6 @@ class SegmentFilter(NetBoxModelFilterMixin):
     termination_date: FilterLookup[str] | None = strawberry_django.filter_field()
     status: FilterLookup[str] | None = strawberry_django.filter_field()
     provider_segment_id: FilterLookup[str] | None = strawberry_django.filter_field()
-    provider_segment_name: FilterLookup[str] | None = strawberry_django.filter_field()
-    provider_segment_contract: FilterLookup[str] | None = strawberry_django.filter_field()
     comments: FilterLookup[str] | None = strawberry_django.filter_field()
 
     # Segment type field
@@ -73,6 +70,38 @@ class SegmentFilter(NetBoxModelFilterMixin):
     circuits: Annotated["CircuitFilter", strawberry.lazy("circuits.graphql.filters")] | None = (
         strawberry_django.filter_field()
     )
+
+    @strawberry_django.filter_field
+    def has_financial_info(self, value: bool, prefix: str, info: Info) -> Q:
+        """Filter segments based on whether they have associated financial info"""
+
+        # Check permission first
+        if not self._check_financial_permission(info):
+            # Return a condition that matches all segments (no filtering)
+            # This prevents leaking information about which segments have financial data
+            return Q()
+
+        if value:
+            # Filter for segments WITH financial info
+            return Q(**{f"{prefix}financial_info__isnull": False})
+        else:
+            # Filter for segments WITHOUT financial info
+            return Q(**{f"{prefix}financial_info__isnull": True})
+
+    def _check_financial_permission(self, info: Info) -> bool:
+        """
+        Check if the current user has permission to view financial info.
+        Returns True if user has permission, False otherwise.
+        """
+        # Access the request context from GraphQL info
+        if not info.context or not hasattr(info.context, "request"):
+            return False
+
+        request = info.context.request
+        if not request or not hasattr(request, "user"):
+            return False
+
+        return request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
 
     # Custom filter methods with decorator approach
     @strawberry_django.filter_field

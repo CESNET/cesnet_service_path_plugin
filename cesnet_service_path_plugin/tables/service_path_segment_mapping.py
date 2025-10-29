@@ -1,5 +1,5 @@
 import django_tables2 as tables
-from netbox.tables import NetBoxTable
+from netbox.tables import NetBoxTable, columns
 
 from cesnet_service_path_plugin.models import ServicePathSegmentMapping
 
@@ -11,6 +11,7 @@ class ServicePathSegmentMappingTable(NetBoxTable):
     segment__location_a = tables.Column(linkify=True, verbose_name="Location A")
     segment__site_b = tables.Column(linkify=True, verbose_name="Site B")
     segment__location_b = tables.Column(linkify=True, verbose_name="Location B")
+    tags = columns.TagColumn()
 
     class Meta(NetBoxTable.Meta):
         model = ServicePathSegmentMapping
@@ -22,6 +23,7 @@ class ServicePathSegmentMappingTable(NetBoxTable):
             "segment__site_b",
             "segment__location_b",
             "service_path",
+            "tags",
             "actions",
         )
         default_columns = (

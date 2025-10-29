@@ -1,5 +1,5 @@
 import django_tables2 as tables
-from netbox.tables import NetBoxTable
+from netbox.tables import NetBoxTable, columns
 
 from cesnet_service_path_plugin.models import SegmentCircuitMapping
 
@@ -42,6 +42,7 @@ class SegmentCircuitMappingTable(NetBoxTable):
         accessor="segment.location_b",
     )
     circuit = tables.Column(linkify=True, verbose_name="Circuit", orderable=True, order_by=("circuit__name",))
+    tags = columns.TagColumn()
 
     class Meta(NetBoxTable.Meta):
         model = SegmentCircuitMapping
@@ -54,6 +55,7 @@ class SegmentCircuitMappingTable(NetBoxTable):
             "segment_location_a",
             "segment_site_b",
             "segment_location_b",
+            "tags",
             "actions",
         )
         default_columns = (

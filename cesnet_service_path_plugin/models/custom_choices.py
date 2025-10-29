@@ -23,7 +23,7 @@ class KindChoices(ChoiceSet):
     CUSTOMER = "customer"
 
     CHOICES = [
-        (EXPERIMENTAL, "Experimentální", "cyan"),
-        (CORE, "Páteřní", "blue"),
-        (CUSTOMER, "Zákaznická", "green"),
+        (EXPERIMENTAL, "Experimental", "cyan"),
+        (CORE, "Core", "blue"),
+        (CUSTOMER, "Customer", "green"),
     ]

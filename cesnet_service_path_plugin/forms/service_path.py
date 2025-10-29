@@ -1,5 +1,10 @@
 from django import forms
-from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
+from netbox.forms import (
+    NetBoxModelBulkEditForm,
+    NetBoxModelFilterSetForm,
+    NetBoxModelForm,
+)
+from utilities.forms import add_blank_choice
 from utilities.forms.fields import CommentField
 from utilities.forms.rendering import FieldSet
 
@@ -10,11 +15,11 @@ from cesnet_service_path_plugin.models.custom_choices import KindChoices, Status
 class ServicePathForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
     status = forms.ChoiceField(
-        required=True, choices=StatusChoices, initial=StatusChoices.ACTIVE
+        required=True,
+        choices=StatusChoices,
+        initial=StatusChoices.ACTIVE,
     )
-    kind = forms.ChoiceField(
-        required=True, choices=KindChoices, initial=KindChoices.CORE
-    )
+    kind = forms.ChoiceField(required=True, choices=KindChoices, initial=KindChoices.CORE)
 
     class Meta:
         model = ServicePath
@@ -29,15 +34,30 @@ class ServicePathForm(NetBoxModelForm):
 
 class ServicePathFilterForm(NetBoxModelFilterSetForm):
     model = ServicePath
-    # TODO: make choices configurable (seperate model maybe)
 
     name = forms.CharField(required=False)
-    status = forms.MultipleChoiceField(
-        required=False, choices=StatusChoices, initial=None
-    )
-    kind = forms.MultipleChoiceField(required=False, choices=KindChoices, initial=None)
+    status = forms.ChoiceField(required=False, choices=add_blank_choice(StatusChoices), initial=None)
+    kind = forms.ChoiceField(required=False, choices=add_blank_choice(KindChoices), initial=None)
 
     fieldsets = (
         FieldSet("q", "tag", "filter_id", name="Misc"),
         FieldSet("name", "status", "kind", name="Service Path"),
     )
+
+
+class ServicePathBulkEditForm(NetBoxModelBulkEditForm):
+    status = forms.ChoiceField(
+        choices=add_blank_choice(StatusChoices),
+        required=False,
+        initial="",
+    )
+    kind = forms.ChoiceField(
+        choices=add_blank_choice(KindChoices),
+        required=False,
+        initial="",
+    )
+    comments = CommentField()
+
+    model = ServicePath
+    fieldsets = (FieldSet("status", "kind", name="Service Path"),)
+    nullable_fields = ("comments",)

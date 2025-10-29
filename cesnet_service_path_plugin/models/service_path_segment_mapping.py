@@ -7,12 +7,8 @@ from .service_path import ServicePath
 
 
 class ServicePathSegmentMapping(NetBoxModel):
-    service_path = models.ForeignKey(
-        ServicePath, on_delete=models.CASCADE, null=False, blank=False
-    )
-    segment = models.ForeignKey(
-        Segment, on_delete=models.CASCADE, null=False, blank=False
-    )
+    service_path = models.ForeignKey(ServicePath, on_delete=models.CASCADE, null=False, blank=False)
+    segment = models.ForeignKey(Segment, on_delete=models.CASCADE, null=False, blank=False)
 
     class Meta:
         ordering = ("service_path", "segment")

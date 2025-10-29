@@ -1,19 +1,24 @@
 import json
 import logging
+
 from circuits.api.serializers import CircuitSerializer, ProviderSerializer
 from dcim.api.serializers import (
     LocationSerializer,
     SiteSerializer,
 )
+from django.core.exceptions import ValidationError as DjangoValidationError
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 
+from cesnet_service_path_plugin.api.serializers.segment_financial_info import (
+    SegmentFinancialInfoSerializer,
+)
 from cesnet_service_path_plugin.models.segment import Segment
-from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
-
-from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
-from django.core.exceptions import ValidationError as DjangoValidationError
-
+from cesnet_service_path_plugin.utils import (
+    determine_file_format_from_extension,
+    export_segment_paths_as_geojson,
+    process_path_data,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +29,9 @@ class SegmentSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
-    location_a = LocationSerializer(required=True, nested=True)
+    location_a = LocationSerializer(required=False, nested=True)
     site_b = SiteSerializer(required=True, nested=True)
-    location_b = LocationSerializer(required=True, nested=True)
+    location_b = LocationSerializer(required=False, nested=True)
     circuits = CircuitSerializer(required=False, many=True, nested=True)
 
     # Add file upload field
@@ -38,6 +43,8 @@ class SegmentSerializer(NetBoxModelSerializer):
 
     # Only include lightweight path info
     has_path_data = serializers.SerializerMethodField(read_only=True)
+
+    financial_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Segment
@@ -53,8 +60,6 @@ class SegmentSerializer(NetBoxModelSerializer):
             "termination_date",
             "provider",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             "site_a",
             "location_a",
             "site_b",
@@ -66,7 +71,8 @@ class SegmentSerializer(NetBoxModelSerializer):
             "path_source_format",
             "path_notes",
             "has_path_data",
-            "path_file",  # Add the file field
+            "path_file",
+            "financial_info",
             "tags",
         )
         brief_fields = (
@@ -82,6 +88,24 @@ class SegmentSerializer(NetBoxModelSerializer):
 
     def get_has_path_data(self, obj):
         return obj.has_path_data()
+
+    def get_financial_info(self, obj):
+        """
+        Only include financial info if the user has permission to view it
+        """
+        request = self.context.get("request")
+        if not request:
+            return None
+
+        # Check if user has permission to view financial info
+        if not request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo"):
+            return None
+
+        # Fetch and serialize financial info if user has permission
+        financial_info = getattr(obj, "financial_info", None)
+        if financial_info:
+            return SegmentFinancialInfoSerializer(financial_info, context=self.context).data
+        return None
 
     def update(self, instance, validated_data):
         """Handle file upload during update"""
@@ -153,9 +177,9 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
-    location_a = LocationSerializer(required=True, nested=True)
+    location_a = LocationSerializer(required=False, nested=True)
     site_b = SiteSerializer(required=True, nested=True)
-    location_b = LocationSerializer(required=True, nested=True)
+    location_b = LocationSerializer(required=False, nested=True)
     circuits = CircuitSerializer(required=False, many=True, nested=True)
 
     # All the heavy geometry fields
@@ -178,8 +202,6 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
             "termination_date",
             "provider",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             "site_a",
             "location_a",
             "site_b",
@@ -215,7 +237,6 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
             return None
 
         try:
-
             geojson_str = export_segment_paths_as_geojson([obj])
             geojson_data = json.loads(geojson_str)
 

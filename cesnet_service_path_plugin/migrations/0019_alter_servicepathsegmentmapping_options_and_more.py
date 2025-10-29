@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cesnet_service_path_plugin", "0018_remove_segment_sync_status_and_more"),
     ]

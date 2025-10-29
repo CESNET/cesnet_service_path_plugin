@@ -1,13 +1,20 @@
-from circuits.tables import CircuitTable
-from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.utils.text import slugify
-from netbox.views import generic
 import json
 
+from circuits.tables import CircuitTable
+from django.contrib import messages
+from django.http import HttpResponse, JsonResponse, QueryDict
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.text import slugify
+from netbox.views import generic
+from utilities.views import register_model_view
+
 from cesnet_service_path_plugin.filtersets import SegmentFilterSet
-from cesnet_service_path_plugin.forms import SegmentFilterForm, SegmentForm
+from cesnet_service_path_plugin.forms import (
+    SegmentBulkEditForm,
+    SegmentFilterForm,
+    SegmentForm,
+)
 from cesnet_service_path_plugin.models import (
     Segment,
     ServicePath,
@@ -17,6 +24,57 @@ from cesnet_service_path_plugin.tables import SegmentTable, ServicePathTable
 from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
 
 
+def generate_circuit_creation_url(segment):
+    """
+    Generate a pre-filled Circuit creation URL from a Segment instance.
+
+    Args:
+        segment: Segment instance to extract data from
+
+    Returns:
+        str: URL with query parameters for Circuit creation form
+    """
+
+    circuit_add_url = reverse("circuits:circuit_add")
+    params = QueryDict(mutable=True)
+
+    # Set provider
+    if segment.provider:
+        params["provider"] = segment.provider.pk
+
+    # Set CID suggestion based on segment name
+    if segment.name:
+        params["cid"] = f"CIR-{segment.name}"
+
+    # Set description with segment information
+    description_parts = []
+    if segment.network_label:
+        description_parts.append(f"Network: {segment.network_label}")
+    if segment.site_a and segment.site_b:
+        description_parts.append(f"Route: {segment.site_a} → {segment.site_b}")
+    if description_parts:
+        params["description"] = " | ".join(description_parts)
+
+    # Set install/termination dates
+    if segment.install_date:
+        params["install_date"] = segment.install_date.strftime("%Y-%m-%d")
+    if segment.termination_date:
+        params["termination_date"] = segment.termination_date.strftime("%Y-%m-%d")
+
+    # Add comments reference
+    if segment.comments:
+        params["comments"] = f"Created from Segment: {segment.name}\n\n{segment.comments}"
+    else:
+        params["comments"] = f"Created from Segment: {segment.name}"
+
+    # Add return URL to come back to this segment
+    params["return_url"] = segment.get_absolute_url()
+
+    # Build the full URL with query parameters
+    return f"{circuit_add_url}?{params.urlencode()}"
+
+
+@register_model_view(Segment)
 class SegmentView(generic.ObjectView):
     queryset = Segment.objects.all()
 
@@ -32,12 +90,31 @@ class SegmentView(generic.ObjectView):
         service_paths_table = ServicePathTable(service_paths)
         service_paths_table.configure(request)
 
+        # Check if user has permission to view financial info
+        has_financial_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
+
+        # Try to get financial info if user has permission
+        financial_info = None
+        if has_financial_view_perm:
+            financial_info = getattr(instance, "financial_info", None)
+
         return {
             "circuits_table": circuits_table,
             "service_paths_table": service_paths_table,
+            "create_circuit_url": generate_circuit_creation_url(instance),
+            "financial_info": financial_info,
+            "has_financial_view_perm": has_financial_view_perm,
+            "has_financial_add_perm": request.user.has_perm("cesnet_service_path_plugin.add_segmentfinancialinfo"),
+            "has_financial_change_perm": request.user.has_perm(
+                "cesnet_service_path_plugin.change_segmentfinancialinfo"
+            ),
+            "has_financial_delete_perm": request.user.has_perm(
+                "cesnet_service_path_plugin.delete_segmentfinancialinfo"
+            ),
         }
 
 
+@register_model_view(Segment, "list", path="", detail=False)
 class SegmentListView(generic.ObjectListView):
     queryset = Segment.objects.all()
     table = SegmentTable
@@ -46,6 +123,8 @@ class SegmentListView(generic.ObjectListView):
     template_name = "cesnet_service_path_plugin/segment_list.html"
 
 
+@register_model_view(Segment, "add", detail=False)
+@register_model_view(Segment, "edit")
 class SegmentEditView(generic.ObjectEditView):
     queryset = Segment.objects.all()
     form = SegmentForm
@@ -53,11 +132,34 @@ class SegmentEditView(generic.ObjectEditView):
     template_name = "cesnet_service_path_plugin/segment_edit.html"
 
 
+@register_model_view(Segment, "delete")
 class SegmentDeleteView(generic.ObjectDeleteView):
     queryset = Segment.objects.all()
 
 
-# New view for downloading segment path as GeoJSON
+@register_model_view(Segment, "bulk_edit", path="edit", detail=False)
+class SegmentBulkEditView(generic.BulkEditView):
+    queryset = Segment.objects.all()
+    filterset = SegmentFilterSet
+    table = SegmentTable
+    form = SegmentBulkEditForm
+
+
+@register_model_view(Segment, "bulk_delete", path="delete", detail=False)
+class SegmentBulkDeleteView(generic.BulkDeleteView):
+    queryset = Segment.objects.all()
+    filterset = SegmentFilterSet
+    table = SegmentTable
+
+
+@register_model_view(Segment, "bulk_import", path="import", detail=False)
+class SegmentBulkImportView(generic.BulkImportView):
+    queryset = Segment.objects.all()
+    model_form = SegmentForm
+    table = SegmentTable
+
+
+# GeoJSON download view (function-based, registered via urls.py)
 def segment_geojson_download(request, pk):
     """
     Download segment path as GeoJSON file
@@ -87,7 +189,7 @@ def segment_geojson_download(request, pk):
     return response
 
 
-# New view for clearing segment path data
+# Clear path data view (not registered - function-based view)
 def segment_path_clear(request, pk):
     """
     Clear path data from a segment
@@ -110,20 +212,19 @@ def segment_path_clear(request, pk):
         return redirect(segment.get_absolute_url())
 
     # For GET requests, show confirmation page
-    return render(request, "cesnet_service_path_plugin/segment_path_clear_confirm.html", {"object": segment})
+    return render(
+        request,
+        "cesnet_service_path_plugin/segment_path_clear_confirm.html",
+        {"object": segment},
+    )
 
 
-# Map view for visualizing segment path
+# Individual segment map view (function-based, registered via urls.py)
 def segment_map_view(request, pk):
     """
     Display segment path on an interactive map with enhanced features
     """
-    import json
-    from django.shortcuts import get_object_or_404, render
-
     segment = get_object_or_404(Segment, pk=pk)
-
-    # Prepare site data for endpoints
 
     has_fallback_line = False
 
@@ -151,7 +252,11 @@ def segment_map_view(request, pk):
         has_fallback_line = True
 
     # Prepare segment styling data
-    segment_style = {"color": "#dc3545", "weight": 4, "opacity": 0.8}  # Red color for better visibility
+    segment_style = {
+        "color": "#dc3545",
+        "weight": 4,
+        "opacity": 0.8,
+    }  # Red color for better visibility
 
     # Adjust styling based on status if needed
     # status_colors = {"Active": "#28a745", "Planned": "#ffc107", "Offline": "#dc3545"}
@@ -173,6 +278,7 @@ def segment_map_view(request, pk):
     return render(request, "cesnet_service_path_plugin/segment_map.html", context)
 
 
+# GeoJSON API for individual segment (function-based, registered via urls.py)
 def segment_geojson_api(request, pk):
     """
     Return segment path as GeoJSON for map display
@@ -208,6 +314,7 @@ def segment_geojson_api(request, pk):
 # In cesnet_service_path_plugin/views/segment.py
 
 
+@register_model_view(Segment, "map", path="map", detail=False)
 class SegmentsMapView(generic.ObjectListView):
     """
     Display multiple segments on an interactive map with filtering support
@@ -320,13 +427,11 @@ class SegmentsMapView(generic.ObjectListView):
         return context
 
 
+# GeoJSON API for multiple segments map (function-based, registered via urls.py)
 def segments_map_api(request):
     """
     API endpoint to return filtered segments as GeoJSON for map display
     """
-    import json
-    from django.http import JsonResponse
-
     # Use the same filterset as the table view
     filterset = SegmentFilterSet(request.GET, queryset=Segment.objects.all())
     segments = filterset.qs
@@ -379,7 +484,10 @@ def segments_map_api(request):
                     "type": "Feature",
                     "geometry": {
                         "type": "LineString",
-                        "coordinates": [[site_a_lng, site_a_lat], [site_b_lng, site_b_lat]],
+                        "coordinates": [
+                            [site_a_lng, site_a_lat],
+                            [site_b_lng, site_b_lat],
+                        ],
                     },
                     "properties": {
                         "id": segment.pk,

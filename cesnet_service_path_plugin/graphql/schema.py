@@ -1,28 +1,35 @@
+from typing import List
+
 import strawberry
 import strawberry_django
-from strawberry_django.optimizer import DjangoOptimizerExtension
 
-from .types import SegmentType, SegmentCircuitMappingType, ServicePathType, ServicePathSegmentMappingType
+from .types import (
+    SegmentCircuitMappingType,
+    SegmentFinancialInfoType,
+    SegmentType,
+    ServicePathSegmentMappingType,
+    ServicePathType,
+)
 
 
 @strawberry.type(name="Query")
 class CesnetServicePathQuery:
     segment: SegmentType = strawberry_django.field()
-    segment_list: list[SegmentType] = strawberry_django.field()
+    segment_list: List[SegmentType] = strawberry_django.field()
 
     segment_circuit_mapping: SegmentCircuitMappingType = strawberry_django.field()
-    segment_circuit_mapping_list: list[SegmentCircuitMappingType] = strawberry_django.field()
+    segment_circuit_mapping_list: List[SegmentCircuitMappingType] = strawberry_django.field()
+
+    segment_financial_info: SegmentFinancialInfoType = strawberry_django.field()
+    segment_financial_info_list: List[SegmentFinancialInfoType] = strawberry_django.field()
 
     service_path: ServicePathType = strawberry_django.field()
-    service_path_list: list[ServicePathType] = strawberry_django.field()
+    service_path_list: List[ServicePathType] = strawberry_django.field()
 
     service_path_segment_mapping: ServicePathSegmentMappingType = strawberry_django.field()
-    service_path_segment_mapping_list: list[ServicePathSegmentMappingType] = strawberry_django.field()
+    service_path_segment_mapping_list: List[ServicePathSegmentMappingType] = strawberry_django.field()
 
 
-schema = strawberry.Schema(
-    query=CesnetServicePathQuery,
-    extensions=[
-        DjangoOptimizerExtension,
-    ],
-)
+schema = [
+    CesnetServicePathQuery,
+]

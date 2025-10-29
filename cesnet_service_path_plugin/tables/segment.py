@@ -55,8 +55,6 @@ class SegmentTable(NetBoxTable):
             "termination_date",
             "provider",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             "site_a",
             "location_a",
             "site_b",

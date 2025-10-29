@@ -1,11 +1,11 @@
 import logging
+
 import django_filters
 from circuits.models import Circuit, Provider
 from dcim.models import Location, Site
 from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
-
 
 from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
@@ -40,8 +40,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Provider (ID)",
     )
     provider_segment_id = django_filters.CharFilter(lookup_expr="icontains")
-    provider_segment_name = django_filters.CharFilter(lookup_expr="icontains")
-    provider_segment_contract = django_filters.CharFilter(lookup_expr="icontains")
 
     site_a_id = django_filters.ModelMultipleChoiceFilter(
         field_name="site_a__id",
@@ -84,6 +82,16 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         queryset=Circuit.objects.all(),
         to_field_name="id",
         label="Circuit (ID)",
+    )
+
+    # Financial info filter
+    has_financial_info = django_filters.ChoiceFilter(
+        choices=[
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        method="_has_financial_info",
+        label="Has Financial Info",
     )
 
     # Path data filter
@@ -222,8 +230,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "termination_date",
             "provider",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             "site_a",
             "location_a",
             "site_b",
@@ -247,6 +253,38 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         location_a = Q(location_a__in=value)
         location_b = Q(location_b__in=value)
         return queryset.filter(location_a | location_b)
+
+    def _has_financial_info(self, queryset, name, value):
+        """
+        Filter segments based on whether they have associated financial info
+        """
+        # Check permission first
+        if not self._check_financial_permission():
+            # Return all segments without applying filter (don't leak info about which have financial data)
+            return queryset
+
+        if value in (None, "", []):
+            # Nothing selected, show all segments
+            return queryset
+
+        has_info = value in [True, "True", "true", "1"]
+
+        if has_info:
+            # Only "Yes" selected, show segments with financial info
+            return queryset.filter(financial_info__isnull=False)
+        else:
+            # Only "No" selected, show segments without financial info
+            return queryset.filter(financial_info__isnull=True)
+
+    def _check_financial_permission(self):
+        """
+        Check if the current user has permission to view financial info.
+        Returns True if user has permission, False otherwise.
+        """
+        request = self.request
+        if not request or not hasattr(request, "user"):
+            return False
+        return request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
 
     def _has_path_data(self, queryset, name, value):
         """
@@ -321,7 +359,13 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         """
         Determine the appropriate type for a field based on its name
         """
-        float_fields = ["fiber_attenuation_max", "total_loss", "total_length", "wavelength", "spectral_slot_width"]
+        float_fields = [
+            "fiber_attenuation_max",
+            "total_loss",
+            "total_length",
+            "wavelength",
+            "spectral_slot_width",
+        ]
         return "float" if field_name in float_fields else "int"
 
     def _filter_smart_numeric(self, queryset, name, value):
@@ -360,7 +404,8 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                 # Use raw SQL to cast JSON value to numeric for exact comparison
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal = %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal = %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
                 logger.debug(f"🔍 Exact match using SQL CAST: {name} = {field_value}")
@@ -390,7 +435,8 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                 field_value = parsed_value.get("value")
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal > %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal > %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
                 logger.debug(f"🔍 Greater than using SQL CAST: {name} > {field_value}")
@@ -399,7 +445,8 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                 field_value = parsed_value.get("value")
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal >= %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal >= %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
                 logger.debug(f"🔍 Greater than or equal using SQL CAST: {name} >= {field_value}")
@@ -408,7 +455,8 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                 field_value = parsed_value.get("value")
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal < %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal < %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
                 logger.debug(f"🔍 Less than using SQL CAST: {name} < {field_value}")
@@ -417,7 +465,8 @@ class SegmentFilterSet(NetBoxModelFilterSet):
                 field_value = parsed_value.get("value")
                 conditions &= Q(
                     pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal <= %s"], params=[name, field_value]
+                        where=["(type_specific_data->>%s)::decimal <= %s"],
+                        params=[name, field_value],
                     ).values("pk")
                 )
                 logger.debug(f"🔍 Less than or equal using SQL CAST: {name} <= {field_value}")

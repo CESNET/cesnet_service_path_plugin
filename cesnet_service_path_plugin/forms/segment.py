@@ -1,11 +1,17 @@
 import logging
 from decimal import Decimal
+
 from circuits.models import Circuit, Provider
 from dcim.models import Location, Site
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
-from netbox.forms import NetBoxModelFilterSetForm, NetBoxModelForm
+from netbox.forms import (
+    NetBoxModelBulkEditForm,
+    NetBoxModelFilterSetForm,
+    NetBoxModelForm,
+)
+from utilities.forms import add_blank_choice
 from utilities.forms.fields import (
     CommentField,
     DynamicModelChoiceField,
@@ -17,8 +23,14 @@ from utilities.forms.widgets.datetime import DatePicker
 
 from cesnet_service_path_plugin.models import Segment
 from cesnet_service_path_plugin.models.custom_choices import StatusChoices
-from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices, SEGMENT_TYPE_SCHEMAS
-from cesnet_service_path_plugin.utils import process_path_data, determine_file_format_from_extension
+from cesnet_service_path_plugin.models.segment_types import (
+    SEGMENT_TYPE_SCHEMAS,
+    SegmentTypeChoices,
+)
+from cesnet_service_path_plugin.utils import (
+    determine_file_format_from_extension,
+    process_path_data,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +38,7 @@ logger = logging.getLogger(__name__)
 class SegmentForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
     status = forms.ChoiceField(required=True, choices=StatusChoices, initial=None)
-    provider_segment_contract = forms.CharField(
-        label=" Contract", required=False, help_text="Provider Segment Contract"
-    )
     provider_segment_id = forms.CharField(label=" ID", required=False, help_text="Provider Segment ID")
-    provider_segment_name = forms.CharField(label="Name", required=False, help_text="Provider Segment Name")
     provider = DynamicModelChoiceField(
         queryset=Provider.objects.all(),
         required=True,
@@ -51,6 +59,7 @@ class SegmentForm(NetBoxModelForm):
             "site_id": "$site_a",
         },
         label=_("Location A"),
+        required=False,
     )
     site_b = DynamicModelChoiceField(
         queryset=Site.objects.all(),
@@ -63,6 +72,7 @@ class SegmentForm(NetBoxModelForm):
             "site_id": "$site_b",
         },
         label=_("Location B"),
+        required=False,
     )
 
     # GIS Fields
@@ -84,7 +94,12 @@ class SegmentForm(NetBoxModelForm):
         choices=SegmentTypeChoices,
         initial=SegmentTypeChoices.DARK_FIBER,
         required=True,
-        widget=forms.Select(attrs={"class": "form-control", "onchange": "updateTypeSpecificFields(this.value)"}),
+        widget=forms.Select(
+            attrs={
+                "class": "form-control",
+                "onchange": "updateTypeSpecificFields(this.value)",
+            }
+        ),
     )
 
     def __init__(self, *args, **kwargs):
@@ -123,7 +138,11 @@ class SegmentForm(NetBoxModelForm):
                         decimal_places=field_config.get("decimal_places", 2),
                         help_text=field_config.get("help_text", ""),
                         widget=forms.NumberInput(
-                            attrs={"class": "form-control", "data-type-field": segment_type, "step": "any"}
+                            attrs={
+                                "class": "form-control",
+                                "data-type-field": segment_type,
+                                "step": "any",
+                            }
                         ),
                     )
                 elif field_config["type"] == "integer":
@@ -133,7 +152,12 @@ class SegmentForm(NetBoxModelForm):
                         min_value=field_config.get("min_value"),
                         max_value=field_config.get("max_value"),
                         help_text=field_config.get("help_text", ""),
-                        widget=forms.NumberInput(attrs={"class": "form-control", "data-type-field": segment_type}),
+                        widget=forms.NumberInput(
+                            attrs={
+                                "class": "form-control",
+                                "data-type-field": segment_type,
+                            }
+                        ),
                     )
                 elif field_config["type"] == "choice":
                     choices = [("", "--------")] + [(c, c) for c in field_config.get("choices", [])]
@@ -142,7 +166,12 @@ class SegmentForm(NetBoxModelForm):
                         required=False,
                         choices=choices,
                         help_text=field_config.get("help_text", ""),
-                        widget=forms.Select(attrs={"class": "form-select", "data-type-field": segment_type}),
+                        widget=forms.Select(
+                            attrs={
+                                "class": "form-select",
+                                "data-type-field": segment_type,
+                            }
+                        ),
                     )
                 elif field_config["type"] == "multichoice":
                     choices = [(c, c) for c in field_config.get("choices", [])]
@@ -151,7 +180,12 @@ class SegmentForm(NetBoxModelForm):
                         required=False,
                         choices=choices,
                         help_text=field_config.get("help_text", ""),
-                        widget=forms.SelectMultiple(attrs={"class": "form-select", "data-type-field": segment_type}),
+                        widget=forms.SelectMultiple(
+                            attrs={
+                                "class": "form-select",
+                                "data-type-field": segment_type,
+                            }
+                        ),
                     )
                 else:  # string
                     field = forms.CharField(
@@ -159,7 +193,12 @@ class SegmentForm(NetBoxModelForm):
                         required=False,
                         max_length=field_config.get("max_length", 255),
                         help_text=field_config.get("help_text", ""),
-                        widget=forms.TextInput(attrs={"class": "form-control", "data-type-field": segment_type}),
+                        widget=forms.TextInput(
+                            attrs={
+                                "class": "form-control",
+                                "data-type-field": segment_type,
+                            }
+                        ),
                     )
 
                 self.fields[form_field_name] = field
@@ -335,8 +374,6 @@ class SegmentForm(NetBoxModelForm):
             "termination_date",
             "provider",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             "site_a",
             "location_a",
             "site_b",
@@ -359,8 +396,6 @@ class SegmentForm(NetBoxModelForm):
         FieldSet(
             "provider",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             name="Provider",
         ),
         FieldSet(
@@ -401,7 +436,10 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     # Basic segment type filter
     segment_type = forms.MultipleChoiceField(
-        required=False, choices=SegmentTypeChoices, initial=None, label=_("Segment Type")
+        required=False,
+        choices=SegmentTypeChoices,
+        initial=None,
+        label=_("Segment Type"),
     )
 
     tag = TagFilterField(model)
@@ -433,8 +471,6 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     provider_id = DynamicModelMultipleChoiceField(queryset=Provider.objects.all(), required=False, label=_("Provider"))
     provider_segment_id = forms.CharField(required=False, label=_("Provider Segment ID"))
-    provider_segment_name = forms.CharField(required=False, label=_("Provider Segment Name"))
-    provider_segment_contract = forms.CharField(required=False, label=_("Provider Segment Contract"))
 
     at_any_site = DynamicModelMultipleChoiceField(
         queryset=Site.objects.all(),
@@ -474,6 +510,17 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         ],
         label=_("Has Type-Specific Data"),
         help_text="Filter segments that have type-specific data defined",
+    )
+
+    has_financial_info = forms.ChoiceField(
+        required=False,
+        choices=[
+            ("", "Any"),
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        label=_("Has Financial Info"),
+        help_text="Filter segments that have financial info defined",
     )
 
     # =============================================================================
@@ -633,13 +680,18 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     fieldsets = (
         FieldSet("q", "tag", "filter_id", name="General"),
         FieldSet(
-            "name", "status", "segment_type", "network_label", "has_path_data", "has_type_specific_data", name="Basic"
+            "name",
+            "status",
+            "segment_type",
+            "network_label",
+            "has_path_data",
+            "has_type_specific_data",
+            "has_financial_info",
+            name="Basic",
         ),
         FieldSet(
             "provider_id",
             "provider_segment_id",
-            "provider_segment_name",
-            "provider_segment_contract",
             name="Provider",
         ),
         FieldSet(
@@ -678,3 +730,27 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
             name="Ethernet Service Technical Specs",
         ),
     )
+
+
+class SegmentBulkEditForm(NetBoxModelBulkEditForm):
+    status = forms.ChoiceField(
+        choices=add_blank_choice(StatusChoices),
+        required=False,
+        initial="",
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    provider = DynamicModelChoiceField(
+        queryset=Provider.objects.all(),
+        required=False,
+        label=_("Provider"),
+    )
+    segment_type = forms.ChoiceField(
+        choices=add_blank_choice(SegmentTypeChoices),
+        required=False,
+        initial="",
+    )
+    comments = CommentField()
+
+    model = Segment
+    fieldsets = (FieldSet("provider", "status", "segment_type", name="Segment"),)
+    nullable_fields = ("comments",)
