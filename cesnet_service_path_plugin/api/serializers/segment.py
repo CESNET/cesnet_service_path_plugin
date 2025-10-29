@@ -10,6 +10,9 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 
+from cesnet_service_path_plugin.api.serializers.segment_financial_info import (
+    SegmentFinancialInfoSerializer,
+)
 from cesnet_service_path_plugin.models.segment import Segment
 from cesnet_service_path_plugin.utils import (
     determine_file_format_from_extension,
@@ -93,9 +96,6 @@ class SegmentSerializer(NetBoxModelSerializer):
         request = self.context.get("request")
         if not request:
             return None
-        from cesnet_service_path_plugin.api.serializers.segment_financial_info import (
-            SegmentFinancialInfoSerializer,
-        )
 
         # Check if user has permission to view financial info
         has_financial_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")

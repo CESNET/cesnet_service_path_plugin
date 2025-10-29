@@ -1,8 +1,8 @@
 # cesnet_service_path_plugin/api/serializers/segment_financial_info.py
-from rest_framework import serializers
 from netbox.api.serializers import NetBoxModelSerializer
+from rest_framework import serializers
 
-from cesnet_service_path_plugin.models import SegmentFinancialInfo
+from cesnet_service_path_plugin.models import Segment, SegmentFinancialInfo
 
 
 class SegmentPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
@@ -11,8 +11,6 @@ class SegmentPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     """
 
     def get_queryset(self):
-        from cesnet_service_path_plugin.models import Segment
-
         return Segment.objects.all()
 
 
