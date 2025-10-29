@@ -1,6 +1,7 @@
 # cesnet_service_path_plugin/api/serializers/segment_financial_info.py
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from cesnet_service_path_plugin.models import Segment, SegmentFinancialInfo
 
@@ -71,13 +72,17 @@ class SegmentFinancialInfoSerializer(NetBoxModelSerializer):
             request = self.context.get("request")
 
             if request:
-                # API context - build absolute URI
-                segment_url = request.build_absolute_uri(
-                    f"/api/plugins/cesnet-service-path-plugin/segments/{obj.segment.id}/"
+                # API context - build absolute URI using reverse
+                segment_url = reverse(
+                    "plugins-api:cesnet_service_path_plugin-api:segment-detail",
+                    kwargs={"pk": obj.segment.id},
+                    request=request,
                 )
             else:
                 # Non-API context (e.g., form validation) - use relative URL
-                segment_url = f"/api/plugins/cesnet-service-path-plugin/segments/{obj.segment.id}/"
+                segment_url = reverse(
+                    "plugins-api:cesnet_service_path_plugin-api:segment-detail", kwargs={"pk": obj.segment.id}
+                )
 
             return {
                 "id": obj.segment.id,

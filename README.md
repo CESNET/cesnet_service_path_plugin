@@ -404,6 +404,8 @@ PLUGINS_CONFIG = {
 }
 ```
 
+*Note: This example shows EUR as the configured default currency. If not configured, the application will use CZK as the fallback default.*
+
 **Configuration options:**
 - `currencies`: List of (code, name) tuples for available currencies
 - `default_currency`: Default currency code to use when creating new financial records

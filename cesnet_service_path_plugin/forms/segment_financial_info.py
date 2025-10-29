@@ -4,6 +4,7 @@ from utilities.forms.fields import DynamicModelChoiceField
 from utilities.forms.rendering import FieldSet
 
 from cesnet_service_path_plugin.models import Segment, SegmentFinancialInfo
+from cesnet_service_path_plugin.models.segment_financial_info import get_currency_choices, get_default_currency
 
 
 class SegmentFinancialInfoForm(NetBoxModelForm):
@@ -36,8 +37,6 @@ class SegmentFinancialInfoForm(NetBoxModelForm):
         super().__init__(*args, **kwargs)
 
         # Dynamically set currency choices from the model's get_currency_choices
-        from cesnet_service_path_plugin.models.segment_financial_info import get_currency_choices, get_default_currency
-
         self.fields["charge_currency"].choices = get_currency_choices()
         self.fields["charge_currency"].initial = get_default_currency()
 

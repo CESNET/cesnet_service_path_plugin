@@ -5,7 +5,7 @@ from cesnet_service_path_plugin import filtersets, models
 from cesnet_service_path_plugin.api.serializers import SegmentCircuitMappingSerializer
 
 
-class SegmnetCircuitMappingViewSet(NetBoxModelViewSet):
+class SegmentCircuitMappingViewSet(NetBoxModelViewSet):
     metadata_class = ContentTypeMetadata
     queryset = models.SegmentCircuitMapping.objects.all()
     serializer_class = SegmentCircuitMappingSerializer

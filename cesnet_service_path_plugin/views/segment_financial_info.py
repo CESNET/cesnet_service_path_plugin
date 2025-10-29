@@ -1,4 +1,5 @@
 from django.shortcuts import redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 from netbox.views import generic
 from utilities.views import register_model_view
 
@@ -16,6 +17,9 @@ class SegmentFinancialInfoView(generic.ObjectView):
 
     def get(self, request, *args, **kwargs):
         obj = self.get_object(**kwargs)
+        # Check if segment exists before redirecting
+        if obj.segment is None:
+            return redirect("/")
         # Redirect to the parent segment's detail view
         return redirect(obj.segment.get_absolute_url())
 
@@ -32,13 +36,11 @@ class SegmentFinancialInfoEditView(generic.ObjectEditView):
         """
         # Check if return_url is in request
         if return_url := request.GET.get("return_url") or request.POST.get("return_url"):
-            return return_url
+            # Validate the return_url to prevent open redirect
+            if url_has_allowed_host_and_scheme(return_url, allowed_hosts={request.get_host()}, require_https=True):
+                return return_url
 
-        # Otherwise return to the segment detail
-        if obj and obj.segment:
-            return obj.segment.get_absolute_url()
-
-        # Fallback to the default behavior
+        # Return safe default if validation fails or no return_url provided
         return super().get_return_url(request, obj)
 
 
@@ -52,11 +54,9 @@ class SegmentFinancialInfoDeleteView(generic.ObjectDeleteView):
         """
         # Check if return_url is in request
         if return_url := request.GET.get("return_url") or request.POST.get("return_url"):
-            return return_url
+            # Validate the return_url to prevent open redirect
+            if url_has_allowed_host_and_scheme(return_url, allowed_hosts={request.get_host()}, require_https=True):
+                return return_url
 
-        # Otherwise return to the segment detail
-        if obj and obj.segment:
-            return obj.segment.get_absolute_url()
-
-        # Fallback to the default behavior
+        # Return safe default if validation fails or no return_url provided
         return super().get_return_url(request, obj)

@@ -4,11 +4,11 @@ import strawberry
 import strawberry_django
 
 from .types import (
-    SegmentType,
     SegmentCircuitMappingType,
     SegmentFinancialInfoType,
-    ServicePathType,
+    SegmentType,
     ServicePathSegmentMappingType,
+    ServicePathType,
 )
 
 
@@ -21,7 +21,7 @@ class CesnetServicePathQuery:
     segment_circuit_mapping_list: List[SegmentCircuitMappingType] = strawberry_django.field()
 
     segment_financial_info: SegmentFinancialInfoType = strawberry_django.field()
-    segment_financial_info_list: list[SegmentFinancialInfoType] = strawberry_django.field()
+    segment_financial_info_list: List[SegmentFinancialInfoType] = strawberry_django.field()
 
     service_path: ServicePathType = strawberry_django.field()
     service_path_list: List[ServicePathType] = strawberry_django.field()

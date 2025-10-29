@@ -98,21 +98,14 @@ class SegmentSerializer(NetBoxModelSerializer):
             return None
 
         # Check if user has permission to view financial info
-        has_financial_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
-
-        # Check if user has permission to view financial info
-        if not has_financial_view_perm:
+        if not request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo"):
             return None
 
-        # Try to get financial info if user has permission
-        financial_info = None
-        if has_financial_view_perm:
-            financial_info = getattr(obj, "financial_info", None)
-
+        # Fetch and serialize financial info if user has permission
+        financial_info = getattr(obj, "financial_info", None)
         if financial_info:
             return SegmentFinancialInfoSerializer(financial_info, context=self.context).data
-        else:
-            return None
+        return None
 
     def update(self, instance, validated_data):
         """Handle file upload during update"""
