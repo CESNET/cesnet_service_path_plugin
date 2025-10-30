@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.urls import reverse
 from netbox.models import NetBoxModel
+from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 
 
@@ -94,7 +95,6 @@ class SegmentFinancialInfo(NetBoxModel):
         Green - the end date already passed
         Gray - no commitment.
         """
-        from django.utils import timezone
 
         if not self.commitment_end_date:
             return "gray"
@@ -108,3 +108,17 @@ class SegmentFinancialInfo(NetBoxModel):
             return "orange"
         else:
             return "red"
+
+    def get_commitment_end_date_tooltip(self):
+        """Generate tooltip text for commitment end date."""
+        if not self.commitment_end_date:
+            return "No commitment period set."
+
+        end_date = self.commitment_end_date
+        today = timezone.now().date()
+
+        if end_date < today:
+            return f"Commitment period ended on {end_date}."
+        else:
+            days_remaining = (end_date - today).days
+            return f"Commitment period ends on {end_date} ({days_remaining} days remaining)."
