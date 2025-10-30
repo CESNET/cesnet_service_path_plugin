@@ -38,6 +38,7 @@ class SegmentFinancialInfoSerializer(NetBoxModelSerializer):
             "charge_currency",
             "non_recurring_charge",
             "commitment_period_months",
+            "commitment_end_date",
             "notes",
             "total_commitment_cost",
             "total_cost_including_setup",

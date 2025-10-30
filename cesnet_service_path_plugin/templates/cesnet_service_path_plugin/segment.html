@@ -206,6 +206,14 @@
                                         <td>{{ financial_info.commitment_period_months }} months</td>
                                     </tr>
                                     <tr>
+                                        <th scope="row">Commitment End Date</th>
+                                        {% if financial_info.commitment_end_date %}
+                                            <td><span class="badge text-bg-{{ financial_info.get_commitment_end_date_color }}">{{ financial_info.commitment_end_date }}</span></td>
+                                        {% else %}
+                                            <td><span class="badge text-bg-{{ financial_info.get_commitment_end_date_color }}">Set Segment Install Date </span></td>
+                                        {% endif %}
+                                    </tr>
+                                    <tr>
                                         <th scope="row">Total Commitment Cost</th>
                                         <td>
                                             <strong>{{ financial_info.total_commitment_cost|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</strong>
