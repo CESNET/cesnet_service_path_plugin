@@ -7,6 +7,8 @@
 {% load i18n %}
 {% load perms %}
 {% load render_table from django_tables2 %}
+{% load static %}
+
 {% block content %}
     <div class="row mb-3">
         <div class="col col-md-6">
@@ -40,6 +42,29 @@
             {% plugin_right_page object %}
         </div>
     </div>
+
+    {# Network Topology Visualization Card #}
+    <div class="row mb-3">
+        <div class="col col-12">
+            <div class="card">
+                <h5 class="card-header">
+                    {% trans "Network Topology" %}
+                    <div class="card-actions">
+                        <button id="fit-topology" class="btn btn-ghost-primary btn-sm" title="Fit to screen">
+                            <i class="mdi mdi-fit-to-screen" aria-hidden="true"></i>
+                        </button>
+                        <button id="reset-topology" class="btn btn-ghost-primary btn-sm" title="Reset layout">
+                            <i class="mdi mdi-refresh" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </h5>
+                <div class="card-body">
+                    <div id="cy-topology" style="width: 100%; height: 600px; border: 1px solid #dee2e6; border-radius: 4px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col col-12">
             <div class="card">
@@ -61,4 +86,355 @@
     <div class="row">
         <div class="col col-md-12">{% plugin_full_width_page object %}</div>
     </div>
+
+    {# Load Cytoscape.js #}
+    {% include './inc/cytoscape_includes.html' %}
+    
+    {# Load Topology Styles #}
+    {% include './inc/topology_styles.html' %}
+
+    {# Template data as JSON from Django context #}
+    <script type="application/json" id="topology-data">
+{{ topology_data|safe }}
+    </script>
+
+    <script>
+    // Parse topology data from JSON
+    const topologyData = JSON.parse(document.getElementById('topology-data').textContent);
+    
+    // Calculate preset positions for deterministic layout
+    function calculatePresetPositions(data) {
+        const positions = {};
+        const serviceNodes = data.nodes.filter(n => n.data.type === 'service');
+        const segmentNodes = data.nodes.filter(n => n.data.type === 'segment');
+        const siteNodes = data.nodes.filter(n => n.data.type === 'site');
+        const circuitNodes = data.nodes.filter(n => n.data.type === 'circuit');
+        
+        // Service path at top center
+        if (serviceNodes.length > 0) {
+            positions[serviceNodes[0].data.id] = { x: 650, y: 80 };
+        }
+        
+        // Segments in a row
+        const segmentSpacing = 600;
+        const segmentStartX = 650 - (segmentNodes.length - 1) * segmentSpacing / 2;
+        segmentNodes.forEach((segment, i) => {
+            positions[segment.data.id] = { 
+                x: segmentStartX + i * segmentSpacing, 
+                y: 300 
+            };
+        });
+        
+        // Sites and circuits within segments
+        segmentNodes.forEach((segment, segmentIndex) => {
+            const segmentId = segment.data.id;
+            const segmentX = positions[segmentId].x;
+            
+            // Get sites for this segment
+            const segmentSites = siteNodes.filter(s => s.data.parent === segmentId);
+            const segmentCircuits = circuitNodes.filter(c => c.data.parent === segmentId);
+            
+            // Position sites horizontally within segment
+            const siteSpacing = 200;
+            const siteStartX = segmentX - (segmentSites.length - 1) * siteSpacing / 2;
+            segmentSites.forEach((site, i) => {
+                positions[site.data.id] = {
+                    x: siteStartX + i * siteSpacing,
+                    y: 400  // Sites above circuits
+                };
+            });
+            
+            // Position circuits between/below sites
+            const circuitSpacing = 200;
+            const circuitStartX = segmentX - (segmentCircuits.length - 1) * circuitSpacing / 2;
+            segmentCircuits.forEach((circuit, i) => {
+                positions[circuit.data.id] = {
+                    x: circuitStartX + i * circuitSpacing,
+                    y: 500  // Circuits below sites
+                };
+            });
+        });
+        
+        return positions;
+    }
+    
+    const presetPositions = calculatePresetPositions(topologyData);
+    
+    // Initialize Cytoscape
+    const cy = cytoscape({
+        container: document.getElementById('cy-topology'),
+        
+        elements: topologyData,
+        
+        // Disable node dragging
+        autoungrabify: true,
+        
+        // Disable mouse wheel zoom
+        wheelSensitivity: 0,
+        
+        style: [
+            // Service path styling (top level container)
+            {
+                selector: 'node[type="service"]',
+                style: {
+                    'shape': 'rectangle',
+                    'background-color': '#E6D5F0',
+                    'border-color': '#9B7EBD',
+                    'border-width': 2,
+                    'label': 'data(label)',
+                    'text-valign': 'top',
+                    'text-halign': 'center',
+                    'text-margin-y': -10,
+                    'font-size': '16px',
+                    'font-weight': 'bold',
+                    'color': '#4A4A4A',
+                    'padding': 20
+                }
+            },
+            
+            // Segment styling (middle level containers)
+            {
+                selector: 'node[type="segment"]',
+                style: {
+                    'shape': 'rectangle',
+                    'background-color': '#F5C4C4',
+                    'border-color': '#D89999',
+                    'border-width': 2,
+                    'label': 'data(label)',
+                    'text-valign': 'top',
+                    'text-halign': 'center',
+                    'text-margin-y': -10,
+                    'font-size': '14px',
+                    'font-weight': 'bold',
+                    'color': '#4A4A4A',
+                    'padding': 30
+                }
+            },
+            
+            // Site styling (rounded rectangles)
+            {
+                selector: 'node[type="site"]',
+                style: {
+                    'shape': 'roundrectangle',
+                    'background-color': '#FFE9C5',
+                    'border-color': '#E6B566',
+                    'border-width': 3,
+                    'label': 'data(label)',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'font-size': '14px',
+                    'font-weight': 'bold',
+                    'color': '#4A4A4A',
+                    'width': 'label',
+                    'height': 40,
+                    'padding': 15,
+                    'corner-radius': 15
+                }
+            },
+            
+            // Connection point sites - special styling
+            {
+                selector: 'node[type="site"][is_connection_point]',
+                style: {
+                    'border-width': 5,
+                    'border-color': '#2196F3',
+                    'border-style': 'double'
+                }
+            },
+            
+            // Site hover effect
+            {
+                selector: 'node[type="site"]:selected',
+                style: {
+                    'border-width': 4,
+                    'border-color': '#D89A3C',
+                    'background-color': '#FFD699'
+                }
+            },
+            
+            // Circuit styling (connection nodes)
+            {
+                selector: 'node[type="circuit"]',
+                style: {
+                    'shape': 'rectangle',
+                    'background-color': '#C8E6C9',
+                    'border-color': '#81C784',
+                    'border-width': 2,
+                    'label': 'data(label)',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'font-size': '12px',
+                    'color': '#2E7D32',
+                    'width': 'label',
+                    'height': 25,
+                    'padding': 5
+                }
+            },
+            
+            // Circuit hover effect
+            {
+                selector: 'node[type="circuit"]:selected',
+                style: {
+                    'border-width': 3,
+                    'border-color': '#66BB6A',
+                    'background-color': '#A5D6A7'
+                }
+            },
+            
+            // Edge styling
+            {
+                selector: 'edge',
+                style: {
+                    'width': 3,
+                    'line-color': '#A5D6A7',
+                    'curve-style': 'bezier',
+                    'target-arrow-shape': 'none'
+                }
+            },
+            
+            // Highlighted edges (when node is selected)
+            {
+                selector: 'edge:selected',
+                style: {
+                    'line-color': '#66BB6A',
+                    'width': 4
+                }
+            },
+            
+            // Connected edges highlight
+            {
+                selector: 'edge.highlighted',
+                style: {
+                    'line-color': '#4CAF50',
+                    'width': 5,
+                    'z-index': 999
+                }
+            }
+        ],
+        
+        layout: {
+            name: 'preset',
+            positions: function(node) {
+                return presetPositions[node.data('id')] || { x: 0, y: 0 };
+            },
+            fit: false,
+            padding: 50
+        }
+    });
+    
+    // Fit to width after layout
+    setTimeout(function() {
+        // Fit to width
+        const boundingBox = cy.elements().boundingBox();
+        const viewportWidth = cy.width();
+        const contentWidth = boundingBox.w;
+        const paddingPixels = 100;
+        const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+        
+        cy.zoom(zoomToFitWidth);
+        cy.center();
+    }, 100);
+    
+    // Tooltip element
+    const tooltip = document.createElement('div');
+    tooltip.className = 'cy-tooltip';
+    document.body.appendChild(tooltip);
+    
+    // Show tooltip on node hover
+    cy.on('mouseover', 'node', function(event) {
+        const node = event.target;
+        const data = node.data();
+        
+        let content = '<strong>' + data.label + '</strong><br>';
+        content += '<em>Type: ' + data.type + '</em><br>';
+        
+        if (data.description) content += data.description + '<br>';
+        if (data.location) content += '📍 ' + data.location + '<br>';
+        if (data.bandwidth) content += '⚡ ' + data.bandwidth + '<br>';
+        if (data.provider) content += '🏢 ' + data.provider + '<br>';
+        if (data.vlan) content += '🔢 VLAN: ' + data.vlan + '<br>';
+        if (data.status) content += '✓ ' + data.status;
+        
+        tooltip.innerHTML = content;
+        tooltip.style.display = 'block';
+    });
+    
+    cy.on('mousemove', 'node', function(event) {
+        tooltip.style.left = (event.originalEvent.pageX + 10) + 'px';
+        tooltip.style.top = (event.originalEvent.pageY + 10) + 'px';
+    });
+    
+    cy.on('mouseout', 'node', function(event) {
+        tooltip.style.display = 'none';
+    });
+    
+    // Highlight connected edges when node is selected
+    cy.on('select', 'node', function(event) {
+        const node = event.target;
+        node.connectedEdges().addClass('highlighted');
+    });
+    
+    cy.on('unselect', 'node', function(event) {
+        const node = event.target;
+        node.connectedEdges().removeClass('highlighted');
+    });
+    
+    // Node click handler
+    cy.on('tap', 'node', function(event) {
+        const node = event.target;
+        console.log('Clicked:', node.data('type'), node.data('label'), node.data());
+        
+        // Future: navigate to detail page
+        // Example: window.location.href = '/plugins/cesnet-service-path/' + node.data('type') + '/' + node.data('id');
+    });
+    
+    // Control buttons
+    document.getElementById('fit-topology').addEventListener('click', function() {
+        // Fit to width instead of fitting everything
+        const boundingBox = cy.elements().boundingBox();
+        const viewportWidth = cy.width();
+        const contentWidth = boundingBox.w;
+        const paddingPixels = 100;
+        const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+        
+        cy.zoom(zoomToFitWidth);
+        cy.center();
+    });
+    
+    document.getElementById('reset-topology').addEventListener('click', function() {
+        // Recalculate positions
+        const newPositions = calculatePresetPositions(topologyData);
+        
+        const layout = cy.layout({
+            name: 'preset',
+            positions: function(node) {
+                return newPositions[node.data('id')] || { x: 0, y: 0 };
+            },
+            fit: false,
+            padding: 50,
+            animate: true,
+            animationDuration: 500
+        });
+        
+        layout.run();
+        
+        // Fit to width after layout
+        layout.one('layoutstop', function() {
+            const boundingBox = cy.elements().boundingBox();
+            const viewportWidth = cy.width();
+            const contentWidth = boundingBox.w;
+            const paddingPixels = 100;
+            const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+            
+            cy.zoom(zoomToFitWidth);
+            cy.center();
+        });
+    });
+    
+    // Responsive resize
+    window.addEventListener('resize', function() {
+        cy.resize();
+        cy.fit(null, 50);
+    });
+    </script>
 {% endblock content %}
