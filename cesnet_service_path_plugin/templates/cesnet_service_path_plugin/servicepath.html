@@ -110,47 +110,84 @@
         const siteNodes = data.nodes.filter(n => n.data.type === 'site');
         const circuitNodes = data.nodes.filter(n => n.data.type === 'circuit');
         
+        // Calculate center X for the canvas
+        const centerX = 500;
+        
         // Service path at top center
         if (serviceNodes.length > 0) {
-            positions[serviceNodes[0].data.id] = { x: 650, y: 80 };
+            positions[serviceNodes[0].data.id] = { x: centerX, y: 50 };
         }
         
-        // Segments in a row
-        const segmentSpacing = 600;
-        const segmentStartX = 650 - (segmentNodes.length - 1) * segmentSpacing / 2;
-        segmentNodes.forEach((segment, i) => {
-            positions[segment.data.id] = { 
-                x: segmentStartX + i * segmentSpacing, 
-                y: 300 
-            };
-        });
+        // Segments positioning
+        let segmentSpacing = 500;
+        
+        // If only one segment, center it
+        if (segmentNodes.length === 1) {
+            positions[segmentNodes[0].data.id] = { x: centerX, y: 220 };
+        } else {
+            // Multiple segments - space them out horizontally
+            const segmentStartX = centerX - (segmentNodes.length - 1) * segmentSpacing / 2;
+            segmentNodes.forEach((segment, i) => {
+                positions[segment.data.id] = { 
+                    x: segmentStartX + i * segmentSpacing, 
+                    y: 220 
+                };
+            });
+        }
         
         // Sites and circuits within segments
         segmentNodes.forEach((segment, segmentIndex) => {
             const segmentId = segment.data.id;
             const segmentX = positions[segmentId].x;
             
-            // Get sites for this segment
+            // Get sites and circuits for this segment
             const segmentSites = siteNodes.filter(s => s.data.parent === segmentId);
             const segmentCircuits = circuitNodes.filter(c => c.data.parent === segmentId);
             
-            // Position sites horizontally within segment
-            const siteSpacing = 200;
+            // Adjust spacing based on number of sites and segments
+            let siteSpacing = 180;
+            
+            // For single segment layouts, use more compact spacing
+            if (segmentNodes.length === 1) {
+                if (segmentSites.length === 2) {
+                    siteSpacing = 220;
+                } else if (segmentSites.length === 1) {
+                    siteSpacing = 0;
+                }
+            } else {
+                // Multiple segments
+                if (segmentSites.length === 2) {
+                    siteSpacing = 250;
+                } else if (segmentSites.length === 1) {
+                    siteSpacing = 0;
+                }
+            }
+            
+            // Position sites horizontally within segment, centered around segmentX
             const siteStartX = segmentX - (segmentSites.length - 1) * siteSpacing / 2;
             segmentSites.forEach((site, i) => {
                 positions[site.data.id] = {
                     x: siteStartX + i * siteSpacing,
-                    y: 400  // Sites above circuits
+                    y: 360  // Sites above circuits
                 };
             });
             
-            // Position circuits between/below sites
-            const circuitSpacing = 200;
+            // Adjust circuit spacing based on number of circuits
+            let circuitSpacing = 180;
+            
+            if (segmentCircuits.length === 1) {
+                // Single circuit - center it
+                circuitSpacing = 0;
+            } else if (segmentCircuits.length === 2) {
+                circuitSpacing = segmentNodes.length === 1 ? 220 : 250;
+            }
+            
+            // Position circuits between/below sites, centered around segmentX
             const circuitStartX = segmentX - (segmentCircuits.length - 1) * circuitSpacing / 2;
             segmentCircuits.forEach((circuit, i) => {
                 positions[circuit.data.id] = {
                     x: circuitStartX + i * circuitSpacing,
-                    y: 500  // Circuits below sites
+                    y: 460  // Circuits below sites
                 };
             });
         });
@@ -369,16 +406,24 @@
         }
     });
     
-    // Fit to width after layout
+    // Fit to view after layout with smart zoom calculation
     setTimeout(function() {
-        // Fit to width
         const boundingBox = cy.elements().boundingBox();
         const viewportWidth = cy.width();
+        const viewportHeight = cy.height();
         const contentWidth = boundingBox.w;
-        const paddingPixels = 100;
-        const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+        const contentHeight = boundingBox.h;
         
-        cy.zoom(zoomToFitWidth);
+        // Calculate padding in pixels
+        const paddingPixels = 80;
+        
+        // Calculate zoom to fit both width and height, use the smaller zoom level
+        const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+        const zoomToFitHeight = (viewportHeight - paddingPixels * 2) / contentHeight;
+        const zoomLevel = Math.min(zoomToFitWidth, zoomToFitHeight, 1.2); // Cap at 1.2x to prevent over-zooming
+        
+        // Apply zoom and center
+        cy.zoom(zoomLevel);
         cy.center();
     }, 100);
     
@@ -471,15 +516,25 @@
     
     // Control buttons
     document.getElementById('fit-topology').addEventListener('click', function() {
-        // Fit to width instead of fitting everything
         const boundingBox = cy.elements().boundingBox();
         const viewportWidth = cy.width();
+        const viewportHeight = cy.height();
         const contentWidth = boundingBox.w;
-        const paddingPixels = 100;
-        const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+        const contentHeight = boundingBox.h;
         
-        cy.zoom(zoomToFitWidth);
-        cy.center();
+        const paddingPixels = 80;
+        
+        // Calculate zoom to fit both width and height
+        const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+        const zoomToFitHeight = (viewportHeight - paddingPixels * 2) / contentHeight;
+        const zoomLevel = Math.min(zoomToFitWidth, zoomToFitHeight, 1.2);
+        
+        cy.animate({
+            zoom: zoomLevel,
+            center: { eles: cy.elements() }
+        }, {
+            duration: 300
+        });
     });
     
     document.getElementById('reset-topology').addEventListener('click', function() {
@@ -499,15 +554,21 @@
         
         layout.run();
         
-        // Fit to width after layout
+        // Fit to view after layout with smart zoom
         layout.one('layoutstop', function() {
             const boundingBox = cy.elements().boundingBox();
             const viewportWidth = cy.width();
+            const viewportHeight = cy.height();
             const contentWidth = boundingBox.w;
-            const paddingPixels = 100;
-            const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+            const contentHeight = boundingBox.h;
             
-            cy.zoom(zoomToFitWidth);
+            const paddingPixels = 80;
+            
+            const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+            const zoomToFitHeight = (viewportHeight - paddingPixels * 2) / contentHeight;
+            const zoomLevel = Math.min(zoomToFitWidth, zoomToFitHeight, 1.2);
+            
+            cy.zoom(zoomLevel);
             cy.center();
         });
     });
