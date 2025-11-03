@@ -59,7 +59,7 @@
                     </div>
                 </h5>
                 <div class="card-body">
-                    <div id="cy-topology" style="width: 100%; height: 600px; border: 1px solid #dee2e6; border-radius: 4px;"></div>
+                    <div id="cy-topology" style="width: 100%; height: 600px; border: 1px solid rgba(59, 130, 246, 0.08); border-radius: 20px;"></div>
                 </div>
             </div>
         </div>
@@ -173,122 +173,166 @@
         wheelSensitivity: 0,
         
         style: [
-            // Service path styling (top level container)
+            // Base node styling - cursor pointer for all nodes
+            {
+                selector: 'node',
+                style: {
+                    'cursor': 'pointer'
+                }
+            },
+            
+            // Service path styling - Deep blue with transparency and gradients
             {
                 selector: 'node[type="service"]',
                 style: {
-                    'shape': 'rectangle',
-                    'background-color': '#E6D5F0',
-                    'border-color': '#9B7EBD',
+                    'shape': 'round-rectangle',
+                    'background-color': '#bfdbfe',
+                    'background-opacity': 0.7,
+                    'background-image': 'linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%)',
+                    'border-color': '#2563eb',
                     'border-width': 2,
+                    'border-opacity': 0.8,
                     'label': 'data(label)',
                     'text-valign': 'top',
                     'text-halign': 'center',
                     'text-margin-y': -10,
                     'font-size': '16px',
-                    'font-weight': 'bold',
-                    'color': '#4A4A4A',
-                    'padding': 20
+                    'font-weight': '700',
+                    'color': '#1e40af',
+                    'padding': 20,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '200px',
+                    'box-shadow': '0 8px 24px rgba(37, 99, 235, 0.25), 0 2px 8px rgba(37, 99, 235, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.5)',
+                    'corner-radius': 14
                 }
             },
             
-            // Segment styling (middle level containers)
+            // Segment styling - Medium blue with transparency
             {
                 selector: 'node[type="segment"]',
                 style: {
-                    'shape': 'rectangle',
-                    'background-color': '#F5C4C4',
-                    'border-color': '#D89999',
+                    'shape': 'round-rectangle',
+                    'background-color': '#dbeafe',
+                    'background-opacity': 0.7,
+                    'background-image': 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                    'border-color': '#3b82f6',
                     'border-width': 2,
+                    'border-opacity': 0.8,
                     'label': 'data(label)',
                     'text-valign': 'top',
                     'text-halign': 'center',
                     'text-margin-y': -10,
                     'font-size': '14px',
-                    'font-weight': 'bold',
-                    'color': '#4A4A4A',
-                    'padding': 30
+                    'font-weight': '700',
+                    'color': '#1e40af',
+                    'padding': 30,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '180px',
+                    'box-shadow': '0 6px 20px rgba(59, 130, 246, 0.22), 0 2px 6px rgba(59, 130, 246, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.5)',
+                    'corner-radius': 12
                 }
             },
             
-            // Site styling (rounded rectangles)
+            // Site styling - Bright blue/cyan (Netbox teal) with enhanced effects
             {
                 selector: 'node[type="site"]',
                 style: {
-                    'shape': 'roundrectangle',
-                    'background-color': '#FFE9C5',
-                    'border-color': '#E6B566',
-                    'border-width': 3,
+                    'shape': 'round-rectangle',
+                    'background-color': '#7dd3fc',
+                    'background-opacity': 0.75,
+                    'background-image': 'linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%)',
+                    'border-color': '#0284c7',
+                    'border-width': 2.5,
+                    'border-opacity': 0.9,
                     'label': 'data(label)',
                     'text-valign': 'center',
                     'text-halign': 'center',
-                    'font-size': '14px',
-                    'font-weight': 'bold',
-                    'color': '#4A4A4A',
+                    'font-size': '13px',
+                    'font-weight': '700',
+                    'color': '#0c4a6e',
                     'width': 'label',
-                    'height': 40,
-                    'padding': 15,
-                    'corner-radius': 15
+                    'height': 45,
+                    'padding': 20,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '150px',
+                    'box-shadow': '0 6px 20px rgba(14, 165, 233, 0.25), 0 2px 8px rgba(14, 165, 233, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.6)',
+                    'corner-radius': 12,
+                    'transition-property': 'box-shadow, border-width, background-opacity',
+                    'transition-duration': '0.3s'
                 }
             },
             
-            // Connection point sites - special styling
+            // Connection point sites - keep blue theme
             {
                 selector: 'node[type="site"][is_connection_point]',
                 style: {
-                    'border-width': 5,
-                    'border-color': '#2196F3',
-                    'border-style': 'double'
+                    'border-width': 3,
+                    'border-color': '#0284c7',
+                    'background-opacity': 0.85
                 }
             },
             
-            // Site hover effect
+            // Site hover/selected effect
             {
                 selector: 'node[type="site"]:selected',
                 style: {
-                    'border-width': 4,
-                    'border-color': '#D89A3C',
-                    'background-color': '#FFD699'
+                    'box-shadow': '0 10px 30px rgba(14, 165, 233, 0.35), 0 4px 12px rgba(14, 165, 233, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.7)',
+                    'border-width': 3,
+                    'border-color': '#0284c7',
+                    'background-opacity': 0.85
                 }
             },
             
-            // Circuit styling (connection nodes)
+            // Circuit styling - Light green/emerald with transparency
             {
                 selector: 'node[type="circuit"]',
                 style: {
-                    'shape': 'rectangle',
-                    'background-color': '#C8E6C9',
-                    'border-color': '#81C784',
+                    'shape': 'round-rectangle',
+                    'background-color': '#d1fae5',
+                    'background-opacity': 0.75,
+                    'background-image': 'linear-gradient(135deg, #d1fae5 0%, #dcfce7 100%)',
+                    'border-color': '#10b981',
                     'border-width': 2,
+                    'border-opacity': 0.9,
                     'label': 'data(label)',
                     'text-valign': 'center',
                     'text-halign': 'center',
                     'font-size': '12px',
-                    'color': '#2E7D32',
+                    'font-weight': '600',
+                    'color': '#047857',
                     'width': 'label',
-                    'height': 25,
-                    'padding': 5
+                    'height': 32,
+                    'padding': 12,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '140px',
+                    'box-shadow': '0 4px 16px rgba(16, 185, 129, 0.15), 0 2px 6px rgba(16, 185, 129, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.5)',
+                    'corner-radius': 10,
+                    'transition-property': 'box-shadow, border-width, background-opacity',
+                    'transition-duration': '0.3s'
                 }
             },
             
-            // Circuit hover effect
+            // Circuit hover/selected effect
             {
                 selector: 'node[type="circuit"]:selected',
                 style: {
-                    'border-width': 3,
-                    'border-color': '#66BB6A',
-                    'background-color': '#A5D6A7'
+                    'box-shadow': '0 6px 20px rgba(14, 165, 233, 0.28), 0 2px 8px rgba(14, 165, 233, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.6)',
+                    'border-width': 2.5,
+                    'background-opacity': 0.85
                 }
             },
             
-            // Edge styling
+            // Edge styling - Soft blue with low opacity
             {
                 selector: 'edge',
                 style: {
-                    'width': 3,
-                    'line-color': '#A5D6A7',
+                    'width': 2.5,
+                    'line-color': '#93c5fd',
                     'curve-style': 'bezier',
-                    'target-arrow-shape': 'none'
+                    'target-arrow-shape': 'none',
+                    'opacity': 0.5,
+                    'transition-property': 'width, line-color, opacity',
+                    'transition-duration': '0.3s'
                 }
             },
             
@@ -296,8 +340,9 @@
             {
                 selector: 'edge:selected',
                 style: {
-                    'line-color': '#66BB6A',
-                    'width': 4
+                    'line-color': '#3b82f6',
+                    'width': 3.5,
+                    'opacity': 0.75
                 }
             },
             
@@ -305,9 +350,11 @@
             {
                 selector: 'edge.highlighted',
                 style: {
-                    'line-color': '#4CAF50',
-                    'width': 5,
-                    'z-index': 999
+                    'line-color': '#2563eb',
+                    'width': 4,
+                    'z-index': 999,
+                    'opacity': 0.85,
+                    'line-style': 'solid'
                 }
             }
         ],
@@ -346,14 +393,14 @@
         const data = node.data();
         
         let content = '<strong>' + data.label + '</strong><br>';
-        content += '<em>Type: ' + data.type + '</em><br>';
+        content += '<em style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">' + data.type + '</em>';
         
-        if (data.description) content += data.description + '<br>';
-        if (data.location) content += '📍 ' + data.location + '<br>';
-        if (data.bandwidth) content += '⚡ ' + data.bandwidth + '<br>';
-        if (data.provider) content += '🏢 ' + data.provider + '<br>';
-        if (data.vlan) content += '🔢 VLAN: ' + data.vlan + '<br>';
-        if (data.status) content += '✓ ' + data.status;
+        if (data.description) content += '<div style="margin-top: 8px; color: #475569;">' + data.description + '</div>';
+        if (data.location) content += '<div style="margin-top: 4px; color: #64748b;">📍 ' + data.location + '</div>';
+        if (data.bandwidth) content += '<div style="margin-top: 4px; color: #64748b;">⚡ ' + data.bandwidth + '</div>';
+        if (data.provider) content += '<div style="margin-top: 4px; color: #64748b;">🏢 ' + data.provider + '</div>';
+        if (data.vlan) content += '<div style="margin-top: 4px; color: #64748b;">🔢 VLAN: ' + data.vlan + '</div>';
+        if (data.status) content += '<div style="margin-top: 4px; color: #059669;">✓ ' + data.status + '</div>';
         
         tooltip.innerHTML = content;
         tooltip.style.display = 'block';
@@ -379,13 +426,47 @@
         node.connectedEdges().removeClass('highlighted');
     });
     
-    // Node click handler
+    // Node single-click handler - just for logging and selection
     cy.on('tap', 'node', function(event) {
         const node = event.target;
-        console.log('Clicked:', node.data('type'), node.data('label'), node.data());
+        console.log('Selected:', node.data('type'), node.data('label'));
+    });
+    
+    // Node double-click handler - open detail page
+    cy.on('dbltap', 'node', function(event) {
+        const node = event.target;
+        const data = node.data();
         
-        // Future: navigate to detail page
-        // Example: window.location.href = '/plugins/cesnet-service-path/' + node.data('type') + '/' + node.data('id');
+        console.log('Double-clicked:', data.type, data.label, 'ID:', data.netbox_id);
+        
+        // Navigate to detail page based on node type
+        let url = null;
+        
+        switch(data.type) {
+            case 'segment':
+                // Navigate to segment detail
+                url = '/plugins/cesnet-service-path-plugin/segments/' + data.netbox_id + '/';
+                break;
+            case 'site':
+                // Navigate to NetBox site detail
+                url = '/dcim/sites/' + data.netbox_id + '/';
+                break;
+            case 'circuit':
+                // Navigate to NetBox circuit detail
+                url = '/circuits/circuits/' + data.netbox_id + '/';
+                break;
+            case 'service':
+                // Already on service path detail page, could reload or do nothing
+                console.log('Already viewing this service path');
+                return;
+            default:
+                console.log('Unknown node type:', data.type);
+                return;
+        }
+        
+        if (url) {
+            window.location.href = url;
+        }
     });
     
     // Control buttons

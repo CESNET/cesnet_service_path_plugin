@@ -53,6 +53,7 @@ class ServicePathView(generic.ObjectView):
             {
                 "data": {
                     "id": service_path_id,
+                    "netbox_id": service_path.pk,
                     "label": service_path.name,
                     "type": "service",
                     "description": f"Service Path: {service_path.name}",
@@ -80,6 +81,7 @@ class ServicePathView(generic.ObjectView):
                 {
                     "data": {
                         "id": segment_id,
+                        "netbox_id": segment.pk,
                         "label": segment.name,
                         "type": "segment",
                         "parent": service_path_id,
@@ -102,6 +104,7 @@ class ServicePathView(generic.ObjectView):
                         {
                             "data": {
                                 "id": site_id,
+                                "netbox_id": site.pk,
                                 "label": site.name,
                                 "type": "site",
                                 "parent": segment_id,
@@ -135,6 +138,7 @@ class ServicePathView(generic.ObjectView):
                         {
                             "data": {
                                 "id": circuit_key,
+                                "netbox_id": circuit.pk,
                                 "label": circuit_label,
                                 "type": "circuit",
                                 "parent": segment_id,  # Make circuit a child of the segment
