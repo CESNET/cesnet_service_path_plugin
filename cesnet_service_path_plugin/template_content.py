@@ -13,7 +13,7 @@ plugin_settings = settings.PLUGINS_CONFIG.get("cesnet_service_path_plugin", {})
 # Extra Views
 
 
-class CircuitKomoraSegmentExtension(PluginTemplateExtension):
+class CircuitSegmentExtension(PluginTemplateExtension):
     models = ["circuits.circuit"]
 
     def full_width_page(self):
@@ -69,7 +69,7 @@ class TenantProviderExtension(PluginTemplateExtension):
 
 
 template_extensions = [
-    CircuitKomoraSegmentExtension,
+    CircuitSegmentExtension,
     TenantProviderExtension,
     ProviderSegmentExtension,
     SiteSegmentExtension,
