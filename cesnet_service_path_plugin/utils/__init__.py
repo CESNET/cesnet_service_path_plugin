@@ -13,6 +13,8 @@ from .utils_gis import (
     validate_path_geometry,
 )
 
+from .utils_topology import TopologyBuilder, build_segment_topology, build_service_path_topology
+
 __all__ = [
     "check_gis_environment",
     "determine_file_format_from_extension",
@@ -26,4 +28,7 @@ __all__ = [
     "read_all_kml_layers",
     "read_kmz_file",
     "validate_path_geometry",
+    "TopologyBuilder",
+    "build_segment_topology",
+    "build_service_path_topology",
 ]
