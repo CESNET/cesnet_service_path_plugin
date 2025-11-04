@@ -41,7 +41,7 @@ class SegmentCircuitMappingTable(NetBoxTable):
         order_by=("segment__location_b__name",),
         accessor="segment.location_b",
     )
-    circuit = tables.Column(linkify=True, verbose_name="Circuit", orderable=True, order_by=("circuit__name",))
+    circuit = tables.Column(linkify=True, verbose_name="Circuit", orderable=True, order_by=("circuit__cid",))
     tags = columns.TagColumn()
 
     class Meta(NetBoxTable.Meta):
