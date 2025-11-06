@@ -37,7 +37,6 @@ class SegmentFinancialInfo(NetBoxModel):
     charge_currency = models.CharField(
         max_length=3,
         choices=get_currency_choices,
-        default=get_default_currency,
         help_text="Currency for all charges",
     )
 
