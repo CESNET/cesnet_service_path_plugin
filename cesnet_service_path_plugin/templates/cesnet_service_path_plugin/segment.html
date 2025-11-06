@@ -303,28 +303,11 @@
         </div>
     {% endif %}
 
-    {# Service Path Topology Visualization Card #}
-    <div class="row mb-3">
-        <div class="col col-12">
-            <div class="card">
-                <h5 class="card-header">
-                    {{ topology_title }}
-                    <div class="card-actions">
-                        <button id="fit-topology" class="btn btn-ghost-primary btn-sm" title="Fit to screen">
-                            <i class="mdi mdi-fit-to-screen" aria-hidden="true"></i>
-                        </button>
-                        <button id="reset-topology" class="btn btn-ghost-primary btn-sm" title="Reset layout">
-                            <i class="mdi mdi-refresh" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </h5>
-                <div class="card-body">
-                    <div id="cy-topology" style="width: 100%; height: 600px; border: 1px solid rgba(59, 130, 246, 0.08); border-radius: 20px;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Service Path or Segment Topology Visualization Card -->
     {% include './inc/topology_visualization.html' %}
+    
+    {% include './inc/topology_segment_card.html' %}
+    
     
     <!-- A and B cards in full width row -->
     <div class="row mb-3">

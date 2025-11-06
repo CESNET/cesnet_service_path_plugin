@@ -7,11 +7,15 @@ from django.utils.translation import gettext_lazy as _
 from netbox.plugins import PluginTemplateExtension
 from utilities.tables import register_table_column
 
-from cesnet_service_path_plugin.models import Segment, ServicePathSegmentMapping
+from cesnet_service_path_plugin.models import Segment, ServicePathSegmentMapping, ServicePath
 from cesnet_service_path_plugin.utils import build_service_path_topology, build_segment_topology
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 plugin_settings = settings.PLUGINS_CONFIG.get("cesnet_service_path_plugin", {})
+
 
 # Extra Views
 
@@ -34,23 +38,26 @@ class CircuitSegmentExtension(PluginTemplateExtension):
 
         if segment:
             # Check if segment is part of any service path
-            service_path_mapping = ServicePathSegmentMapping.objects.filter(segment=segment).first()
+            service_paths = ServicePathSegmentMapping.objects.filter(segment=segment).all()
+            topologies = {}
+            if service_paths:
+                for sp in service_paths:
+                    # get data from service path model
+                    sp_data = ServicePath.objects.filter(id=sp.service_path_id).first()
 
-            if service_path_mapping:
-                # Build service path topology
-                topology_title = f"Service Path Topology: {service_path_mapping.service_path.name}"
-                topology_data = build_service_path_topology(service_path_mapping.service_path)
+                    topology_title = f"Service Path {sp_data.name}"
+                    topology_data = build_service_path_topology(sp_data)
+                    topologies[topology_title] = json.dumps(topology_data)
             else:
-                # Build segment topology only
-                topology_title = f"Segment Topology: {segment.name}"
-                topology_data = build_segment_topology(segment)
+                topology_title = f"Segment  {segment.name}"
+                topology_data = build_segment_topology(segment=segment)
+                topologies[topology_title] = json.dumps(topology_data)
 
         return self.render(
             "cesnet_service_path_plugin/circuit_segments_extension.html",
             extra_context={
                 "segment": segment,
-                "topology_data": json.dumps(topology_data) if topology_data else None,
-                "topology_title": topology_title,
+                "topologies": topologies,
             },
         )
 

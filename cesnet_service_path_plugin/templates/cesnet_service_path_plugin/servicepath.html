@@ -43,28 +43,28 @@
         </div>
     </div>
 
-    {# Service Path Topology Visualization Card #}
-    <div class="row mb-3">
-        <div class="col col-12">
-            <div class="card">
-                <h5 class="card-header">
-                    {% trans "Service Path Topology" %}
-                    <div class="card-actions">
-                        <button id="fit-topology" class="btn btn-ghost-primary btn-sm" title="Fit to screen">
-                            <i class="mdi mdi-fit-to-screen" aria-hidden="true"></i>
-                        </button>
-                        <button id="reset-topology" class="btn btn-ghost-primary btn-sm" title="Reset layout">
-                            <i class="mdi mdi-refresh" aria-hidden="true"></i>
-                        </button>
+        <!-- Service Path Topology Visualization Card -->
+        {% include './inc/topology_visualization.html' %}
+
+        <div class="row mb-3">
+            <div class="col col-12">
+                <div class="card">
+                    <h5 class="card-header">
+                        {% trans "Service Path Topology" %}
+                    </h5>
+                    <div class="card-body">
+                        <div id="cy-topology" data-topology='{{ topology_data|safe }}' class="cy-topology" ></div>
                     </div>
-                </h5>
-                <div class="card-body">
-                    <div id="cy-topology" style="width: 100%; height: 600px; border: 1px solid rgba(59, 130, 246, 0.08); border-radius: 20px;"></div>
                 </div>
             </div>
         </div>
-    </div>
-    {% include './inc/topology_visualization.html' %}
+        <script>
+            // Initialize topology when DOM is ready
+            (function() {
+                initializeTopology('cy-topology');  // Will read from data-topology attribute
+            })();
+        </script>
+    
 
     <div class="row">
         <div class="col col-12">

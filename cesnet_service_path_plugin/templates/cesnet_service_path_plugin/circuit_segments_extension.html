@@ -17,35 +17,8 @@
 </div>
 
 <!-- Topology Visualization Card -->
-{% if topology_data %}
-<div class="col col-md-12 mt-3">
-    <div class="card">
-        <h5 class="card-header">
-            {{ topology_title }}
-            <div class="card-actions">
-                <button id="fit-topology" class="btn btn-ghost-primary btn-sm" title="Fit to screen">
-                    <i class="mdi mdi-fit-to-screen" aria-hidden="true"></i>
-                </button>
-                <button id="reset-topology" class="btn btn-ghost-primary btn-sm" title="Reset layout">
-                    <i class="mdi mdi-refresh" aria-hidden="true"></i>
-                </button>
-            </div>
-        </h5>
-        <div class="card-body">
-            <div id="cy-topology" style="width: 100%; height: 600px; border: 1px solid rgba(59, 130, 246, 0.08); border-radius: 20px;"></div>
-        </div>
-    </div>
-</div>
+{% if topologies %}
+    {% include 'cesnet_service_path_plugin/inc/topology_visualization.html' %}
+    {% include 'cesnet_service_path_plugin/inc/topology_segment_card.html' %}
 
-<!-- Include Topology Visualization -->
-{% include 'cesnet_service_path_plugin/inc/topology_visualization.html' %}
-
-{% elif segment %}
-<div class="col col-md-12 mt-3">
-    <div class="alert alert-info">
-        <i class="mdi mdi-information-outline" aria-hidden="true"></i>
-        This circuit is associated with segment <a href="{{ segment.get_absolute_url }}">{{ segment.name }}</a>, 
-        but topology visualization is not available. Visit the segment detail page to view its topology.
-    </div>
-</div>
 {% endif %}

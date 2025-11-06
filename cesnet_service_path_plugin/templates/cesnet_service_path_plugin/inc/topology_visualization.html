@@ -1,29 +1,51 @@
 {% load i18n %}
-{% if not container_id %}{% with container_id='cy-topology' %}{% endwith %}{% endif %}
-{% if not container_height %}{% with container_height='600px' %}{% endwith %}{% endif %}
-{% if show_controls == None %}{% with show_controls=True %}{% endwith %}{% endif %}
 {# Load Cytoscape.js #}
-    {% include './cytoscape_includes.html' %}
+{% include './cytoscape_includes.html' %}
+
+{# Load Topology Styles #}
+{% include './topology_styles.html' %}
+
+<script>
+/**
+ * Initialize a Cytoscape topology visualization
+ * @param {string} containerId - The ID of the container element (without '#')
+ * @param {Object|null} topologyData - Optional topology data object. If null, will read from data-topology attribute
+ */
+function initializeTopology(containerId, topologyData = null) {
+    // Default options
     
-    {# Load Topology Styles #}
-    {% include './topology_styles.html' %}
-
-    {# Template data as JSON from Django context #}
-    <script type="application/json" id="topology-data">
-{{ topology_data|safe }}
-    </script>
-
-    <script>
-    // Parse topology data from JSON
-    const topologyData = JSON.parse(document.getElementById('topology-data').textContent);
+    // Get the container element
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error('Container element not found:', containerId);
+        return null;
+    }
+    
+    // Get topology data from parameter or data attribute
+    let data = topologyData;
+    if (!data) {
+        const dataAttr = container.getAttribute('data-topology');
+        if (dataAttr) {
+            try {
+                data = JSON.parse(dataAttr);
+            } catch (e) {
+                console.error('Failed to parse topology data from data-topology attribute:', e);
+                return null;
+            }
+        } else {
+            console.error('No topology data provided for container:', containerId);
+            return null;
+        }
+    }
+    console.log('Topology data :', data);
     
     // Calculate preset positions for deterministic layout
-    function calculatePresetPositions(data) {
+    function calculatePresetPositions(topologyData) {
         const positions = {};
-        const serviceNodes = data.nodes.filter(n => n.data.type === 'service');
-        const segmentNodes = data.nodes.filter(n => n.data.type === 'segment');
-        const siteNodes = data.nodes.filter(n => n.data.type === 'site');
-        const circuitNodes = data.nodes.filter(n => n.data.type === 'circuit');
+        const serviceNodes = topologyData.nodes.filter(n => n.data.type === 'service');
+        const segmentNodes = topologyData.nodes.filter(n => n.data.type === 'segment');
+        const siteNodes = topologyData.nodes.filter(n => n.data.type === 'site');
+        const circuitNodes = topologyData.nodes.filter(n => n.data.type === 'circuit');
         
         // Calculate center X for the canvas
         const centerX = 500;
@@ -110,13 +132,13 @@
         return positions;
     }
     
-    const presetPositions = calculatePresetPositions(topologyData);
+    const presetPositions = calculatePresetPositions(data);
     
     // Initialize Cytoscape
     const cy = cytoscape({
-        container: document.getElementById('cy-topology'),
+        container: container,
         
-        elements: topologyData,
+        elements: data,
         
         // Disable node dragging
         autoungrabify: true,
@@ -342,10 +364,15 @@
         cy.center();
     }, 100);
     
-    // Tooltip element
-    const tooltip = document.createElement('div');
-    tooltip.className = 'cy-tooltip';
-    document.body.appendChild(tooltip);
+    // Create tooltip element with unique ID for this instance
+    const tooltipId = 'cy-tooltip-' + containerId;
+    let tooltip = document.getElementById(tooltipId);
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = tooltipId;
+        tooltip.className = 'cy-tooltip';
+        document.body.appendChild(tooltip);
+    }
     
     // Show tooltip on node hover
     cy.on('mouseover', 'node', function(event) {
@@ -429,68 +456,36 @@
         }
     });
     
-    // Control buttons
-    document.getElementById('fit-topology').addEventListener('click', function() {
-        const boundingBox = cy.elements().boundingBox();
-        const viewportWidth = cy.width();
-        const viewportHeight = cy.height();
-        const contentWidth = boundingBox.w;
-        const contentHeight = boundingBox.h;
-        
-        const paddingPixels = 80;
-        
-        // Calculate zoom to fit both width and height
-        const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
-        const zoomToFitHeight = (viewportHeight - paddingPixels * 2) / contentHeight;
-        const zoomLevel = Math.min(zoomToFitWidth, zoomToFitHeight, 1.2);
-        
-        cy.animate({
-            zoom: zoomLevel,
-            center: { eles: cy.elements() }
-        }, {
-            duration: 300
-        });
-    });
-    
-    document.getElementById('reset-topology').addEventListener('click', function() {
-        // Recalculate positions
-        const newPositions = calculatePresetPositions(topologyData);
-        
-        const layout = cy.layout({
-            name: 'preset',
-            positions: function(node) {
-                return newPositions[node.data('id')] || { x: 0, y: 0 };
-            },
-            fit: false,
-            padding: 50,
-            animate: true,
-            animationDuration: 500
-        });
-        
-        layout.run();
-        
-        // Fit to view after layout with smart zoom
-        layout.one('layoutstop', function() {
-            const boundingBox = cy.elements().boundingBox();
-            const viewportWidth = cy.width();
-            const viewportHeight = cy.height();
-            const contentWidth = boundingBox.w;
-            const contentHeight = boundingBox.h;
-            
-            const paddingPixels = 80;
-            
-            const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
-            const zoomToFitHeight = (viewportHeight - paddingPixels * 2) / contentHeight;
-            const zoomLevel = Math.min(zoomToFitWidth, zoomToFitHeight, 1.2);
-            
-            cy.zoom(zoomLevel);
-            cy.center();
-        });
-    });
     
     // Responsive resize
-    window.addEventListener('resize', function() {
+    const resizeHandler = function() {
         cy.resize();
         cy.fit(null, 50);
-    });
-    </script>
+    };
+    window.addEventListener('resize', resizeHandler);
+    
+    // Return the Cytoscape instance and cleanup function
+    return {
+        cy: cy,
+        destroy: function() {
+            window.removeEventListener('resize', resizeHandler);
+            if (tooltip) {
+                tooltip.remove();
+            }
+            cy.destroy();
+        }
+    };
+}
+
+/**
+ * Convenience function for showing a topology with a button click
+ * Can be called directly from onclick handlers
+ * @param {string} containerId - The ID of the container element
+ * @param {Object|null} topologyData - Optional topology data
+ */
+function showTopology(containerId, topologyData = null) {
+    console.log('Showing topology in container:', containerId);
+    console.log('Topology data:', topologyData);
+    return initializeTopology(containerId, topologyData);
+}
+</script>

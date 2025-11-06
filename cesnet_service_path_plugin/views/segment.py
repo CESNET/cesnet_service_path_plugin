@@ -106,12 +106,16 @@ class SegmentView(generic.ObjectView):
             financial_info = getattr(instance, "financial_info", None)
 
         # Build topology data for visualization
+        topologies = {}
         if service_paths:
-            topology_title = "Service Path Topology"
-            topology_data = build_service_path_topology(service_paths.first())
+            for sp in service_paths:
+                topology_title = f"Service Path {sp}"
+                topology_data = build_service_path_topology(sp)
+                topologies[topology_title] = json.dumps(topology_data)
         else:
-            topology_title = "Segment Topology"
+            topology_title = f"Segment {instance}"
             topology_data = build_segment_topology(instance)
+            topologies[topology_title] = json.dumps(topology_data)
 
         return {
             "circuits_table": circuits_table,
@@ -126,8 +130,7 @@ class SegmentView(generic.ObjectView):
             "has_financial_delete_perm": request.user.has_perm(
                 "cesnet_service_path_plugin.delete_segmentfinancialinfo"
             ),
-            "topology_data": json.dumps(topology_data),
-            "topology_title": topology_title,
+            "topologies": topologies,
         }
 
 
