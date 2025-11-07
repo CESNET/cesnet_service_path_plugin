@@ -15,6 +15,7 @@ Note about NetBox Circuit Terminations:
 """
 
 import logging
+from pprint import pprint
 from typing import Dict, List, Set, Optional, Any
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,142 @@ class TopologyBuilder:
             "nodes": self.nodes,
             "edges": self.edges,
         }
+
+    def sort_nodes_by_path_traversal(self) -> None:
+        """
+        Sort nodes (sites and circuits) within each segment by following the graph path.
+
+        This method:
+        1. Finds endpoint sites (sites with only one edge)
+        2. Traverses the graph from an endpoint
+        3. Reorders nodes to match the traversal order
+
+        Only affects site and circuit nodes that are children of segments.
+        Service and segment nodes maintain their original order.
+        """
+        # Group nodes by parent segment
+        segments = {}
+        non_segment_children = []
+
+        for node in self.nodes:
+            node_type = node["data"].get("type")
+            parent = node["data"].get("parent")
+
+            # Keep service and segment nodes separate
+            if node_type in ["service", "segment"]:
+                non_segment_children.append(node)
+                continue
+
+            # Group site and circuit nodes by their parent segment
+            if parent and parent.startswith("segment-"):
+                if parent not in segments:
+                    segments[parent] = []
+                segments[parent].append(node)
+            else:
+                non_segment_children.append(node)
+
+        # Build edge lookup for quick traversal
+        edge_map = self._build_edge_map()
+
+        # Sort nodes within each segment
+        sorted_segment_nodes = []
+        for segment_id, segment_nodes in segments.items():
+            sorted_nodes = self._sort_segment_nodes(segment_nodes, edge_map)
+            sorted_segment_nodes.extend(sorted_nodes)
+
+        # Reconstruct nodes list: service/segment nodes first, then sorted segment children
+        self.nodes = non_segment_children + sorted_segment_nodes
+
+    def _build_edge_map(self) -> Dict[str, List[str]]:
+        """
+        Build a bidirectional edge map for graph traversal.
+
+        Returns:
+            Dict mapping node_id -> list of connected node_ids
+        """
+        edge_map = {}
+
+        for edge in self.edges:
+            source = edge["data"]["source"]
+            target = edge["data"]["target"]
+
+            # Add bidirectional connections
+            if source not in edge_map:
+                edge_map[source] = []
+            edge_map[source].append(target)
+
+            if target not in edge_map:
+                edge_map[target] = []
+            edge_map[target].append(source)
+
+        return edge_map
+
+    def _sort_segment_nodes(self, segment_nodes: List[Dict], edge_map: Dict[str, List[str]]) -> List[Dict]:
+        """
+        Sort nodes within a segment by traversing the graph path.
+
+        Args:
+            segment_nodes: List of site and circuit nodes in this segment
+            edge_map: Bidirectional edge mapping
+
+        Returns:
+            Sorted list of nodes following the graph path
+        """
+        if not segment_nodes:
+            return []
+
+        # Create lookup for quick node access
+        node_lookup = {node["data"]["id"]: node for node in segment_nodes}
+        node_ids = set(node_lookup.keys())
+
+        # Find endpoint: a site with only one connection to nodes in this segment
+        start_node_id = None
+        for node_id in node_ids:
+            node = node_lookup[node_id]
+            if node["data"]["type"] == "site":
+                # Count connections to other nodes in this segment
+                connections = [conn for conn in edge_map.get(node_id, []) if conn in node_ids]
+                if len(connections) == 1:
+                    start_node_id = node_id
+                    break
+
+        # If no endpoint found (shouldn't happen in a path), use first site
+        if start_node_id is None:
+            for node_id in node_ids:
+                if node_lookup[node_id]["data"]["type"] == "site":
+                    start_node_id = node_id
+                    break
+
+        # If still no start node, return original order
+        if start_node_id is None:
+            return segment_nodes
+
+        # Traverse the graph
+        sorted_nodes = []
+        visited = set()
+        current_id = start_node_id
+
+        while current_id and current_id not in visited:
+            # Add current node
+            if current_id in node_lookup:
+                sorted_nodes.append(node_lookup[current_id])
+                visited.add(current_id)
+
+            # Find next unvisited node
+            next_id = None
+            for connected_id in edge_map.get(current_id, []):
+                if connected_id in node_ids and connected_id not in visited:
+                    next_id = connected_id
+                    break
+
+            current_id = next_id
+
+        # Add any remaining nodes that weren't in the main path (shouldn't happen)
+        for node in segment_nodes:
+            if node["data"]["id"] not in visited:
+                sorted_nodes.append(node)
+
+        return sorted_nodes
 
     def add_service_path_node(self, service_path) -> str:
         """
@@ -353,6 +490,8 @@ def build_service_path_topology(service_path) -> Dict[str, List[Dict]]:
         for circuit in segment.circuits.all():
             builder.process_circuit_with_sites(circuit, segment_id, site_a_id, site_b_id)
 
+    # Sort nodes by path traversal order
+    builder.sort_nodes_by_path_traversal()
     return builder.get_topology_data()
 
 
@@ -396,5 +535,8 @@ def build_segment_topology(segment) -> Dict[str, List[Dict]]:
 
     for circuit in circuits:
         builder.process_circuit_with_sites(circuit, segment_id, site_a_id, site_b_id)
+
+    # Sort nodes by path traversal order
+    builder.sort_nodes_by_path_traversal()
 
     return builder.get_topology_data()
