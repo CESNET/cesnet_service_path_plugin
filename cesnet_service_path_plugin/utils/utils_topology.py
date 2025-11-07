@@ -15,7 +15,6 @@ Note about NetBox Circuit Terminations:
 """
 
 import logging
-from pprint import pprint
 from typing import Dict, List, Set, Optional, Any
 
 logger = logging.getLogger(__name__)
@@ -48,12 +47,15 @@ class TopologyBuilder:
 
         This method:
         1. Finds endpoint sites (sites with only one edge)
-        2. Traverses the graph from an endpoint
+        2. Traverses the graph from an endpoint (preferring site_a)
         3. Reorders nodes to match the traversal order
 
         Only affects site and circuit nodes that are children of segments.
         Service and segment nodes maintain their original order.
         """
+        # First pass: mark site_a nodes for each segment
+        self._mark_site_a_nodes()
+
         # Group nodes by parent segment
         segments = {}
         non_segment_children = []
@@ -81,11 +83,34 @@ class TopologyBuilder:
         # Sort nodes within each segment
         sorted_segment_nodes = []
         for segment_id, segment_nodes in segments.items():
-            sorted_nodes = self._sort_segment_nodes(segment_nodes, edge_map)
+            sorted_nodes = self._sort_segment_nodes(segment_nodes, edge_map, segment_id)
             sorted_segment_nodes.extend(sorted_nodes)
 
         # Reconstruct nodes list: service/segment nodes first, then sorted segment children
         self.nodes = non_segment_children + sorted_segment_nodes
+
+    def _mark_site_a_nodes(self) -> None:
+        """
+        Mark nodes that represent site_a in their segments.
+        This helps determine the correct starting point for traversal.
+        """
+        # Build a map of segment_id -> site_a_id from segment nodes
+        segment_site_a_map = {}
+
+        for node in self.nodes:
+            if node["data"].get("type") == "segment":
+                segment_id = node["data"]["id"]
+                # Look for site_a_id stored during segment creation
+                if "site_a_id" in node["data"]:
+                    segment_site_a_map[segment_id] = node["data"]["site_a_id"]
+
+        # Mark site nodes that are site_a
+        for node in self.nodes:
+            if node["data"].get("type") == "site":
+                parent_segment = node["data"].get("parent")
+                if parent_segment and parent_segment in segment_site_a_map:
+                    if node["data"]["id"] == segment_site_a_map[parent_segment]:
+                        node["data"]["is_site_a"] = True
 
     def _build_edge_map(self) -> Dict[str, List[str]]:
         """
@@ -111,13 +136,16 @@ class TopologyBuilder:
 
         return edge_map
 
-    def _sort_segment_nodes(self, segment_nodes: List[Dict], edge_map: Dict[str, List[str]]) -> List[Dict]:
+    def _sort_segment_nodes(
+        self, segment_nodes: List[Dict], edge_map: Dict[str, List[str]], segment_id: str = None
+    ) -> List[Dict]:
         """
         Sort nodes within a segment by traversing the graph path.
 
         Args:
             segment_nodes: List of site and circuit nodes in this segment
             edge_map: Bidirectional edge mapping
+            segment_id: Optional segment ID to determine site_a preference
 
         Returns:
             Sorted list of nodes following the graph path
@@ -129,16 +157,36 @@ class TopologyBuilder:
         node_lookup = {node["data"]["id"]: node for node in segment_nodes}
         node_ids = set(node_lookup.keys())
 
-        # Find endpoint: a site with only one connection to nodes in this segment
-        start_node_id = None
+        # Find all endpoint sites (sites with only one connection)
+        endpoint_sites = []
         for node_id in node_ids:
             node = node_lookup[node_id]
             if node["data"]["type"] == "site":
                 # Count connections to other nodes in this segment
                 connections = [conn for conn in edge_map.get(node_id, []) if conn in node_ids]
                 if len(connections) == 1:
+                    endpoint_sites.append(node_id)
+
+        # Determine starting node
+        start_node_id = None
+
+        # If we have segment_id and can identify site_a, prefer it as start
+        if segment_id and endpoint_sites:
+            # Look for site_a marker in the segment nodes
+            # Check if any endpoint has site_a_id in its data
+            for node_id in endpoint_sites:
+                node = node_lookup[node_id]
+                # Check if this node has a marker indicating it's site_a
+                if node["data"].get("is_site_a"):
                     start_node_id = node_id
                     break
+
+            # If no site_a marker found, use first endpoint
+            if start_node_id is None and endpoint_sites:
+                start_node_id = endpoint_sites[0]
+        elif endpoint_sites:
+            # No segment context, just use first endpoint
+            start_node_id = endpoint_sites[0]
 
         # If no endpoint found (shouldn't happen in a path), use first site
         if start_node_id is None:
@@ -204,13 +252,14 @@ class TopologyBuilder:
         )
         return node_id
 
-    def add_segment_node(self, segment, parent_id: Optional[str] = None) -> str:
+    def add_segment_node(self, segment, parent_id: Optional[str] = None, site_a_id: Optional[str] = None) -> str:
         """
         Add a segment node to the topology.
 
         Args:
             segment: Segment model instance
             parent_id: Optional parent node ID (e.g., service path ID)
+            site_a_id: Optional site_a ID for ordering reference
 
         Returns:
             str: The node ID for the segment
@@ -228,6 +277,9 @@ class TopologyBuilder:
 
         if parent_id:
             node_data["parent"] = parent_id
+
+        if site_a_id:
+            node_data["site_a_id"] = site_a_id
 
         self.nodes.append({"data": node_data})
         return node_id
@@ -480,7 +532,12 @@ def build_service_path_topology(service_path) -> Dict[str, List[Dict]]:
 
     # Process each segment
     for segment in segments:
-        segment_id = builder.add_segment_node(segment, parent_id=service_path_id)
+        # Add segment sites first to get their IDs
+        site_a_id = f"site-{segment.site_a.pk}"
+        site_b_id = f"site-{segment.site_b.pk}"
+
+        # Add segment node with site_a reference
+        segment_id = builder.add_segment_node(segment, parent_id=service_path_id, site_a_id=site_a_id)
 
         # Add segment sites
         site_a_id = builder.add_or_update_site_node(segment.site_a, segment_id)
@@ -492,6 +549,7 @@ def build_service_path_topology(service_path) -> Dict[str, List[Dict]]:
 
     # Sort nodes by path traversal order
     builder.sort_nodes_by_path_traversal()
+
     return builder.get_topology_data()
 
 
@@ -512,8 +570,12 @@ def build_segment_topology(segment) -> Dict[str, List[Dict]]:
     """
     builder = TopologyBuilder()
 
-    # Add segment as root node (no parent)
-    segment_id = builder.add_segment_node(segment, parent_id=None)
+    # Get site IDs first
+    site_a_id = f"site-{segment.site_a.pk}"
+    site_b_id = f"site-{segment.site_b.pk}"
+
+    # Add segment as root node (no parent) with site_a reference
+    segment_id = builder.add_segment_node(segment, parent_id=None, site_a_id=site_a_id)
 
     # Add segment sites
     site_a_id = builder.add_or_update_site_node(segment.site_a, segment_id)

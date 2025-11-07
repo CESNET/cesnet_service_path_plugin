@@ -10,25 +10,26 @@
             <div class="col col-12">
                 <div class="card">
                     <h5 class="card-header">
-                        {% trans "Topologies" %}
-                            {% for topology_title, topology_data in topologies.items %}
-                                {% if topologies|length > 1 %}
-                                <button class="btn btn-ghost-primary btn-sm topology-btn {% if forloop.first %}active{% endif %}" 
-                                        id="btn-topology-{{ forloop.counter }}"
-                                        onclick="showTopologyWithButtons('cy-topology-viewer', 'cy-topology-data-{{ forloop.counter }}', '{{ forloop.counter }}')">
-                                    {{ topology_title }}
-                                </button>
-                                {% else %}
-                                    {{ topology_title }}
-                                {% endif %}
-                            {% endfor %}
-                        
+                        {% if topologies|length > 1 %}
+                            {% trans "Topologies" %}
+                            {% else %}
+                            {% trans "Topology of" %}
+                        {% endif %}   
+                        {% for topology_title, topology_data in topologies.items %}
+                            {% if topologies|length > 1 %}
+                            <button class="btn btn-ghost-primary btn-sm topology-btn {% if forloop.first %}active{% endif %}" 
+                                    id="btn-topology-{{ forloop.counter }}"
+                                    onclick="showTopologyWithButtons('cy-topology-viewer', 'cy-topology-data-{{ forloop.counter }}', '{{ forloop.counter }}')">
+                                {{ topology_title }}
+                            </button>
+                            {% else %}
+                                {{ topology_title }}
+                            {% endif %}
+                        {% endfor %}
                     </h5>
-                    
                     <div class="card-body">
                         <!-- Single Topology Container -->
                         <div class="cy-topology" id="cy-topology-viewer"></div>
-                        
                         <!-- Hidden topology data containers -->
                         {% for topology_title, topology_data in topologies.items %}
                         <div id="cy-topology-data-{{ forloop.counter }}" 
@@ -39,9 +40,7 @@
                 </div>
             </div>
         </div>
-   
-        
-   
+    
     <style>
         .card-header {
             display: flex;
