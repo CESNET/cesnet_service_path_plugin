@@ -5,7 +5,82 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.2.0] - TBD
+## [5.2.1] - 2025-11-07
+
+### Added
+- **Topology Visualization**: Interactive network topology visualization using Cytoscape.js
+  - Visual representation of segment connections and circuit terminations
+  - Multi-topology support for service paths with multiple segments
+  - Automatic topology generation for both segments and service paths
+  - Clean NetBox Blue styled visualization with gradients and shadows
+  - Interactive topology viewer with hover tooltips showing node details
+  - Topology visualization integrated into segment and service path detail views
+  - Topology visualization added to circuit detail pages showing related segments/service paths
+  - Toggle between multiple topologies when segment belongs to multiple service paths
+
+- **Commitment End Date Tracking**: Enhanced financial commitment monitoring
+  - Automatic calculation of commitment end date based on install date and commitment period
+  - Color-coded commitment status indicators:
+    - Red: More than 30 days until end
+    - Orange: Within 30 days of end
+    - Green: Commitment period has ended
+    - Gray: No commitment period set
+  - Interactive tooltips showing days remaining until commitment end
+  - Visual feedback for commitment periods that have ended
+  - Commitment end date displayed in segment detail view with badge styling
+  - GraphQL API support for commitment end dates with ISO format
+
+### Changed
+- **Circuit Extensions Refactoring**: Improved code organization
+  - Renamed `CircuitKomoraSegmentExtension` to `CircuitSegmentExtension` for better naming consistency
+  - Enhanced circuit detail view with topology visualization support
+  - Better separation of concerns in template content extensions
+  - Circuit pages now show topology visualizations for associated segments
+
+- **Currency Field Enhancement**: Made charge_currency field required
+  - Removed default currency value to ensure explicit currency selection
+  - Migration `0031` updates currency field constraints
+  - Currency must now be explicitly set when creating financial information
+  - Prevents accidental use of default currency when not intended
+
+- **Table Improvements**: Enhanced data presentation
+  - Circuit column in SegmentCircuitMappingTable now orders by CID instead of name
+  - Improved ordering logic for better data organization and searchability
+
+- **Version Update**: Updated to version 5.2.1b5 in pyproject.toml
+
+### Fixed
+- Added missing `python-dateutil` dependency to pyproject.toml for date calculations
+- Improved commitment end date calculation with proper timezone handling using `django.utils.timezone`
+- Enhanced tooltip rendering with proper Bootstrap integration
+- Fixed tooltip data attributes for proper display of commitment information
+
+### Technical Details
+- New utility module `utils_topology.py` with `TopologyBuilder` class for generating network graphs
+- Cytoscape.js (v3.28.1) integration for advanced graph visualization
+- Reusable topology visualization templates:
+  - `topology_visualization.html` - Core Cytoscape includes and initialization
+  - `topology_segment_card.html` - Topology display card with multi-topology support
+  - `topology_styles.html` - Styling for topology containers and tooltips
+- Support for multiple topologies on single page with tab switching functionality
+- Topology data stored as JSON and rendered client-side for performance
+- Color-coding system for commitment status based on time remaining (30-day threshold)
+- New GraphQL field resolver for `commitment_end_date` with ISO format output
+- Template extensions now check for service path membership to generate appropriate topologies
+
+### Migration Notes
+- **Migration 0031**: Updates `charge_currency` field to remove default value - requires explicit currency selection
+- **New Dependencies**: Added `python-dateutil` for relativedelta calculations in commitment period tracking
+- **Template Updates**: New topology visualization templates require Cytoscape.js CDN (included automatically)
+- **API Changes**: GraphQL API now includes `commitment_end_date` field in SegmentFinancialInfoType
+
+### Upgrade Instructions
+1. Run migrations: `python manage.py migrate cesnet_service_path_plugin`
+2. Install new dependency: `pip install python-dateutil` (or upgrade plugin package)
+3. Update existing financial records to set currency explicitly if using default
+4. Refresh browser cache to load new topology visualization assets
+
+## [5.2.0] - 2025-10-29
 
 ### Added
 - **Financial Information Management**: New segment financial tracking system

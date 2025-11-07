@@ -1,6 +1,6 @@
 # CESNET ServicePath Plugin for NetBox
 
-A NetBox plugin for managing service paths and segments in network infrastructure with advanced geographic path visualization and financial tracking.
+A NetBox plugin for managing service paths and segments in network infrastructure with advanced geographic path visualization, interactive topology visualization, and financial tracking.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![PyPI version](https://img.shields.io/pypi/v/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
@@ -21,6 +21,7 @@ A NetBox plugin for managing service paths and segments in network infrastructur
   - [Custom Kind Choices](#custom-kind-choices)
   - [Currency Configuration](#currency-configuration)
 - [Geographic Path Data](#geographic-path-data)
+- [Topology Visualization](#topology-visualization)
 - [Financial Information Management](#financial-information-management)
 - [API Usage](#api-usage)
 - [Development](#development)
@@ -32,9 +33,11 @@ A NetBox plugin for managing service paths and segments in network infrastructur
 ## Overview
 
 The CESNET ServicePath Plugin extends NetBox's capabilities by providing comprehensive network service path management with:
-- Interactive geographic path visualization using Leaflet maps, introduced in version 5.0.x
+- Interactive geographic path visualization using Leaflet maps (introduced in version 5.0.x)
+- **Interactive topology visualization using Cytoscape.js** (new in 5.2.1)
 - Support for KML, KMZ, and GeoJSON path data
-- **Financial information tracking for segments** (new in 5.2.0)
+- **Financial information tracking for segments** (introduced in 5.2.0)
+- **Commitment end date tracking with visual indicators** (new in 5.2.1)
 - Service path and segment relationship management
 - Advanced filtering and search capabilities
 - REST API and GraphQL support
@@ -56,6 +59,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - Track service path status and metadata
 - Link multiple segments to create complete paths
 - Visual relationship mapping
+- **Interactive topology visualization** showing complete service path topology
 
 ### Segment Management
 - Track network segments between locations
@@ -65,13 +69,35 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **One-click Circuit generation** from Segment data with auto-filled forms
 - Automatic status tracking based on dates
 - **Geographic path visualization with actual route data**
+- **Interactive topology visualization** showing segment connections and circuit terminations
 - Segment types (dark fiber, optical spectrum, ethernet) with type specific data
-- **Financial information tracking with multi-currency support** (new in 5.2.0)
+- **Financial information tracking with multi-currency support**
+- **Commitment end date tracking** with color-coded status indicators (new in 5.2.1)
+
+### Topology Visualization (New in 5.2.1)
+- **Interactive network topology graphs** powered by Cytoscape.js
+- **Automatic topology generation** for segments and service paths
+- **Visual representation** of segment connections, circuits, and terminations
+- **Multi-topology support** - view multiple service paths when a segment belongs to multiple paths
+- **Clean NetBox Blue styling** with gradients and modern design
+- **Interactive hover tooltips** displaying detailed node information
+- **Integrated views**:
+  - Segment detail pages show segment topology or service path topology
+  - Service path detail pages show complete path topology
+  - Circuit detail pages show topologies for related segments/service paths
+- **Toggle between topologies** when multiple topologies are available
 
 ### Financial Information Management
 - **Monthly charge tracking** with configurable currencies
 - **Non-recurring charge** (one-time setup/installation fees)
 - **Commitment period** tracking in months
+- **Commitment end date** automatic calculation and tracking (new in 5.2.1)
+- **Visual commitment status indicators** with color coding:
+  - 🔴 Red: More than 30 days remaining
+  - 🟠 Orange: Within 30 days of expiration
+  - 🟢 Green: Commitment period ended
+  - ⚫ Gray: No commitment period set
+- **Interactive tooltips** showing days remaining until commitment end
 - **Automatic cost calculations**:
   - Total commitment cost (monthly × commitment period)
   - Total cost including setup fees
@@ -117,10 +143,11 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Financial information** (optional one-to-one relationship)
 - Automated status monitoring
 
-### Segment Financial Info (New in 5.2.0)
+### Segment Financial Info
 - **Monthly charges** with currency selection
 - **Non-recurring charges** for setup/installation
-- **Commitment period** tracking
+- **Commitment period** tracking in months
+- **Commitment end date** automatic calculation (new in 5.2.1)
 - **Automatic cost calculations**
 - **Notes** field for additional financial context
 - **Permission-based visibility**
@@ -438,6 +465,52 @@ PLUGINS_CONFIG = {
 - **Overlapping segment handling** with selection popups
 - **Status-based color coding** for visual identification
 
+## Topology Visualization
+
+### Overview (New in 5.2.1)
+
+The plugin includes interactive network topology visualization using Cytoscape.js, providing a graph-based view of your network segments, circuits, and their interconnections.
+
+### Features
+
+- **Automatic topology generation**: Topologies are automatically generated for segments and service paths
+- **Interactive graph visualization**: Pan, zoom, and hover over nodes to see details
+- **Multi-topology support**: When a segment belongs to multiple service paths, you can toggle between different topology views
+- **Clean visual design**: NetBox Blue themed styling with gradients and modern aesthetics
+- **Node information**: Hover tooltips display detailed information about locations, circuits, and segments
+
+### Where Topologies Appear
+
+Topologies are automatically displayed in:
+
+1. **Segment Detail Pages**:
+   - Shows segment topology with connected circuits and terminations
+   - If segment belongs to service paths, shows service path topology instead
+   - Multiple topology tabs if segment is part of multiple service paths
+
+2. **Service Path Detail Pages**:
+   - Shows complete service path topology
+   - Visualizes all segments in the path and their connections
+
+3. **Circuit Detail Pages**:
+   - Shows topology for segments associated with the circuit
+   - Displays service path topology if the segment belongs to a service path
+
+### Topology Components
+
+Topologies visualize:
+- **Location nodes**: Sites and locations where segments terminate
+- **Circuit nodes**: Circuits connected to segments
+- **Circuit termination nodes**: A-side and B-side terminations
+- **Edges**: Connections between nodes showing network relationships
+
+### Technical Details
+
+- Uses Cytoscape.js v3.28.1 for graph rendering
+- Client-side rendering for performance
+- Responsive design adapts to different screen sizes
+- Automatic layout algorithms for optimal node placement
+
 ## Financial Information Management
 
 ### Adding Financial Information
@@ -458,9 +531,27 @@ Financial information can be added to any segment through the segment detail vie
 Financial information is displayed on the segment detail page for users with view permissions:
 - Monthly charge with currency
 - Non-recurring charge (if applicable)
-- Commitment period
+- Commitment period in months
+- **Commitment end date** with color-coded status badge (new in 5.2.1)
 - Automatically calculated total costs
 - Additional notes
+
+### Commitment End Date Tracking (New in 5.2.1)
+
+The plugin automatically calculates and tracks commitment end dates:
+
+- **Automatic calculation**: Based on segment install date + commitment period
+- **Visual status indicators** with color coding:
+  - 🔴 **Red badge**: More than 30 days until commitment ends
+  - 🟠 **Orange badge**: Within 30 days of commitment end (action required soon)
+  - 🟢 **Green badge**: Commitment period has ended
+  - ⚫ **Gray badge**: No commitment period set or install date not defined
+- **Interactive tooltips**: Hover over the badge to see:
+  - Exact commitment end date
+  - Days remaining until expiration
+  - Status message
+
+**Note**: Commitment end date is calculated when both the segment install date and commitment period are set. If the install date is missing, a gray badge indicates that the date will be calculated once the install date is defined.
 
 ### Permission Requirements
 
@@ -506,6 +597,7 @@ Segment API responses include a `financial_info` field:
     "charge_currency": "EUR",
     "non_recurring_charge": "5000.00",
     "commitment_period_months": 36,
+    "commitment_end_date": "2028-11-07",
     "total_commitment_cost": "36000.00",
     "total_cost_including_setup": "41000.00",
     "notes": "Special discount applied"
@@ -563,6 +655,21 @@ query {
     }
   }
 }
+
+# Query financial information with commitment end date (new in 5.2.1)
+query {
+  segment_list {
+    id
+    name
+    financialInfo {
+      monthlyCharge
+      chargeCurrency
+      commitmentPeriodMonths
+      commitmentEndDate
+      totalCommitmentCost
+    }
+  }
+}
 ```
 
 #### GraphQL Features
@@ -572,6 +679,7 @@ query {
 - **Advanced filtering**: Status, dates, providers, sites, path data availability
 - **Nested relationships**: Query related circuits, providers, locations in single request
 - **Type-specific data**: Query segment type information and technical specifications
+- **Commitment tracking**: Query commitment end dates and financial calculations (new in 5.2.1)
 
 ## Development
 
@@ -605,7 +713,7 @@ sudo apt-get install gdal-bin libgdal34 libgeos-c1t64 libproj25
 brew install gdal geos proj
 
 # Install Python packages
-pip install geopandas fiona shapely
+pip install geopandas fiona shapely python-dateutil
 ```
 
 **Note**: For development, you typically only need the runtime libraries. The Python packages (geopandas, fiona, shapely) use precompiled wheels that already include the necessary bindings. Development headers (`-dev` packages) are only needed if you're compiling these libraries from source.
@@ -637,11 +745,13 @@ The plugin adds a **Service Paths** menu with:
 - **Quick action buttons**: Add and Import shortcuts in navigation menu
 - **Bulk operations**: Edit, delete, and import multiple records at once
 - **Advanced search**: Full-text search across names, comments, network labels, and path notes
+- **Topology visualization cards**: Interactive network graphs on detail pages (new in 5.2.1)
+- **Commitment status badges**: Color-coded indicators for financial commitments (new in 5.2.1)
 
 ### Template Extensions
 
 Automatic integration with existing NetBox models:
-- **Circuit pages**: Show related segments
+- **Circuit pages**: Show related segments with topology visualization (enhanced in 5.2.1)
 - **Provider pages**: List provider segments
 - **Site/Location pages**: Display connected segments
 - **Tenant pages**: Show associated provider information
@@ -652,6 +762,7 @@ Financial information appears on segment detail pages when:
 - User has view permission
 - Segment has financial information attached
 - Displayed in a dedicated panel with all cost details and calculations
+- Shows commitment end date with color-coded status badge (new in 5.2.1)
 
 ## Troubleshooting
 
@@ -664,6 +775,8 @@ Financial information appears on segment detail pages when:
 5. **Library version mismatch**: If you encounter errors about missing libraries, check that library package names match your OS version (e.g., `libgdal34` vs `libgdal32`)
 6. **Financial info not visible**: Check user permissions for `view_segmentfinancialinfo`
 7. **Currency not appearing**: Verify plugin configuration in `configuration/plugins.py`
+8. **Topology not rendering**: Check browser console for Cytoscape.js CDN errors (new in 5.2.1)
+9. **Commitment end date not showing**: Ensure segment has both install date and commitment period defined (new in 5.2.1)
 
 ### Debug Mode
 
@@ -684,6 +797,7 @@ LOGGING = {
 - Created using [Cookiecutter](https://github.com/audreyr/cookiecutter) and [`netbox-community/cookiecutter-netbox-plugin`](https://github.com/netbox-community/cookiecutter-netbox-plugin)
 - Based on the [NetBox plugin tutorial](https://github.com/netbox-community/netbox-plugin-tutorial)
 - Geographic features powered by [GeoPandas](https://geopandas.org/), [Leaflet](https://leafletjs.com/), and [PostGIS](https://postgis.net/)
+- Topology visualization powered by [Cytoscape.js](https://js.cytoscape.org/)
 
 ## License
 
