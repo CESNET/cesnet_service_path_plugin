@@ -50,7 +50,9 @@
             <div class="col col-12">
                 <div class="card">
                     <h5 class="card-header">
-                        {% trans "Service Path Topology" %}
+                        {% trans "Topology of" %}
+                        {{ object.name }}
+                        {% trans "Service Path" %}
                     </h5>
                     <div class="card-body">
                         <div id="cy-topology" data-topology='{{ topology_data|safe }}' class="cy-topology" ></div>

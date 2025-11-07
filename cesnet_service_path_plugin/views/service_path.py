@@ -27,8 +27,6 @@ class ServicePathView(generic.ObjectView):
         # Build topology data using utility function
         topology_data = build_service_path_topology(instance)
 
-        logger.debug(f"Topology data: {topology_data}")
-
         # Serialize to JSON for template
         context["topology_data"] = json.dumps(topology_data)
 
