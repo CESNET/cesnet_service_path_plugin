@@ -35,11 +35,11 @@ class CircuitSegmentExtension(PluginTemplateExtension):
         # Initialize topology data
         topology_data = None
         topology_title = None
+        topologies = {}
 
         if segment:
             # Check if segment is part of any service path
             service_paths = ServicePathSegmentMapping.objects.filter(segment=segment).all()
-            topologies = {}
             if service_paths:
                 for sp in service_paths:
                     # get data from service path model
