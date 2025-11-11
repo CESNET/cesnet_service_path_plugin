@@ -160,9 +160,10 @@ function initializeTopology(containerId, topologyData = null) {
                 selector: 'node[type="service"]',
                 style: {
                     'shape': 'round-rectangle',
-                    'background-color': '#bfdbfe',
+                    'background-fill': 'linear-gradient',
+                    'background-gradient-stop-colors': ['#bfdbfe', '#93c5fd'],
+                    'background-gradient-direction': 'to-bottom-right',
                     'background-opacity': 0.7,
-                    'background-image': 'linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%)',
                     'border-color': '#2563eb',
                     'border-width': 2,
                     'border-opacity': 0.8,
@@ -178,7 +179,7 @@ function initializeTopology(containerId, topologyData = null) {
                     'text-max-width': '200px',
                     'box-shadow': '0 8px 24px rgba(37, 99, 235, 0.25), 0 2px 8px rgba(37, 99, 235, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.5)',
                     'corner-radius': 14
-                }
+                    }
             },
             
             // Segment styling - Medium blue with transparency
@@ -188,7 +189,9 @@ function initializeTopology(containerId, topologyData = null) {
                     'shape': 'round-rectangle',
                     'background-color': '#dbeafe',
                     'background-opacity': 0.7,
-                    'background-image': 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                    'background-fill': 'linear-gradient',
+                    'background-gradient-stop-colors': ['#bfdbfe', '#93c5fd'],
+                    'background-gradient-direction': 'to-bottom-right',
                     'border-color': '#3b82f6',
                     'border-width': 2,
                     'border-opacity': 0.8,
@@ -214,7 +217,9 @@ function initializeTopology(containerId, topologyData = null) {
                     'shape': 'round-rectangle',
                     'background-color': '#7dd3fc',
                     'background-opacity': 0.75,
-                    'background-image': 'linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%)',
+                    'background-fill': 'linear-gradient',
+                    'background-gradient-stop-colors': ['#bfdbfe', '#93c5fd'],
+                    'background-gradient-direction': 'to-bottom-right',
                     'border-color': '#0284c7',
                     'border-width': 2.5,
                     'border-opacity': 0.9,
@@ -264,7 +269,9 @@ function initializeTopology(containerId, topologyData = null) {
                     'shape': 'round-rectangle',
                     'background-color': '#d1fae5',
                     'background-opacity': 0.75,
-                    'background-image': 'linear-gradient(135deg, #d1fae5 0%, #dcfce7 100%)',
+                    'background-fill': 'linear-gradient',
+                    'background-gradient-stop-colors': ['#d1fae5', '#dcfce7'],
+                    'background-gradient-direction': 'to-bottom-right',
                     'border-color': '#10b981',
                     'border-width': 2,
                     'border-opacity': 0.9,
@@ -455,7 +462,7 @@ function initializeTopology(containerId, topologyData = null) {
             window.location.href = url;
         }
     });
-    
+
     
     // Responsive resize
     const resizeHandler = function() {
