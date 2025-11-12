@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cesnet_service_path_plugin"
-version = "5.2.0"
-description = "Adds ability to create, edit and view service paths in the CESNET network."
+version = "5.2.1b7"
+description = "Adds ability to create, edit and view service paths in the network."
 authors = [
     {name = "Jan Krupa", email = "jan.krupa@cesnet.cz"},
     {name = "Jiri Vrany", email = "jiri.vrany@cesnet.cz"}
@@ -16,7 +16,8 @@ requires-python = ">=3.10"
 dependencies = [
     "geopandas",
     "fiona",
-    "shapely"
+    "shapely",
+    "python-dateutil",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

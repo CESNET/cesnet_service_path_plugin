@@ -1,4 +1,6 @@
 {% load i18n %}
+
+<!-- Segments Table Card -->
 <div class="col col-md-12">
     <div class="card">
         <h5 class="card-header">
@@ -13,3 +15,10 @@
         {% htmx_table 'plugins:cesnet_service_path_plugin:segmentcircuitmapping_list' circuit_id=object.pk %}
     </div>
 </div>
+
+<!-- Topology Visualization Card -->
+{% if topologies %}
+    {% include 'cesnet_service_path_plugin/inc/topology_visualization.html' %}
+    {% include 'cesnet_service_path_plugin/inc/topology_segment_card.html' %}
+
+{% endif %}

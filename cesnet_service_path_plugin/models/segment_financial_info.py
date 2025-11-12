@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from django.urls import reverse
 from netbox.models import NetBoxModel
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 
 
 def get_currency_choices():
@@ -35,7 +37,6 @@ class SegmentFinancialInfo(NetBoxModel):
     charge_currency = models.CharField(
         max_length=3,
         choices=get_currency_choices,
-        default=get_default_currency,
         help_text="Currency for all charges",
     )
 
@@ -74,3 +75,49 @@ class SegmentFinancialInfo(NetBoxModel):
         if self.non_recurring_charge:
             total += self.non_recurring_charge
         return total if total > 0 else None
+
+    @property
+    def commitment_end_date(self):
+        """Calculate the end date of the commitment period."""
+
+        if self.commitment_period_months and self.segment.install_date:
+            start_date = self.segment.install_date
+            end_date = start_date + relativedelta(months=self.commitment_period_months)
+            return end_date
+        return None
+
+    def get_commitment_end_date_color(self):
+        """
+        Color code the commitment end date based on proximity to current date.
+        Red - 30+ days to the end
+        Orange - within 30 days
+        Green - the end date already passed
+        Gray - no commitment.
+        """
+
+        if not self.commitment_end_date:
+            return "gray"
+
+        today = timezone.now().date()
+        end_date = self.commitment_end_date
+
+        if end_date < today:
+            return "green"
+        elif (end_date - today).days <= 30:
+            return "orange"
+        else:
+            return "red"
+
+    def get_commitment_end_date_tooltip(self):
+        """Generate tooltip text for commitment end date."""
+        if not self.commitment_end_date:
+            return "No commitment period set."
+
+        end_date = self.commitment_end_date
+        today = timezone.now().date()
+
+        if end_date < today:
+            return f"Commitment period ended on {end_date}."
+        else:
+            days_remaining = (end_date - today).days
+            return f"Commitment period ends on {end_date} ({days_remaining} days remaining)."

@@ -21,7 +21,14 @@ from cesnet_service_path_plugin.models import (
     ServicePathSegmentMapping,
 )
 from cesnet_service_path_plugin.tables import SegmentTable, ServicePathTable
-from cesnet_service_path_plugin.utils import export_segment_paths_as_geojson
+from cesnet_service_path_plugin.utils import (
+    export_segment_paths_as_geojson,
+    build_segment_topology,
+    build_service_path_topology,
+)
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def generate_circuit_creation_url(segment):
@@ -98,6 +105,18 @@ class SegmentView(generic.ObjectView):
         if has_financial_view_perm:
             financial_info = getattr(instance, "financial_info", None)
 
+        # Build topology data for visualization
+        topologies = {}
+        if service_paths:
+            for sp in service_paths:
+                topology_title = f"Service Path {sp}"
+                topology_data = build_service_path_topology(sp)
+                topologies[topology_title] = json.dumps(topology_data)
+        else:
+            topology_title = f"Segment {instance}"
+            topology_data = build_segment_topology(instance)
+            topologies[topology_title] = json.dumps(topology_data)
+
         return {
             "circuits_table": circuits_table,
             "service_paths_table": service_paths_table,
@@ -111,6 +130,7 @@ class SegmentView(generic.ObjectView):
             "has_financial_delete_perm": request.user.has_perm(
                 "cesnet_service_path_plugin.delete_segmentfinancialinfo"
             ),
+            "topologies": topologies,
         }
 
 
@@ -258,12 +278,6 @@ def segment_map_view(request, pk):
         "opacity": 0.8,
     }  # Red color for better visibility
 
-    # Adjust styling based on status if needed
-    # status_colors = {"Active": "#28a745", "Planned": "#ffc107", "Offline": "#dc3545"}
-
-    # if hasattr(segment, "status") and hasattr(segment, "get_status_display"):
-    #    segment_style["color"] = status_colors.get(segment.get_status_display(), "#dc3545")
-
     context = {
         "object": segment,
         "segment": segment,
@@ -309,9 +323,6 @@ def segment_geojson_api(request, pk):
     geojson = {"type": "FeatureCollection", "features": [feature]}
 
     return JsonResponse(geojson)
-
-
-# In cesnet_service_path_plugin/views/segment.py
 
 
 @register_model_view(Segment, "map", path="map", detail=False)
@@ -375,7 +386,6 @@ class SegmentsMapView(generic.ObjectListView):
                 "provider_id": segment.provider.pk if segment.provider else None,
                 "status": segment.get_status_display(),
                 "status_color": segment.get_status_color(),
-                # NEW: Add segment type information
                 "segment_type": segment.get_segment_type_display(),
                 "segment_type_color": segment.get_segment_type_color(),
                 "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
@@ -458,7 +468,6 @@ def segments_map_api(request):
                         "provider": str(segment.provider) if segment.provider else None,
                         "status": segment.get_status_display(),
                         "status_color": segment.get_status_color(),
-                        # NEW: Add segment type information
                         "segment_type": segment.get_segment_type_display(),
                         "segment_type_color": segment.get_segment_type_color(),
                         "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
@@ -496,7 +505,6 @@ def segments_map_api(request):
                         "provider": str(segment.provider) if segment.provider else None,
                         "status": segment.get_status_display(),
                         "status_color": segment.get_status_color(),
-                        # NEW: Add segment type information
                         "segment_type": segment.get_segment_type_display(),
                         "segment_type_color": segment.get_segment_type_color(),
                         "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,

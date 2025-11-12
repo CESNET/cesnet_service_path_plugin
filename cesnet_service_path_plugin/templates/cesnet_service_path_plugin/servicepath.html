@@ -7,6 +7,8 @@
 {% load i18n %}
 {% load perms %}
 {% load render_table from django_tables2 %}
+{% load static %}
+
 {% block content %}
     <div class="row mb-3">
         <div class="col col-md-6">
@@ -40,6 +42,32 @@
             {% plugin_right_page object %}
         </div>
     </div>
+
+        <!-- Service Path Topology Visualization Card -->
+        {% include './inc/topology_visualization.html' %}
+
+        <div class="row mb-3">
+            <div class="col col-12">
+                <div class="card">
+                    <h5 class="card-header">
+                        {% trans "Topology of" %}
+                        {{ object.name }}
+                        {% trans "Service Path" %}
+                    </h5>
+                    <div class="card-body">
+                        <div id="cy-topology" data-topology='{{ topology_data|safe }}' class="cy-topology" ></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            // Initialize topology when DOM is ready
+            (function() {
+                initializeTopology('cy-topology');  // Will read from data-topology attribute
+            })();
+        </script>
+    
+
     <div class="row">
         <div class="col col-12">
             <div class="card">
@@ -61,4 +89,6 @@
     <div class="row">
         <div class="col col-md-12">{% plugin_full_width_page object %}</div>
     </div>
+
+    
 {% endblock content %}

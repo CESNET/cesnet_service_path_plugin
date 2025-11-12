@@ -1,0 +1,111 @@
+{% load i18n %}
+<!-- fallback if there are no topologies-->
+{% if not topologies %}
+    <div class="alert alert-warning">
+        {% trans "No topologies available." %}
+    </div>
+{% else %}
+
+<div class="row mb-3">
+            <div class="col col-12">
+                <div class="card">
+                    <h5 class="card-header">
+                        {% if topologies|length > 1 %}
+                            {% trans "Topologies" %}
+                            {% else %}
+                            {% trans "Topology of" %}
+                        {% endif %}   
+                        {% for topology_title, topology_data in topologies.items %}
+                            {% if topologies|length > 1 %}
+                            <button class="btn btn-ghost-primary btn-sm topology-btn {% if forloop.first %}active{% endif %}" 
+                                    id="btn-topology-{{ forloop.counter }}"
+                                    onclick="showTopologyWithButtons('cy-topology-viewer', 'cy-topology-data-{{ forloop.counter }}', '{{ forloop.counter }}')">
+                                {{ topology_title }}
+                            </button>
+                            {% else %}
+                                {{ topology_title }}
+                            {% endif %}
+                        {% endfor %}
+                    </h5>
+                    <div class="card-body">
+                        <!-- Single Topology Container -->
+                        <div class="cy-topology" id="cy-topology-viewer"></div>
+                        <!-- Hidden topology data containers -->
+                        {% for topology_title, topology_data in topologies.items %}
+                        <div id="cy-topology-data-{{ forloop.counter }}" 
+                            data-topology='{{ topology_data|safe }}' 
+                            style="display: none;"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+    <style>
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .topology-btn.active {
+            background-color: #2563eb !important;
+            color: white !important;
+        }
+    </style>
+
+    <script>
+    let currentTopologyInstance = null;
+
+    function showTopologyWithButtons(viewerContainerId, dataContainerId, buttonNumber) {
+        // Remove active class from all buttons
+        document.querySelectorAll('.topology-btn').forEach(function(btn) {
+            btn.classList.remove('active');
+        });
+        
+        // Add active class to clicked button
+        document.getElementById('btn-topology-' + buttonNumber).classList.add('active');
+        
+        // Destroy existing topology instance if any
+        if (currentTopologyInstance) {
+            currentTopologyInstance.destroy();
+        }
+        
+        // Get topology data from hidden container
+        const dataContainer = document.getElementById(dataContainerId);
+        const topologyData = JSON.parse(dataContainer.getAttribute('data-topology'));
+        
+        // Initialize new topology
+        currentTopologyInstance = initializeTopology(viewerContainerId, topologyData);
+    }
+
+    function showTopology(viewerContainerId, dataContainerId) {
+        // Destroy existing topology instance if any
+        if (currentTopologyInstance) {
+            currentTopologyInstance.destroy();
+        }
+
+        // Get topology data from hidden container
+        const dataContainer = document.getElementById(dataContainerId);
+        const topologyData = JSON.parse(dataContainer.getAttribute('data-topology'));
+        // Initialize new topology
+        currentTopologyInstance = initializeTopology(viewerContainerId, topologyData);
+    }
+    </script>
+
+    {% if topologies|length > 1 %}
+        <script>
+        // Initialize first topology on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            showTopologyWithButtons('cy-topology-viewer', 'cy-topology-data-1', 1);
+        });
+        </script>
+    {% else %}
+        <script>
+        // Initialize first topology on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            showTopology('cy-topology-viewer', 'cy-topology-data-1');
+        });
+    </script>
+    {% endif %}
+{% endif %} 

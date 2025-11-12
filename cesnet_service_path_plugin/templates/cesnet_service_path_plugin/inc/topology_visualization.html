@@ -1,0 +1,498 @@
+{% load i18n %}
+{# Load Cytoscape.js #}
+{% include './cytoscape_includes.html' %}
+
+{# Load Topology Styles #}
+{% include './topology_styles.html' %}
+
+<script>
+/**
+ * Initialize a Cytoscape topology visualization
+ * @param {string} containerId - The ID of the container element (without '#')
+ * @param {Object|null} topologyData - Optional topology data object. If null, will read from data-topology attribute
+ */
+function initializeTopology(containerId, topologyData = null) {
+    // Default options
+    
+    // Get the container element
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error('Container element not found:', containerId);
+        return null;
+    }
+    
+    // Get topology data from parameter or data attribute
+    let data = topologyData;
+    if (!data) {
+        const dataAttr = container.getAttribute('data-topology');
+        if (dataAttr) {
+            try {
+                data = JSON.parse(dataAttr);
+            } catch (e) {
+                console.error('Failed to parse topology data from data-topology attribute:', e);
+                return null;
+            }
+        } else {
+            console.error('No topology data provided for container:', containerId);
+            return null;
+        }
+    }
+    console.log('Topology data :', data);
+    
+    // Calculate preset positions for deterministic layout
+    function calculatePresetPositions(topologyData) {
+        const positions = {};
+        const serviceNodes = topologyData.nodes.filter(n => n.data.type === 'service');
+        const segmentNodes = topologyData.nodes.filter(n => n.data.type === 'segment');
+        const siteNodes = topologyData.nodes.filter(n => n.data.type === 'site');
+        const circuitNodes = topologyData.nodes.filter(n => n.data.type === 'circuit');
+        
+        // Calculate center X for the canvas
+        const centerX = 500;
+        
+        // Service path at top center
+        if (serviceNodes.length > 0) {
+            positions[serviceNodes[0].data.id] = { x: centerX, y: 50 };
+        }
+        
+        // Segments positioning
+        let segmentSpacing = 500;
+        
+        // If only one segment, center it
+        if (segmentNodes.length === 1) {
+            positions[segmentNodes[0].data.id] = { x: centerX, y: 220 };
+        } else {
+            // Multiple segments - space them out horizontally
+            const segmentStartX = centerX - (segmentNodes.length - 1) * segmentSpacing / 2;
+            segmentNodes.forEach((segment, i) => {
+                positions[segment.data.id] = { 
+                    x: segmentStartX + i * segmentSpacing, 
+                    y: 220 
+                };
+            });
+        }
+        
+        // Sites and circuits within segments
+        segmentNodes.forEach((segment, segmentIndex) => {
+            const segmentId = segment.data.id;
+            const segmentX = positions[segmentId].x;
+            
+            // Get sites and circuits for this segment
+            const segmentSites = siteNodes.filter(s => s.data.parent === segmentId);
+            const segmentCircuits = circuitNodes.filter(c => c.data.parent === segmentId);
+            
+            // Adjust spacing based on number of sites and segments
+            let siteSpacing = 180;
+            
+            // For single segment layouts, use more compact spacing
+            if (segmentNodes.length === 1) {
+                if (segmentSites.length === 2) {
+                    siteSpacing = 220;
+                } else if (segmentSites.length === 1) {
+                    siteSpacing = 0;
+                }
+            } else {
+                // Multiple segments
+                if (segmentSites.length === 2) {
+                    siteSpacing = 250;
+                } else if (segmentSites.length === 1) {
+                    siteSpacing = 0;
+                }
+            }
+            
+            // Position sites horizontally within segment, centered around segmentX
+            const siteStartX = segmentX - (segmentSites.length - 1) * siteSpacing / 2;
+            segmentSites.forEach((site, i) => {
+                positions[site.data.id] = {
+                    x: siteStartX + i * siteSpacing,
+                    y: 360  // Sites above circuits
+                };
+            });
+            
+            // Adjust circuit spacing based on number of circuits
+            let circuitSpacing = 180;
+            
+            if (segmentCircuits.length === 1) {
+                // Single circuit - center it
+                circuitSpacing = 0;
+            } else if (segmentCircuits.length === 2) {
+                circuitSpacing = segmentNodes.length === 1 ? 220 : 250;
+            }
+            
+            // Position circuits between/below sites, centered around segmentX
+            const circuitStartX = segmentX - (segmentCircuits.length - 1) * circuitSpacing / 2;
+            segmentCircuits.forEach((circuit, i) => {
+                positions[circuit.data.id] = {
+                    x: circuitStartX + i * circuitSpacing,
+                    y: 460  // Circuits below sites
+                };
+            });
+        });
+        
+        return positions;
+    }
+    
+    const presetPositions = calculatePresetPositions(data);
+    
+    // Initialize Cytoscape
+    const cy = cytoscape({
+        container: container,
+        
+        elements: data,
+        
+        // Disable node dragging
+        autoungrabify: true,
+        
+        // Disable mouse wheel zoom
+        wheelSensitivity: 0,
+        
+        style: [
+            // Base node styling - cursor pointer for all nodes
+            {
+                selector: 'node',
+                style: {
+                    'cursor': 'pointer'
+                }
+            },
+            
+            // Service path styling - Deep blue with transparency and gradients
+            {
+                selector: 'node[type="service"]',
+                style: {
+                    'shape': 'round-rectangle',
+                    'background-fill': 'linear-gradient',
+                    'background-gradient-stop-colors': ['#bfdbfe', '#93c5fd'],
+                    'background-gradient-direction': 'to-bottom-right',
+                    'background-opacity': 0.7,
+                    'border-color': '#2563eb',
+                    'border-width': 2,
+                    'border-opacity': 0.8,
+                    'label': 'data(label)',
+                    'text-valign': 'top',
+                    'text-halign': 'center',
+                    'text-margin-y': -10,
+                    'font-size': '16px',
+                    'font-weight': '700',
+                    'color': '#1e40af',
+                    'padding': 20,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '200px',
+                    'box-shadow': '0 8px 24px rgba(37, 99, 235, 0.25), 0 2px 8px rgba(37, 99, 235, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.5)',
+                    'corner-radius': 14
+                    }
+            },
+            
+            // Segment styling - Medium blue with transparency
+            {
+                selector: 'node[type="segment"]',
+                style: {
+                    'shape': 'round-rectangle',
+                    'background-color': '#dbeafe',
+                    'background-opacity': 0.7,
+                    'background-fill': 'linear-gradient',
+                    'background-gradient-stop-colors': ['#bfdbfe', '#93c5fd'],
+                    'background-gradient-direction': 'to-bottom-right',
+                    'border-color': '#3b82f6',
+                    'border-width': 2,
+                    'border-opacity': 0.8,
+                    'label': 'data(label)',
+                    'text-valign': 'top',
+                    'text-halign': 'center',
+                    'text-margin-y': -10,
+                    'font-size': '14px',
+                    'font-weight': '700',
+                    'color': '#1e40af',
+                    'padding': 30,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '180px',
+                    'box-shadow': '0 6px 20px rgba(59, 130, 246, 0.22), 0 2px 6px rgba(59, 130, 246, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.5)',
+                    'corner-radius': 12
+                }
+            },
+            
+            // Site styling - Bright blue/cyan (Netbox teal) with enhanced effects
+            {
+                selector: 'node[type="site"]',
+                style: {
+                    'shape': 'round-rectangle',
+                    'background-color': '#7dd3fc',
+                    'background-opacity': 0.75,
+                    'background-fill': 'linear-gradient',
+                    'background-gradient-stop-colors': ['#bfdbfe', '#93c5fd'],
+                    'background-gradient-direction': 'to-bottom-right',
+                    'border-color': '#0284c7',
+                    'border-width': 2.5,
+                    'border-opacity': 0.9,
+                    'label': 'data(label)',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'font-size': '13px',
+                    'font-weight': '700',
+                    'color': '#0c4a6e',
+                    'width': 'label',
+                    'height': 45,
+                    'padding': 20,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '150px',
+                    'box-shadow': '0 6px 20px rgba(14, 165, 233, 0.25), 0 2px 8px rgba(14, 165, 233, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.6)',
+                    'corner-radius': 12,
+                    'transition-property': 'box-shadow, border-width, background-opacity',
+                    'transition-duration': '0.3s'
+                }
+            },
+            
+            // Connection point sites - keep blue theme
+            {
+                selector: 'node[type="site"][is_connection_point]',
+                style: {
+                    'border-width': 3,
+                    'border-color': '#0284c7',
+                    'background-opacity': 0.85
+                }
+            },
+            
+            // Site hover/selected effect
+            {
+                selector: 'node[type="site"]:selected',
+                style: {
+                    'box-shadow': '0 10px 30px rgba(14, 165, 233, 0.35), 0 4px 12px rgba(14, 165, 233, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.7)',
+                    'border-width': 3,
+                    'border-color': '#0284c7',
+                    'background-opacity': 0.85
+                }
+            },
+            
+            // Circuit styling - Light green/emerald with transparency
+            {
+                selector: 'node[type="circuit"]',
+                style: {
+                    'shape': 'round-rectangle',
+                    'background-color': '#d1fae5',
+                    'background-opacity': 0.75,
+                    'background-fill': 'linear-gradient',
+                    'background-gradient-stop-colors': ['#d1fae5', '#dcfce7'],
+                    'background-gradient-direction': 'to-bottom-right',
+                    'border-color': '#10b981',
+                    'border-width': 2,
+                    'border-opacity': 0.9,
+                    'label': 'data(label)',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'font-size': '12px',
+                    'font-weight': '600',
+                    'color': '#047857',
+                    'width': 'label',
+                    'height': 32,
+                    'padding': 12,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '140px',
+                    'box-shadow': '0 4px 16px rgba(16, 185, 129, 0.15), 0 2px 6px rgba(16, 185, 129, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.5)',
+                    'corner-radius': 10,
+                    'transition-property': 'box-shadow, border-width, background-opacity',
+                    'transition-duration': '0.3s'
+                }
+            },
+            
+            // Circuit hover/selected effect
+            {
+                selector: 'node[type="circuit"]:selected',
+                style: {
+                    'box-shadow': '0 6px 20px rgba(14, 165, 233, 0.28), 0 2px 8px rgba(14, 165, 233, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.6)',
+                    'border-width': 2.5,
+                    'background-opacity': 0.85
+                }
+            },
+            
+            // Edge styling - Soft blue with low opacity
+            {
+                selector: 'edge',
+                style: {
+                    'width': 2.5,
+                    'line-color': '#93c5fd',
+                    'curve-style': 'bezier',
+                    'target-arrow-shape': 'none',
+                    'opacity': 0.5,
+                    'transition-property': 'width, line-color, opacity',
+                    'transition-duration': '0.3s'
+                }
+            },
+            
+            // Highlighted edges (when node is selected)
+            {
+                selector: 'edge:selected',
+                style: {
+                    'line-color': '#3b82f6',
+                    'width': 3.5,
+                    'opacity': 0.75
+                }
+            },
+            
+            // Connected edges highlight
+            {
+                selector: 'edge.highlighted',
+                style: {
+                    'line-color': '#2563eb',
+                    'width': 4,
+                    'z-index': 999,
+                    'opacity': 0.85,
+                    'line-style': 'solid'
+                }
+            }
+        ],
+        
+        layout: {
+            name: 'preset',
+            positions: function(node) {
+                return presetPositions[node.data('id')] || { x: 0, y: 0 };
+            },
+            fit: false,
+            padding: 50
+        }
+    });
+    
+    // Fit to view after layout with smart zoom calculation
+    setTimeout(function() {
+        const boundingBox = cy.elements().boundingBox();
+        const viewportWidth = cy.width();
+        const viewportHeight = cy.height();
+        const contentWidth = boundingBox.w;
+        const contentHeight = boundingBox.h;
+        
+        // Calculate padding in pixels
+        const paddingPixels = 80;
+        
+        // Calculate zoom to fit both width and height, use the smaller zoom level
+        const zoomToFitWidth = (viewportWidth - paddingPixels * 2) / contentWidth;
+        const zoomToFitHeight = (viewportHeight - paddingPixels * 2) / contentHeight;
+        const zoomLevel = Math.min(zoomToFitWidth, zoomToFitHeight, 1.2); // Cap at 1.2x to prevent over-zooming
+        
+        // Apply zoom and center
+        cy.zoom(zoomLevel);
+        cy.center();
+    }, 100);
+    
+    // Create tooltip element with unique ID for this instance
+    const tooltipId = 'cy-tooltip-' + containerId;
+    let tooltip = document.getElementById(tooltipId);
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = tooltipId;
+        tooltip.className = 'cy-tooltip';
+        document.body.appendChild(tooltip);
+    }
+    
+    // Show tooltip on node hover
+    cy.on('mouseover', 'node', function(event) {
+        const node = event.target;
+        const data = node.data();
+        
+        let content = '<strong>' + data.label + '</strong><br>';
+        content += '<em style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">' + data.type + '</em>';
+        
+        if (data.description) content += '<div style="margin-top: 8px; color: #475569;">' + data.description + '</div>';
+        if (data.location) content += '<div style="margin-top: 4px; color: #64748b;">📍 ' + data.location + '</div>';
+        if (data.bandwidth) content += '<div style="margin-top: 4px; color: #64748b;">⚡ ' + data.bandwidth + '</div>';
+        if (data.provider) content += '<div style="margin-top: 4px; color: #64748b;">🏢 ' + data.provider + '</div>';
+        if (data.vlan) content += '<div style="margin-top: 4px; color: #64748b;">🔢 VLAN: ' + data.vlan + '</div>';
+        if (data.status) content += '<div style="margin-top: 4px; color: #059669;">✓ ' + data.status + '</div>';
+        
+        tooltip.innerHTML = content;
+        tooltip.style.display = 'block';
+    });
+    
+    cy.on('mousemove', 'node', function(event) {
+        tooltip.style.left = (event.originalEvent.pageX + 10) + 'px';
+        tooltip.style.top = (event.originalEvent.pageY + 10) + 'px';
+    });
+    
+    cy.on('mouseout', 'node', function(event) {
+        tooltip.style.display = 'none';
+    });
+    
+    // Highlight connected edges when node is selected
+    cy.on('select', 'node', function(event) {
+        const node = event.target;
+        node.connectedEdges().addClass('highlighted');
+    });
+    
+    cy.on('unselect', 'node', function(event) {
+        const node = event.target;
+        node.connectedEdges().removeClass('highlighted');
+    });
+    
+    // Node single-click handler - just for logging and selection
+    cy.on('tap', 'node', function(event) {
+        const node = event.target;
+        console.log('Selected:', node.data('type'), node.data('label'));
+    });
+    
+    // Node double-click handler - open detail page
+    cy.on('dbltap', 'node', function(event) {
+        const node = event.target;
+        const data = node.data();
+        
+        console.log('Double-clicked:', data.type, data.label, 'ID:', data.netbox_id);
+        
+        // Navigate to detail page based on node type
+        let url = null;
+        
+        switch(data.type) {
+            case 'segment':
+                // Navigate to segment detail
+                url = '/plugins/cesnet-service-path-plugin/segments/' + data.netbox_id + '/';
+                break;
+            case 'site':
+                // Navigate to NetBox site detail
+                url = '/dcim/sites/' + data.netbox_id + '/';
+                break;
+            case 'circuit':
+                // Navigate to NetBox circuit detail
+                url = '/circuits/circuits/' + data.netbox_id + '/';
+                break;
+            case 'service':
+                // Already on service path detail page, could reload or do nothing
+                console.log('Already viewing this service path');
+                return;
+            default:
+                console.log('Unknown node type:', data.type);
+                return;
+        }
+        
+        if (url) {
+            window.location.href = url;
+        }
+    });
+
+    
+    // Responsive resize
+    const resizeHandler = function() {
+        cy.resize();
+        cy.fit(null, 50);
+    };
+    window.addEventListener('resize', resizeHandler);
+    
+    // Return the Cytoscape instance and cleanup function
+    return {
+        cy: cy,
+        destroy: function() {
+            window.removeEventListener('resize', resizeHandler);
+            if (tooltip) {
+                tooltip.remove();
+            }
+            cy.destroy();
+        }
+    };
+}
+
+/**
+ * Convenience function for showing a topology with a button click
+ * Can be called directly from onclick handlers
+ * @param {string} containerId - The ID of the container element
+ * @param {Object|null} topologyData - Optional topology data
+ */
+function showTopology(containerId, topologyData = null) {
+    console.log('Showing topology in container:', containerId);
+    console.log('Topology data:', topologyData);
+    return initializeTopology(containerId, topologyData);
+}
+</script>
