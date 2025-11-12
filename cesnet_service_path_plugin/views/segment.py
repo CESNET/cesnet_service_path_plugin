@@ -268,8 +268,9 @@ def segment_map_view(request, pk):
         site_b_data = None
 
     # Check if we should show fallback line (when no geojson but sites have coordinates)
-    if site_a_data and site_b_data:
-        has_fallback_line = True
+    if not segment.has_path_data():
+        if site_a_data and site_b_data:
+            has_fallback_line = True
 
     # Prepare segment styling data
     segment_style = {
