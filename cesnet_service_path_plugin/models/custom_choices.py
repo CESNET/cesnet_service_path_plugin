@@ -7,11 +7,37 @@ class StatusChoices(ChoiceSet):
     ACTIVE = "active"
     PLANNED = "planned"
     OFFLINE = "offline"
+    DECOMMISSIONED = "decommissioned"
+    SURVEYED = "surveyed"
 
     CHOICES = [
         (ACTIVE, "Active", "green"),
         (PLANNED, "Planned", "orange"),
         (OFFLINE, "Offline", "red"),
+        (DECOMMISSIONED, "Decommissioned", "gray"),
+        (SURVEYED, "Surveyed", "blue"),
+    ]
+
+
+class OwnershipTypeChoices(ChoiceSet):
+    """
+    owned
+    leased
+    shared
+    foreign
+    """
+
+    key = "cesnet_service_path_plugin.choices.ownership_type"
+    OWNED = "owned"
+    LEASED = "leased"
+    SHARED = "shared"
+    FOREIGN = "foreign"
+
+    CHOICES = [
+        (OWNED, "Owned", "green"),
+        (LEASED, "Leased", "blue"),
+        (SHARED, "Shared", "orange"),
+        (FOREIGN, "Foreign", "red"),
     ]
 
 
