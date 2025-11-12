@@ -36,7 +36,7 @@ class OwnershipTypeChoices(ChoiceSet):
     CHOICES = [
         (OWNED, "Owned", "green"),
         (LEASED, "Leased", "blue"),
-        (SHARED, "Shared", "orange"),
+        (SHARED, "Shared", "yellow"),
         (FOREIGN, "Foreign", "red"),
     ]
 
