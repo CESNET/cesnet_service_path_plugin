@@ -88,6 +88,9 @@
                             <li><a class="dropdown-item" href="#" data-scheme="segment_type">
                                 <i class="mdi mdi-circle-medium" style="color: #9c27b0;"></i> By Segment Type
                             </a></li>
+                            <li><a class="dropdown-item" href="#" data-scheme="ownership_type">
+                                <i class="mdi mdi-circle-medium" style="color: #0d6efd;"></i> By Ownership Type
+                            </a></li>
                         </ul>
                     </div>
                     
@@ -196,6 +199,14 @@
                         "Surveyed": "info"
                     };
 
+                    // Ownership type color mapping (matching OwnershipTypeChoices)
+                    const ownershipTypeBadge = {
+                        "Owned": "success",     // green
+                        "Leased": "primary",    // blue
+                        "Shared": "warning",    // yellow
+                        "Foreign": "danger"     // red
+                    };
+
                     // Provider color mapping - generate colors dynamically
                     const providerColors = {};
 
@@ -204,6 +215,14 @@
                         "Dark Fiber": "#9c27b0",      // Purple (matches your SegmentTypeChoices)
                         "Optical Spectrum": "#ff9800", // Orange (matches your SegmentTypeChoices)  
                         "Ethernet Service": "#4caf50"  // Green (matches your SegmentTypeChoices)
+                    };
+
+                    // NEW: Ownership type color mapping for lines (darker/more saturated than badges)
+                    const ownershipTypeColorsLine = {
+                        "Owned": "#198754",      // Dark green (matching status Active)
+                        "Leased": "#0d6efd",     // Bright blue 
+                        "Shared": "#fd7e14",     // Orange (darker than warning yellow)
+                        "Foreign": "#dc3545"     // Red (matching danger)
                     };
 
                     // Generate color palette for providers
@@ -252,6 +271,8 @@
                             return providerColors[segment.provider] || '#6c757d';
                         } else if (currentColorScheme === 'segment_type') {
                             return segmentTypeColors[segment.segment_type] || '#6c757d';
+                        } else if (currentColorScheme === 'ownership_type') {
+                            return ownershipTypeColorsLine[segment.ownership_type] || '#6c757d';
                         }
                         return '#dc3545';
                     }
@@ -259,6 +280,11 @@
                     // Function to get status badge color 
                     function getStatusBadgeColor(segment) {
                         return statusBadge[segment.status] || 'secondary';
+                    }
+
+                    // Function to get ownership type badge color
+                    function getOwnershipTypeBadgeColor(segment) {
+                        return ownershipTypeBadge[segment.ownership_type] || 'secondary';
                     }
 
                     // Function to generate path data badge
@@ -303,6 +329,16 @@
                                 </span>`;
                                 legendDropdown.appendChild(li);
                             });
+                        } else if (currentColorScheme === 'ownership_type') {
+                            // NEW: Ownership type legend
+                            Object.entries(ownershipTypeColorsLine).forEach(([ownershipType, color]) => {
+                                const li = document.createElement('li');
+                                li.innerHTML = `<span class="dropdown-item-text small">
+                                    <span style="display: inline-block; width: 20px; height: 3px; background-color: ${color}; margin-right: 8px;"></span>
+                                    ${ownershipType}
+                                </span>`;
+                                legendDropdown.appendChild(li);
+                            });
                         }
                         
                         // Add common legend items
@@ -330,6 +366,8 @@
                             schemeButton.textContent = 'Provider';
                         } else if (scheme === 'segment_type') {
                             schemeButton.textContent = 'Segment Type';
+                        } else if (scheme === 'ownership_type') {
+                            schemeButton.textContent = 'Ownership Type';
                         }
                         
                         // Update legend
@@ -347,14 +385,16 @@
 
                         const pathDataBadge = getPathDataBadge(segment);
                         
-                        const badgeColor = getStatusBadgeColor(segment);
+                        const statusBadgeColor = getStatusBadgeColor(segment);
+                        const ownershipBadgeColor = getOwnershipTypeBadgeColor(segment);
                         
                         infoContent.innerHTML = `
                             <div class="row">
                                 <div class="col-md-6">
                                     <h4>${segment.name}</h4>
                                     <p><strong>Provider:</strong> ${segment.provider || 'N/A'}</p>
-                                    <p><strong>Status:</strong> <span class="badge text-bg-${badgeColor}">${segment.status}</span></p>
+                                    <p><strong>Status:</strong> <span class="badge text-bg-${statusBadgeColor}">${segment.status}</span></p>
+                                    <p><strong>Ownership:</strong> <span class="badge text-bg-${ownershipBadgeColor}">${segment.ownership_type}</span></p>
                                     <p><strong>Path Data:</strong> ${pathDataBadge}</p>
                                 </div>
                                 <div class="col-md-6">
@@ -565,14 +605,16 @@
                     
                     // Show popup for single segment
                     function showSingleSegmentPopup(segment, clickPoint) {
-                        const badgeColor = getStatusBadgeColor(segment);
+                        const statusBadgeColor = getStatusBadgeColor(segment);
+                        const ownershipBadgeColor = getOwnershipTypeBadgeColor(segment);
                         const pathDataBadge = getPathDataBadge(segment);
                         
                         const popupContent = `
                             <div class="single-segment-popup">
                                 <h4 class="mt-4">${segment.name}</h4>
                                 <p class="mb-1"><strong>Provider:</strong> ${segment.provider || 'N/A'}</p>
-                                <p class="mb-1"><strong>Status:</strong> <span class="badge text-bg-${badgeColor}">${segment.status}</span></p>
+                                <p class="mb-1"><strong>Status:</strong> <span class="badge text-bg-${statusBadgeColor}">${segment.status}</span></p>
+                                <p class="mb-1"><strong>Ownership:</strong> <span class="badge text-bg-${ownershipBadgeColor}">${segment.ownership_type}</span></p>
                                 <p class="mb-1"><strong>Path Data:</strong> ${pathDataBadge}</p>
                                 <p class="mb-1"><strong>Route:</strong> ${segment.site_a ? segment.site_a.name : 'N/A'} ↔ ${segment.site_b ? segment.site_b.name : 'N/A'}</p>
                                 <p class="mb-2"><strong>Length:</strong> ${segment.path_length_km ? segment.path_length_km + ' km' : 'Unknown'}</p>
@@ -613,7 +655,8 @@
                         
                         overlappingLayers.forEach((layerInfo, index) => {
                             const segment = layerInfo.segment;
-                            const badgeColor = getStatusBadgeColor(segment);
+                            const statusBadgeColor = getStatusBadgeColor(segment);
+                            const ownershipBadgeColor = getOwnershipTypeBadgeColor(segment);
                             const displayValue = segment.status;
                             const pathDataBadge = getPathDataBadge(segment);
 
@@ -626,7 +669,8 @@
                                         </p>
                                         <ul class="list-unstyled mb-0">
                                             <li><strong>Sites:</strong> ${segment.site_a ? segment.site_a.name : 'N/A'} ↔ ${segment.site_b ? segment.site_b.name : 'N/A'}</li>
-                                            <li><strong>Status:</strong> <span class="badge text-bg-${badgeColor}">${displayValue}</span></li>
+                                            <li><strong>Status:</strong> <span class="badge text-bg-${statusBadgeColor}">${displayValue}</span></li>
+                                            <li><strong>Ownership:</strong> <span class="badge text-bg-${ownershipBadgeColor}">${segment.ownership_type}</span></li>
                                             <li><strong>Path Data:</strong> ${pathDataBadge}</li>
                                             <li><strong>Length:</strong> ${segment.path_length_km ? segment.path_length_km + ' km' : 'Unknown'}</li>
                                         </ul>
