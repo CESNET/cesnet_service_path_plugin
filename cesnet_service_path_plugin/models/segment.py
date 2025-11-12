@@ -178,6 +178,9 @@ class Segment(NetBoxModel):
     def get_status_color(self):
         return StatusChoices.colors.get(self.status, "gray")
 
+    def get_ownership_type_color(self):
+        return OwnershipTypeChoices.colors.get(self.ownership_type, "gray")
+
     def get_segment_type_color(self):
         """Get color for segment type badge"""
         return SegmentTypeChoices.colors.get(self.segment_type, "gray")

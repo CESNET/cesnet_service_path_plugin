@@ -39,6 +39,7 @@ class SegmentFilter(NetBoxModelFilterMixin):
     install_date: FilterLookup[str] | None = strawberry_django.filter_field()  # Date fields as string
     termination_date: FilterLookup[str] | None = strawberry_django.filter_field()
     status: FilterLookup[str] | None = strawberry_django.filter_field()
+    ownership_type: FilterLookup[str] | None = strawberry_django.filter_field()
     provider_segment_id: FilterLookup[str] | None = strawberry_django.filter_field()
     comments: FilterLookup[str] | None = strawberry_django.filter_field()
 

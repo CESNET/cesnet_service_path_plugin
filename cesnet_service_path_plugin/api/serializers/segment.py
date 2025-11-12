@@ -55,6 +55,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "name",
             "segment_type",
             "status",
+            "ownership_type",
             "network_label",
             "install_date",
             "termination_date",
@@ -82,6 +83,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "name",
             "segment_type",
             "status",
+            "ownership_type",
             "has_path_data",
             "tags",
         )
@@ -197,6 +199,7 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
             "name",
             "segment_type",
             "status",
+            "ownership_type",
             "network_label",
             "install_date",
             "termination_date",
@@ -225,6 +228,7 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
             "name",
             "segment_type",
             "status",
+            "ownership_type",
             "has_path_data",
             "tags",
         )

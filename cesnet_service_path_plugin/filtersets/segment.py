@@ -8,7 +8,7 @@ from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
 from cesnet_service_path_plugin.models import Segment
-from cesnet_service_path_plugin.models.custom_choices import StatusChoices
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices, OwnershipTypeChoices
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     name = django_filters.CharFilter(lookup_expr="icontains")
     network_label = django_filters.CharFilter(lookup_expr="icontains")
     status = django_filters.MultipleChoiceFilter(choices=StatusChoices, null_value=None)
+    ownership_type = django_filters.MultipleChoiceFilter(choices=OwnershipTypeChoices, null_value=None)
 
     # Basic segment type filter
     segment_type = django_filters.MultipleChoiceFilter(
@@ -521,6 +522,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         network_label = Q(network_label__icontains=value)
         provider_segment_id = Q(provider_segment_id__icontains=value)
         status = Q(status__iexact=value)
+        ownership_type = Q(ownership_type__iexact=value)
         segment_type = Q(segment_type__iexact=value)
 
         return queryset.filter(
@@ -532,5 +534,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             | network_label
             | provider_segment_id
             | status
+            | ownership_type
             | segment_type
         )
