@@ -762,5 +762,5 @@ class SegmentBulkEditForm(NetBoxModelBulkEditForm):
     comments = CommentField()
 
     model = Segment
-    fieldsets = (FieldSet("provider", "status", "segment_type", name="Segment"),)
+    fieldsets = (FieldSet("provider", "status", "ownership_type", "segment_type", name="Segment"),)
     nullable_fields = ("comments",)
