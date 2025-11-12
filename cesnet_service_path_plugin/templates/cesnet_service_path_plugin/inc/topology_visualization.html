@@ -39,7 +39,7 @@ function initializeTopology(containerId, topologyData = null) {
     }
     console.log('Topology data :', data);
     
-    // Calculate preset positions for deterministic layout
+    // Calculate preset positions for deterministic layout with adaptive scaling
     function calculatePresetPositions(topologyData) {
         const positions = {};
         const serviceNodes = topologyData.nodes.filter(n => n.data.type === 'service');
@@ -47,86 +47,96 @@ function initializeTopology(containerId, topologyData = null) {
         const siteNodes = topologyData.nodes.filter(n => n.data.type === 'site');
         const circuitNodes = topologyData.nodes.filter(n => n.data.type === 'circuit');
         
-        // Calculate center X for the canvas
-        const centerX = 500;
+        // Analyze topology complexity to determine spacing
+        const maxSitesInSegment = Math.max(...segmentNodes.map(seg => 
+            siteNodes.filter(s => s.data.parent === seg.data.id).length
+        ), 1);
+        const maxCircuitsInSegment = Math.max(...segmentNodes.map(seg => 
+            circuitNodes.filter(c => c.data.parent === seg.data.id).length
+        ), 1);
+        
+        // Adaptive spacing based on complexity
+        // For larger topologies, use tighter spacing
+        let baseNodeSpacing = 180; // Base spacing between nodes
+        let baseSegmentSpacing = 500; // Base spacing between segments
+        
+        // Scale down spacing for complex topologies
+        if (maxSitesInSegment > 3 || maxCircuitsInSegment > 3) {
+            const complexityFactor = Math.max(maxSitesInSegment, maxCircuitsInSegment);
+            baseNodeSpacing = Math.max(140, 180 - (complexityFactor - 3) * 15);
+            baseSegmentSpacing = Math.max(400, 500 - (complexityFactor - 3) * 30);
+        }
+        
+        // Calculate total width needed for each segment
+        const segmentWidths = segmentNodes.map(segment => {
+            const segmentId = segment.data.id;
+            const segmentSites = siteNodes.filter(s => s.data.parent === segmentId);
+            const segmentCircuits = circuitNodes.filter(c => c.data.parent === segmentId);
+            
+            const maxNodesInRow = Math.max(segmentSites.length, segmentCircuits.length);
+            return maxNodesInRow > 1 ? (maxNodesInRow - 1) * baseNodeSpacing : 0;
+        });
+        
+        // Calculate total layout width and determine segment positions
+        const totalWidth = segmentWidths.reduce((sum, w) => sum + w, 0) + 
+                          (segmentNodes.length - 1) * baseSegmentSpacing;
+        
+        // Calculate center X for the canvas (use larger value for wide topologies)
+        const centerX = Math.max(500, totalWidth / 2);
         
         // Service path at top center
         if (serviceNodes.length > 0) {
             positions[serviceNodes[0].data.id] = { x: centerX, y: 50 };
         }
         
-        // Segments positioning
-        let segmentSpacing = 500;
+        // Position segments
+        let currentX = centerX - totalWidth / 2;
         
-        // If only one segment, center it
-        if (segmentNodes.length === 1) {
-            positions[segmentNodes[0].data.id] = { x: centerX, y: 220 };
-        } else {
-            // Multiple segments - space them out horizontally
-            const segmentStartX = centerX - (segmentNodes.length - 1) * segmentSpacing / 2;
-            segmentNodes.forEach((segment, i) => {
-                positions[segment.data.id] = { 
-                    x: segmentStartX + i * segmentSpacing, 
-                    y: 220 
-                };
-            });
-        }
-        
-        // Sites and circuits within segments
         segmentNodes.forEach((segment, segmentIndex) => {
             const segmentId = segment.data.id;
-            const segmentX = positions[segmentId].x;
+            const segmentWidth = segmentWidths[segmentIndex];
+            const segmentCenterX = currentX + segmentWidth / 2;
+            
+            positions[segmentId] = { x: segmentCenterX, y: 220 };
             
             // Get sites and circuits for this segment
             const segmentSites = siteNodes.filter(s => s.data.parent === segmentId);
             const segmentCircuits = circuitNodes.filter(c => c.data.parent === segmentId);
             
-            // Adjust spacing based on number of sites and segments
-            let siteSpacing = 180;
-            
-            // For single segment layouts, use more compact spacing
-            if (segmentNodes.length === 1) {
-                if (segmentSites.length === 2) {
-                    siteSpacing = 220;
-                } else if (segmentSites.length === 1) {
-                    siteSpacing = 0;
-                }
+            // Position sites horizontally within segment
+            if (segmentSites.length === 1) {
+                positions[segmentSites[0].data.id] = {
+                    x: segmentCenterX,
+                    y: 360
+                };
             } else {
-                // Multiple segments
-                if (segmentSites.length === 2) {
-                    siteSpacing = 250;
-                } else if (segmentSites.length === 1) {
-                    siteSpacing = 0;
-                }
+                const siteStartX = segmentCenterX - (segmentSites.length - 1) * baseNodeSpacing / 2;
+                segmentSites.forEach((site, i) => {
+                    positions[site.data.id] = {
+                        x: siteStartX + i * baseNodeSpacing,
+                        y: 360
+                    };
+                });
             }
             
-            // Position sites horizontally within segment, centered around segmentX
-            const siteStartX = segmentX - (segmentSites.length - 1) * siteSpacing / 2;
-            segmentSites.forEach((site, i) => {
-                positions[site.data.id] = {
-                    x: siteStartX + i * siteSpacing,
-                    y: 360  // Sites above circuits
-                };
-            });
-            
-            // Adjust circuit spacing based on number of circuits
-            let circuitSpacing = 180;
-            
+            // Position circuits horizontally within segment
             if (segmentCircuits.length === 1) {
-                // Single circuit - center it
-                circuitSpacing = 0;
-            } else if (segmentCircuits.length === 2) {
-                circuitSpacing = segmentNodes.length === 1 ? 220 : 250;
+                positions[segmentCircuits[0].data.id] = {
+                    x: segmentCenterX,
+                    y: 460
+                };
+            } else {
+                const circuitStartX = segmentCenterX - (segmentCircuits.length - 1) * baseNodeSpacing / 2;
+                segmentCircuits.forEach((circuit, i) => {
+                    positions[circuit.data.id] = {
+                        x: circuitStartX + i * baseNodeSpacing,
+                        y: 460
+                    };
+                });
             }
             
-            // Position circuits between/below sites, centered around segmentX
-            const circuitStartX = segmentX - (segmentCircuits.length - 1) * circuitSpacing / 2;
-            segmentCircuits.forEach((circuit, i) => {
-                positions[circuit.data.id] = {
-                    x: circuitStartX + i * circuitSpacing,
-                    y: 460  // Circuits below sites
-                };
-            });
+            // Move to next segment position
+            currentX += segmentWidth + baseSegmentSpacing;
         });
         
         return positions;
