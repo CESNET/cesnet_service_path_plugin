@@ -22,7 +22,7 @@ from utilities.forms.rendering import FieldSet, InlineFields
 from utilities.forms.widgets.datetime import DatePicker
 
 from cesnet_service_path_plugin.models import Segment
-from cesnet_service_path_plugin.models.custom_choices import StatusChoices
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices, OwnershipTypeChoices
 from cesnet_service_path_plugin.models.segment_types import (
     SEGMENT_TYPE_SCHEMAS,
     SegmentTypeChoices,
@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 class SegmentForm(NetBoxModelForm):
     comments = CommentField(required=False, label="Comments", help_text="Comments")
     status = forms.ChoiceField(required=True, choices=StatusChoices, initial=None)
+    ownership_type = forms.ChoiceField(required=True, choices=OwnershipTypeChoices, initial=None)
     provider_segment_id = forms.CharField(label=" ID", required=False, help_text="Provider Segment ID")
     provider = DynamicModelChoiceField(
         queryset=Provider.objects.all(),
@@ -369,6 +370,7 @@ class SegmentForm(NetBoxModelForm):
             "name",
             "segment_type",
             "status",
+            "ownership_type",
             "network_label",
             "install_date",
             "termination_date",
@@ -390,6 +392,7 @@ class SegmentForm(NetBoxModelForm):
             "segment_type",
             "network_label",
             "status",
+            "ownership_type",
             InlineFields("install_date", "termination_date", label="Dates"),
             name="Basic Information",
         ),
@@ -432,6 +435,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     name = forms.CharField(required=False)
     status = forms.MultipleChoiceField(required=False, choices=StatusChoices, initial=None)
+    ownership_type = forms.MultipleChoiceField(required=False, choices=OwnershipTypeChoices, initial=None)
     network_label = forms.CharField(required=False)
 
     # Basic segment type filter
@@ -735,6 +739,12 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 class SegmentBulkEditForm(NetBoxModelBulkEditForm):
     status = forms.ChoiceField(
         choices=add_blank_choice(StatusChoices),
+        required=False,
+        initial="",
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    ownership_type = forms.ChoiceField(
+        choices=add_blank_choice(OwnershipTypeChoices),
         required=False,
         initial="",
         widget=forms.Select(attrs={"class": "form-control"}),
