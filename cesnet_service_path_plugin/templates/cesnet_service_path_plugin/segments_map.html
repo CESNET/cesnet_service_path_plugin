@@ -354,7 +354,7 @@
                         legendDropdown.appendChild(pathInfo);
                     }
 
-                    // Function to switch color scheme
+                    // Function to switch color scheme (OPTIMIZED VERSION)
                     function switchColorScheme(scheme) {
                         currentColorScheme = scheme;
                         
@@ -373,8 +373,33 @@
                         // Update legend
                         updateLegend();
                         
-                        // Reload segments with new colors
-                        loadSegmentsWithOverlapHandling();
+                        // OPTIMIZED: Just update colors instead of reloading everything
+                        updateSegmentColors();
+                    }
+
+                    // OPTIMIZED: Efficient function to update only segment colors without recreation
+                    function updateSegmentColors() {
+                        segmentLayers.forEach((layer, segmentId) => {
+                            // Find the segment data
+                            const segment = segmentsData.find(s => s.id.toString() === segmentId.toString());
+                            if (!segment) return;
+                            
+                            // Get the new color based on current scheme
+                            const newColor = getSegmentColor(segment);
+                            
+                            // Update the layer style based on layer type
+                            if (layer instanceof L.Polyline) {
+                                // For simple polylines (fallback lines)
+                                layer.setStyle({ color: newColor });
+                            } else if (layer.eachLayer) {
+                                // For GeoJSON layers, need to iterate through sublayers
+                                layer.eachLayer(function(subLayer) {
+                                    if (subLayer.setStyle) {
+                                        subLayer.setStyle({ color: newColor });
+                                    }
+                                });
+                            }
+                        });
                     }
 
                     
