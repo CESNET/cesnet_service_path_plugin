@@ -46,6 +46,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version |
 |----------------|----------------|
+|     4.4        |      5.3.x     |
 |     4.4        |      5.2.x     |
 |     4.4        |      5.1.x     |
 |     4.3        |      5.0.x     |
@@ -73,6 +74,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - Segment types (dark fiber, optical spectrum, ethernet) with type specific data
 - **Financial information tracking with multi-currency support**
 - **Commitment end date tracking** with color-coded status indicators (new in 5.2.1)
+- Define ownership type (new in 5.3.0)
 
 ### Topology Visualization (New in 5.2.1)
 - **Interactive network topology graphs** powered by Cytoscape.js
