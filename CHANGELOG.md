@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2025-11-19
+
+### Added
+
+  - **Introduced ownership type support attribute**
+  - New **database migration** adding ownership_type to segments.
+  - New constants in custom_choices and model methods for ownership type labels and colors.
+  - Added backend and frontend color mappings for ownership type (badges + map line colors).
+  - Added new "Ownership Type" color scheme to the Segments Map, including:
+  - Optimized Segments map color scheme change for faster rendering
+
+### Changed
+
+  - Improved segment map UI:
+    - Popups and detail panels now show both status badge and ownership type badge.
+    - Map legend updated to support ownership types.
+    - Optimized color scheme switching with a new updateSegmentColors() function to avoid full redraw.
+    - Status color mapping corrected (duplicate “Planned” entry resolved).
+    - Enhanced fall-back line logic to correctly show straight-line path only when path data is missing.
+    - Adjusted styling of badges and map-line colors for better consistency with Bootstrap and existing segment status colors.
+
+### Fixed
+
+  - Several UI inconsistencies in map popups where status badges were duplicated or missing label formatting.
+  - Missing ownership fields in multiple API outputs and templates.
+
+### Removed
+
+  - Deprecated static color entries in map_status_colors.html.
+
 ## [5.2.1] - 2025-11-07
 
 ### Added
