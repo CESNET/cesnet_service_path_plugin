@@ -81,6 +81,7 @@ class SegmentType(NetBoxObjectType):
     install_date: auto
     termination_date: auto
     status: auto
+    ownership_type: auto
 
     # Segment type fields
     segment_type: auto

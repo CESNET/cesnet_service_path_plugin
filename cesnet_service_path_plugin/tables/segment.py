@@ -8,6 +8,7 @@ class SegmentTable(NetBoxTable):
     tags = columns.TagColumn()
     name = tables.Column(linkify=True)
     status = ChoiceFieldColumn()
+    ownership_type = ChoiceFieldColumn()
     segment_type = ChoiceFieldColumn()
     provider = tables.Column(linkify=True)
     site_a = tables.Column(linkify=True)
@@ -64,6 +65,7 @@ class SegmentTable(NetBoxTable):
             "tags",
             "actions",
             "status",
+            "ownership_type",
             "date_status",
         )
 
@@ -78,5 +80,6 @@ class SegmentTable(NetBoxTable):
             "location_b",
             "has_path_data",  # Added to default view
             "status",
+            "ownership_type",
             "date_status",
         )

@@ -268,8 +268,9 @@ def segment_map_view(request, pk):
         site_b_data = None
 
     # Check if we should show fallback line (when no geojson but sites have coordinates)
-    if site_a_data and site_b_data:
-        has_fallback_line = True
+    if not segment.has_path_data():
+        if site_a_data and site_b_data:
+            has_fallback_line = True
 
     # Prepare segment styling data
     segment_style = {
@@ -312,6 +313,10 @@ def segment_geojson_api(request, pk):
             "provider": str(segment.provider) if segment.provider else None,
             "status": segment.get_status_display(),
             "status_color": segment.get_status_color(),
+            "segment_type": segment.get_segment_type_display(),
+            "segment_type_color": segment.get_segment_type_color(),
+            "ownership_type": segment.get_ownership_type_display(),
+            "ownership_type_color": segment.get_ownership_type_color(),
             "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
             "install_date": segment.install_date.isoformat() if segment.install_date else None,
             "termination_date": segment.termination_date.isoformat() if segment.termination_date else None,
@@ -388,6 +393,8 @@ class SegmentsMapView(generic.ObjectListView):
                 "status_color": segment.get_status_color(),
                 "segment_type": segment.get_segment_type_display(),
                 "segment_type_color": segment.get_segment_type_color(),
+                "ownership_type": segment.get_ownership_type_display(),
+                "ownership_type_color": segment.get_ownership_type_color(),
                 "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
                 "site_a": site_a_data,
                 "site_b": site_b_data,
@@ -470,6 +477,8 @@ def segments_map_api(request):
                         "status_color": segment.get_status_color(),
                         "segment_type": segment.get_segment_type_display(),
                         "segment_type_color": segment.get_segment_type_color(),
+                        "ownership_type": segment.get_ownership_type_display(),
+                        "ownership_type_color": segment.get_ownership_type_color(),
                         "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
                         "site_a": str(segment.site_a),
                         "site_b": str(segment.site_b),
@@ -507,6 +516,8 @@ def segments_map_api(request):
                         "status_color": segment.get_status_color(),
                         "segment_type": segment.get_segment_type_display(),
                         "segment_type_color": segment.get_segment_type_color(),
+                        "ownership_type": segment.get_ownership_type_display(),
+                        "ownership_type_color": segment.get_ownership_type_color(),
                         "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
                         "site_a": str(segment.site_a),
                         "site_b": str(segment.site_b),

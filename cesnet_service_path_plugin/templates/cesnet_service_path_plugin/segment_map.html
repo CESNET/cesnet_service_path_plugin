@@ -34,6 +34,7 @@
                     <div class="alert alert-info mb-3">
                         <strong>{{ object.provider }}</strong> | 
                         <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span> | 
+                        <span class="badge text-bg-{{ object.get_ownership_type_color }}">{{ object.get_ownership_type_display }}</span> | 
                         {% if object.path_length_km %}{{ object.path_length_km }} km{% else %}Length unknown{% endif %} | 
                         {{ object.site_a }} ↔ {{ object.site_b }}
                         {% if has_fallback_line %}
@@ -71,6 +72,9 @@
                             "name": "{{ object.name|escapejs }}",
                             "provider": "{{ object.provider|escapejs }}",
                             "status": "{{ object.get_status_display|escapejs }}",
+                            "statusColor": "{{ object.get_status_color|escapejs }}",
+                            "ownershipType": "{{ object.get_ownership_type_display|escapejs }}",
+                            "ownershipTypeColor": "{{ object.get_ownership_type_color|escapejs }}",
                             "length": "{% if object.path_length_km %}{{ object.path_length_km }} km{% else %}Length unknown{% endif %}",
                             "route": "{{ object.site_a|escapejs }} ↔ {{ object.site_b|escapejs }}"
                         },
@@ -163,7 +167,8 @@
                                 '<div>' +
                                 '<h6>' + segmentInfo.name + '</h6>' +
                                 '<p><strong>Provider:</strong> ' + segmentInfo.provider + '</p>' +
-                                '<p><strong>Status:</strong> ' + segmentInfo.status + '</p>' +
+                                '<p><strong>Status:</strong> <span class="badge text-bg-' + segmentInfo.statusColor + '">' + segmentInfo.status + '</span></p>' +
+                                '<p><strong>Ownership:</strong> <span class="badge text-bg-' + segmentInfo.ownershipTypeColor + '">' + segmentInfo.ownershipType + '</span></p>' +
                                 '<p><strong>Length:</strong> ' + segmentInfo.length + '</p>' +
                                 '<p><strong>Route:</strong> ' + segmentInfo.route + '</p>' +
                                 '<p><small class="text-muted">Note: Straight line - actual path data not available</small></p>' +
@@ -205,7 +210,8 @@
                                         '<div>' +
                                         '<h6>' + segmentInfo.name + '</h6>' +
                                         '<p><strong>Provider:</strong> ' + segmentInfo.provider + '</p>' +
-                                        '<p><strong>Status:</strong> ' + segmentInfo.status + '</p>' +
+                                        '<p><strong>Status:</strong> <span class="badge text-bg-' + segmentInfo.statusColor + '">' + segmentInfo.status + '</span></p>' +
+                                        '<p><strong>Ownership:</strong> <span class="badge text-bg-' + segmentInfo.ownershipTypeColor + '">' + segmentInfo.ownershipType + '</span></p>' +
                                         '<p><strong>Length:</strong> ' + segmentInfo.length + '</p>' +
                                         '<p><strong>Route:</strong> ' + segmentInfo.route + '</p>' +
                                         '</div>'

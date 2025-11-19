@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from netbox.models import NetBoxModel
 
-from cesnet_service_path_plugin.models.custom_choices import StatusChoices
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices, OwnershipTypeChoices
 from cesnet_service_path_plugin.models.segment_types import (
     SEGMENT_TYPE_SCHEMAS,
     SegmentTypeChoices,
@@ -23,6 +23,14 @@ class Segment(NetBoxModel):
         max_length=30,
         choices=StatusChoices,
         default=StatusChoices.ACTIVE,
+        blank=False,
+        null=False,
+    )
+
+    ownership_type = models.CharField(
+        max_length=30,
+        choices=OwnershipTypeChoices,
+        default=OwnershipTypeChoices.LEASED,
         blank=False,
         null=False,
     )
@@ -169,6 +177,9 @@ class Segment(NetBoxModel):
 
     def get_status_color(self):
         return StatusChoices.colors.get(self.status, "gray")
+
+    def get_ownership_type_color(self):
+        return OwnershipTypeChoices.colors.get(self.ownership_type, "gray")
 
     def get_segment_type_color(self):
         """Get color for segment type badge"""
