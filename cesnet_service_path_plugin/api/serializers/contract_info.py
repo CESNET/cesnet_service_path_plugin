@@ -1,9 +1,9 @@
-# cesnet_service_path_plugin/api/serializers/segment_financial_info.py
+# cesnet_service_path_plugin/api/serializers/contract_info.py
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
-from cesnet_service_path_plugin.models import Segment, SegmentFinancialInfo
+from cesnet_service_path_plugin.models import Segment, ContractInfo
 
 
 class SegmentPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
@@ -15,9 +15,9 @@ class SegmentPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
         return Segment.objects.all()
 
 
-class SegmentFinancialInfoSerializer(NetBoxModelSerializer):
+class ContractInfoSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="plugins-api:cesnet_service_path_plugin-api:segmentfinancialinfo-detail"
+        view_name="plugins-api:cesnet_service_path_plugin-api:contractinfo-detail"
     )
 
     # Writable segment field (accepts ID for write operations)
@@ -28,16 +28,15 @@ class SegmentFinancialInfoSerializer(NetBoxModelSerializer):
     total_cost_including_setup = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
-        model = SegmentFinancialInfo
+        model = ContractInfo
         fields = [
             "id",
             "url",
             "display",
             "segment",
-            "monthly_charge",
+            "recurring_charge",
             "charge_currency",
             "non_recurring_charge",
-            "commitment_period_months",
             "commitment_end_date",
             "notes",
             "total_commitment_cost",
@@ -52,7 +51,7 @@ class SegmentFinancialInfoSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "segment",
-            "monthly_charge",
+            "recurring_charge",
             "charge_currency",
         ]
 

@@ -11,7 +11,7 @@ from decimal import Decimal
 from cesnet_service_path_plugin.models import (
     Segment,
     SegmentCircuitMapping,
-    SegmentFinancialInfo,
+    ContractInfo,
     ServicePath,
     ServicePathSegmentMapping,
 )
@@ -36,18 +36,17 @@ class PathBounds:
     ymax: float
 
 
-@strawberry_django_type(SegmentFinancialInfo)
-class SegmentFinancialInfoType(NetBoxObjectType):
+@strawberry_django_type(ContractInfo)
+class ContractInfoType(NetBoxObjectType):
     """
-    GraphQL type for SegmentFinancialInfo with permission checking.
-    Financial data will only be exposed if user has view permission.
+    GraphQL type for ContractInfo with permission checking.
+    Contract data will only be exposed if user has view permission.
     """
 
     id: auto
-    monthly_charge: auto
+    recurring_charge: auto
     charge_currency: auto
     non_recurring_charge: auto
-    commitment_period_months: auto
     notes: auto
 
     # Related segment (simplified reference)
@@ -104,9 +103,9 @@ class SegmentType(NetBoxObjectType):
     circuits: List[Annotated["CircuitType", lazy("circuits.graphql.types")]]
 
     @field
-    def financial_info(self, info) -> Optional[Annotated["SegmentFinancialInfoType", lazy(".types")]]:
+    def contract_info(self, info) -> Optional[Annotated["ContractInfoType", lazy(".types")]]:
         """
-        Return financial info only if user has permission to view it.
+        Return contract info only if user has permission to view it.
         This mimics the REST API behavior.
         """
         request = info.context.get("request")
@@ -114,21 +113,21 @@ class SegmentType(NetBoxObjectType):
         if not request:
             return None
 
-        # Check if user has permission to view financial info
-        has_financial_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
+        # Check if user has permission to view contract info
+        has_contract_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_contractinfo")
 
-        if not has_financial_view_perm:
+        if not has_contract_view_perm:
             return None
 
-        # Try to get financial info if user has permission
-        financial_info = getattr(self, "financial_info", None)
+        # Try to get contract info if user has permission
+        contract_info = getattr(self, "contract_info", None)
 
-        return financial_info if financial_info else None
+        return contract_info if contract_info else None
 
     @field
-    def has_financial_info(self) -> bool:
-        """Whether this segment has associated financial info"""
-        if hasattr(self, "financial_info") and self.financial_info is not None:
+    def has_contract_info(self) -> bool:
+        """Whether this segment has associated contract info"""
+        if hasattr(self, "contract_info") and self.contract_info is not None:
             return True
         return False
 

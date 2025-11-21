@@ -56,13 +56,13 @@ urlpatterns = (
         "segment-circuit-mappings/<int:pk>/",
         include(get_model_urls("cesnet_service_path_plugin", "segmentcircuitmapping")),
     ),
-    # SegmentFinancialInfo views
+    # ContractInfo views
     path(
-        "segment-financial-info/",
-        include(get_model_urls("cesnet_service_path_plugin", "segmentfinancialinfo", detail=False)),
+        "contract-info/",
+        include(get_model_urls("cesnet_service_path_plugin", "contractinfo", detail=False)),
     ),
     path(
-        "segment-financial-info/<int:pk>/",
-        include(get_model_urls("cesnet_service_path_plugin", "segmentfinancialinfo")),
+        "contract-info/<int:pk>/",
+        include(get_model_urls("cesnet_service_path_plugin", "contractinfo")),
     ),
 )

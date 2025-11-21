@@ -73,25 +73,25 @@ class SegmentFilter(NetBoxModelFilterMixin):
     )
 
     @strawberry_django.filter_field
-    def has_financial_info(self, value: bool, prefix: str, info: Info) -> Q:
-        """Filter segments based on whether they have associated financial info"""
+    def has_contract_info(self, value: bool, prefix: str, info: Info) -> Q:
+        """Filter segments based on whether they have associated contract info"""
 
         # Check permission first
-        if not self._check_financial_permission(info):
+        if not self._check_contract_permission(info):
             # Return a condition that matches all segments (no filtering)
-            # This prevents leaking information about which segments have financial data
+            # This prevents leaking information about which segments have contract data
             return Q()
 
         if value:
-            # Filter for segments WITH financial info
-            return Q(**{f"{prefix}financial_info__isnull": False})
+            # Filter for segments WITH contract info
+            return Q(**{f"{prefix}contract_info__isnull": False})
         else:
-            # Filter for segments WITHOUT financial info
-            return Q(**{f"{prefix}financial_info__isnull": True})
+            # Filter for segments WITHOUT contract info
+            return Q(**{f"{prefix}contract_info__isnull": True})
 
-    def _check_financial_permission(self, info: Info) -> bool:
+    def _check_contract_permission(self, info: Info) -> bool:
         """
-        Check if the current user has permission to view financial info.
+        Check if the current user has permission to view contract info.
         Returns True if user has permission, False otherwise.
         """
         # Access the request context from GraphQL info
@@ -102,7 +102,7 @@ class SegmentFilter(NetBoxModelFilterMixin):
         if not request or not hasattr(request, "user"):
             return False
 
-        return request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
+        return request.user.has_perm("cesnet_service_path_plugin.view_contractinfo")
 
     # Custom filter methods with decorator approach
     @strawberry_django.filter_field

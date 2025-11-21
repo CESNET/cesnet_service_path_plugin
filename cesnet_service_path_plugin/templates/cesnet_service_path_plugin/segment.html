@@ -160,21 +160,21 @@
                     </table>
                 </div>
             </div>
-            <!-- Financial Information Card -->
-            {% if has_financial_view_perm %}
+            <!-- Contract Information Card -->
+            {% if has_contract_view_perm %}
                 <div class="card">
                     <h5 class="card-header">
-                        Financial Information
-                        {% if financial_info %}
+                        Contract Information
+                        {% if contract_info %}
                             <div class="card-actions">
-                                {% if has_financial_change_perm %}
-                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_edit' pk=financial_info.pk %}" 
+                                {% if has_contract_change_perm %}
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_edit' pk=contract_info.pk %}" 
                                        class="btn btn-outline-warning btn-sm">
                                         <i class="mdi mdi-pencil" aria-hidden="true"></i> Edit
                                     </a>
                                 {% endif %}
-                                {% if has_financial_delete_perm %}
-                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_delete' pk=financial_info.pk %}" 
+                                {% if has_contract_delete_perm %}
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_delete' pk=contract_info.pk %}" 
                                        class="btn btn-outline-danger btn-sm">
                                         <i class="mdi mdi-delete" aria-hidden="true"></i> Delete
                                     </a>
@@ -182,48 +182,48 @@
                             </div>
                         {% else %}
                             <div class="card-actions">
-                                {% if has_financial_add_perm %}
-                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}" 
+                                {% if has_contract_add_perm %}
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}" 
                                        class="btn btn-outline-success btn-sm">
-                                        <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add Financial Info
+                                        <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add Contract Info
                                     </a>
                                 {% endif %}
                             </div>
                         {% endif %}
                     </h5>
                     <div class="card-body">
-                        {% if financial_info %}
+                        {% if contract_info %}
                             <table class="table table-hover attr-table">
                                 <tr>
                                     <th scope="row">Monthly Charge</th>
                                     <td>
-                                        <strong>{{ financial_info.monthly_charge|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</strong>
+                                        <strong>{{ contract_info.monthly_charge|floatformat:2|spacecomma }} {{ contract_info.charge_currency }}</strong>
                                     </td>
                                 </tr>
-                                {% if financial_info.non_recurring_charge %}
+                                {% if contract_info.non_recurring_charge %}
                                     <tr>
                                         <th scope="row">Non-Recurring Charge</th>
-                                        <td>{{ financial_info.non_recurring_charge|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</td>
+                                        <td>{{ contract_info.non_recurring_charge|floatformat:2|spacecomma }} {{ contract_info.charge_currency }}</td>
                                     </tr>
                                 {% endif %}
-                                {% if financial_info.commitment_period_months %}
+                                {% if contract_info.commitment_period_months %}
                                     <tr>
                                         <th scope="row">Commitment Period</th>
-                                        <td>{{ financial_info.commitment_period_months }} months</td>
+                                        <td>{{ contract_info.commitment_period_months }} months</td>
                                     </tr>
                                     <tr>
                                         <th scope="row">Commitment End Date</th>
-                                        {% if financial_info.commitment_end_date %}
+                                        {% if contract_info.commitment_end_date %}
                                             
                                             <td>
-                                                <span class="badge text-bg-{{ financial_info.get_commitment_end_date_color }}">{{ financial_info.commitment_end_date }}</span>
+                                                <span class="badge text-bg-{{ contract_info.get_commitment_end_date_color }}">{{ contract_info.commitment_end_date }}</span>
                                                 <i class="mdi mdi-information text-primary" data-bs-toggle="tooltip"
                                                 data-bs-placement="right"
-                                                aria-label="{{ financial_info.get_commitment_end_date_tooltip }}"
-                                                data-bs-original-title="{{ financial_info.get_commitment_end_date_tooltip }}"></i>
+                                                aria-label="{{ contract_info.get_commitment_end_date_tooltip }}"
+                                                data-bs-original-title="{{ contract_info.get_commitment_end_date_tooltip }}"></i>
                                             </td>
                                         {% else %}
-                                            <td><span class="badge text-bg-{{ financial_info.get_commitment_end_date_color }}">Set Segment Install Date </span>
+                                            <td><span class="badge text-bg-{{ contract_info.get_commitment_end_date_color }}">Set Segment Install Date </span>
                                              <i class="mdi mdi-information text-primary" data-bs-toggle="tooltip"  data-bs-placement="right"  aria-label="Commitment end date will be set automatically once the segment install date is defined." data-bs-original-title="Commitment end date will be set automatically once the segment install date is defined."></i>
                                              </td>
                                         {% endif %}
@@ -232,34 +232,34 @@
                                     <tr>
                                         <th scope="row">Total Commitment Cost</th>
                                         <td>
-                                            <strong>{{ financial_info.total_commitment_cost|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</strong>
+                                            <strong>{{ contract_info.total_commitment_cost|floatformat:2|spacecomma }} {{ contract_info.charge_currency }}</strong>
                                         </td>
                                     </tr>
-                                    {% if financial_info.non_recurring_charge %}
+                                    {% if contract_info.non_recurring_charge %}
                                         <tr>
                                             <th scope="row">Total Cost (incl. Setup)</th>
                                             <td>
                                                 <strong class="text-primary">
-                                                    {{ financial_info.total_cost_including_setup|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}
+                                                    {{ contract_info.total_cost_including_setup|floatformat:2|spacecomma }} {{ contract_info.charge_currency }}
                                                 </strong>
                                             </td>
                                         </tr>
                                     {% endif %}
                                 {% endif %}
-                                {% if financial_info.notes %}
+                                {% if contract_info.notes %}
                                     <tr>
                                         <th scope="row">Notes</th>
-                                        <td>{{ financial_info.notes|linebreaks }}</td>
+                                        <td>{{ contract_info.notes|linebreaks }}</td>
                                     </tr>
                                 {% endif %}
                             </table>
                         {% else %}
                             <div class="text-muted">
                                 <i class="mdi mdi-information-outline" aria-hidden="true"></i>
-                                No financial information available for this segment.
-                                {% if has_financial_add_perm %}
-                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}">
-                                        Add financial information
+                                No contract information available for this segment.
+                                {% if has_contract_add_perm %}
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}">
+                                        Add contract information
                                     </a>
                                 {% endif %}
                             </div>

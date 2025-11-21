@@ -97,13 +97,13 @@ class SegmentView(generic.ObjectView):
         service_paths_table = ServicePathTable(service_paths)
         service_paths_table.configure(request)
 
-        # Check if user has permission to view financial info
-        has_financial_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
+        # Check if user has permission to view contract info
+        has_contract_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_contractinfo")
 
-        # Try to get financial info if user has permission
-        financial_info = None
-        if has_financial_view_perm:
-            financial_info = getattr(instance, "financial_info", None)
+        # Try to get contract info if user has permission
+        contract_info = None
+        if has_contract_view_perm:
+            contract_info = getattr(instance, "contract_info", None)
 
         # Build topology data for visualization
         topologies = {}
@@ -121,15 +121,11 @@ class SegmentView(generic.ObjectView):
             "circuits_table": circuits_table,
             "service_paths_table": service_paths_table,
             "create_circuit_url": generate_circuit_creation_url(instance),
-            "financial_info": financial_info,
-            "has_financial_view_perm": has_financial_view_perm,
-            "has_financial_add_perm": request.user.has_perm("cesnet_service_path_plugin.add_segmentfinancialinfo"),
-            "has_financial_change_perm": request.user.has_perm(
-                "cesnet_service_path_plugin.change_segmentfinancialinfo"
-            ),
-            "has_financial_delete_perm": request.user.has_perm(
-                "cesnet_service_path_plugin.delete_segmentfinancialinfo"
-            ),
+            "contract_info": contract_info,
+            "has_contract_view_perm": has_contract_view_perm,
+            "has_contract_add_perm": request.user.has_perm("cesnet_service_path_plugin.add_contractinfo"),
+            "has_contract_change_perm": request.user.has_perm("cesnet_service_path_plugin.change_contractinfo"),
+            "has_contract_delete_perm": request.user.has_perm("cesnet_service_path_plugin.delete_contractinfo"),
             "topologies": topologies,
         }
 

@@ -3,17 +3,17 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from netbox.views import generic
 from utilities.views import register_model_view
 
-from cesnet_service_path_plugin.forms import SegmentFinancialInfoForm
-from cesnet_service_path_plugin.models import SegmentFinancialInfo
+from cesnet_service_path_plugin.forms import ContractInfoForm
+from cesnet_service_path_plugin.models import ContractInfo
 
 
-@register_model_view(SegmentFinancialInfo)
-class SegmentFinancialInfoView(generic.ObjectView):
+@register_model_view(ContractInfo)
+class ContractInfoView(generic.ObjectView):
     """
     Redirect to the parent segment's detail view instead of showing a separate detail page
     """
 
-    queryset = SegmentFinancialInfo.objects.all()
+    queryset = ContractInfo.objects.all()
 
     def get(self, request, *args, **kwargs):
         obj = self.get_object(**kwargs)
@@ -24,11 +24,11 @@ class SegmentFinancialInfoView(generic.ObjectView):
         return redirect(obj.segment.get_absolute_url())
 
 
-@register_model_view(SegmentFinancialInfo, "add", detail=False)
-@register_model_view(SegmentFinancialInfo, "edit")
-class SegmentFinancialInfoEditView(generic.ObjectEditView):
-    queryset = SegmentFinancialInfo.objects.all()
-    form = SegmentFinancialInfoForm
+@register_model_view(ContractInfo, "add", detail=False)
+@register_model_view(ContractInfo, "edit")
+class ContractInfoEditView(generic.ObjectEditView):
+    queryset = ContractInfo.objects.all()
+    form = ContractInfoForm
 
     def get_return_url(self, request, obj=None):
         """
@@ -44,9 +44,9 @@ class SegmentFinancialInfoEditView(generic.ObjectEditView):
         return super().get_return_url(request, obj)
 
 
-@register_model_view(SegmentFinancialInfo, "delete")
-class SegmentFinancialInfoDeleteView(generic.ObjectDeleteView):
-    queryset = SegmentFinancialInfo.objects.all()
+@register_model_view(ContractInfo, "delete")
+class ContractInfoDeleteView(generic.ObjectDeleteView):
+    queryset = ContractInfo.objects.all()
 
     def get_return_url(self, request, obj=None):
         """
