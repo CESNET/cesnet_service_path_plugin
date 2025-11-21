@@ -70,10 +70,6 @@ class ContractInfo(NetBoxModel):
         help_text="Currency for all charges (cannot be changed in amendments)",
     )
 
-    provider = models.ForeignKey(
-        "circuits.Provider", on_delete=models.PROTECT, help_text="Service provider (cannot be changed in amendments)"
-    )
-
     # ========================================================================
     # CUMULATIVE ATTRIBUTES - Sum across all versions
     # ========================================================================
