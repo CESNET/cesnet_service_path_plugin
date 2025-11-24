@@ -269,8 +269,6 @@ class ContractInfo(NetBoxModel):
         if self.previous_version:
             if self.charge_currency != self.previous_version.charge_currency:
                 raise ValidationError({"charge_currency": "Currency cannot be changed in amendments"})
-            if self.provider != self.previous_version.provider:
-                raise ValidationError({"provider": "Provider cannot be changed in amendments"})
 
     # ========================================================================
     # HELPER METHODS FOR CUMULATIVE NOTES
@@ -346,6 +344,16 @@ class ContractInfo(NetBoxModel):
         """Override save to handle version chain updates and cumulative notes"""
         cloned_segments = getattr(self, "_cloned_segments", None)
         is_new = self.pk is None
+
+        # Auto-set contract_type based on previous_version
+        if is_new and self.previous_version:
+            # If contract_type is still default (NEW) but we have a previous_version, it's an AMENDMENT
+            # (unless explicitly set to RENEWAL, which is preserved)
+            if self.contract_type == ContractTypeChoices.NEW:
+                self.contract_type = ContractTypeChoices.AMENDMENT
+            # Validate that contract_type is appropriate for a versioned contract
+            elif self.contract_type not in [ContractTypeChoices.AMENDMENT, ContractTypeChoices.RENEWAL]:
+                self.contract_type = ContractTypeChoices.AMENDMENT
 
         # Auto-set commitment_end_date to end_date if not specified
         if not self.commitment_end_date and self.end_date:

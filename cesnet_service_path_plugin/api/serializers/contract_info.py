@@ -20,12 +20,29 @@ class ContractInfoSerializer(NetBoxModelSerializer):
         view_name="plugins-api:cesnet_service_path_plugin-api:contractinfo-detail"
     )
 
-    # Writable segment field (accepts ID for write operations)
-    segment = SegmentPrimaryKeyRelatedField(required=True)
+    # Writable segments field (M2M - accepts list of IDs for write operations)
+    segments = SegmentPrimaryKeyRelatedField(many=True, required=False)
+
+    # Versioning fields
+    previous_version = serializers.PrimaryKeyRelatedField(
+        queryset=ContractInfo.objects.all(),
+        required=False,
+        allow_null=True,
+        help_text="Link to previous version for amendments/renewals"
+    )
+    contract_type = serializers.CharField(
+        required=False,
+        help_text="Type of contract (auto-set to 'amendment' if previous_version exists, can be set to 'renewal')"
+    )
+    # Read-only versioning fields
+    superseded_by = serializers.PrimaryKeyRelatedField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
+    version = serializers.IntegerField(read_only=True)
 
     # Read-only computed fields
-    total_commitment_cost = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    total_cost_including_setup = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_recurring_cost = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_contract_value = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    recurring_charge_end_date = serializers.DateField(read_only=True)
 
     class Meta:
         model = ContractInfo
@@ -33,14 +50,36 @@ class ContractInfoSerializer(NetBoxModelSerializer):
             "id",
             "url",
             "display",
-            "segment",
-            "recurring_charge",
+            # Versioning
+            "previous_version",
+            "superseded_by",
+            "contract_type",
+            "is_active",
+            "version",
+            # Contract metadata
+            "contract_number",
+            "effective_date",
+            "change_reason",
+            # Relationships
+            "segments",
+            # Financial
             "charge_currency",
+            "recurring_charge",
+            "recurring_charge_period",
+            "number_of_recurring_charges",
             "non_recurring_charge",
+            # Dates
+            "start_date",
+            "end_date",
             "commitment_end_date",
+            # Notes
             "notes",
-            "total_commitment_cost",
-            "total_cost_including_setup",
+            "cumulative_notes",
+            # Computed
+            "total_recurring_cost",
+            "total_contract_value",
+            "recurring_charge_end_date",
+            # NetBox standard
             "created",
             "last_updated",
             "tags",
@@ -50,7 +89,10 @@ class ContractInfoSerializer(NetBoxModelSerializer):
             "id",
             "url",
             "display",
-            "segment",
+            "contract_number",
+            "contract_type",
+            "is_active",
+            "version",
             "recurring_charge",
             "charge_currency",
         ]
@@ -60,34 +102,35 @@ class ContractInfoSerializer(NetBoxModelSerializer):
         Customize the output representation to show detailed segment info
         """
         ret = super().to_representation(instance)
-        # Replace segment ID with detailed info in the output
-        if instance.segment:
-            ret["segment"] = self.get_segment_detail(instance)
+        # Replace segments IDs with detailed info in the output
+        if instance.segments.exists():
+            ret["segments"] = self.get_segments_detail(instance)
         return ret
 
-    def get_segment_detail(self, obj):
+    def get_segments_detail(self, obj):
         """Return nested segment information for read operations"""
-        if obj.segment:
-            # Check if we have a request in context
-            request = self.context.get("request")
+        segments_list = []
+        request = self.context.get("request")
 
+        for segment in obj.segments.all():
             if request:
                 # API context - build absolute URI using reverse
                 segment_url = reverse(
                     "plugins-api:cesnet_service_path_plugin-api:segment-detail",
-                    kwargs={"pk": obj.segment.id},
+                    kwargs={"pk": segment.id},
                     request=request,
                 )
             else:
                 # Non-API context (e.g., form validation) - use relative URL
                 segment_url = reverse(
-                    "plugins-api:cesnet_service_path_plugin-api:segment-detail", kwargs={"pk": obj.segment.id}
+                    "plugins-api:cesnet_service_path_plugin-api:segment-detail", kwargs={"pk": segment.id}
                 )
 
-            return {
-                "id": obj.segment.id,
+            segments_list.append({
+                "id": segment.id,
                 "url": segment_url,
-                "display": str(obj.segment),
-                "name": obj.segment.name,
-            }
-        return None
+                "display": str(segment),
+                "name": segment.name,
+            })
+
+        return segments_list
