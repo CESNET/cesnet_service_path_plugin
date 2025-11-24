@@ -273,6 +273,40 @@ class ContractInfo(NetBoxModel):
                 raise ValidationError({"provider": "Provider cannot be changed in amendments"})
 
     # ========================================================================
+    # HELPER METHODS FOR CUMULATIVE NOTES
+    # ========================================================================
+    def _build_cumulative_notes(self, previous_cumulative="", current_notes="", version_number=None, effective_date=None):
+        """
+        Helper method to build cumulative notes by appending current version's notes
+        to the accumulated notes from previous versions.
+
+        Args:
+            previous_cumulative: Cumulative notes from previous versions
+            current_notes: Notes specific to current version
+            version_number: Version number for the header (optional)
+            effective_date: Date for the header (optional)
+
+        Returns:
+            Updated cumulative notes string
+        """
+        parts = []
+
+        # Add previous cumulative notes if they exist
+        if previous_cumulative:
+            parts.append(previous_cumulative)
+
+        # Add current version's notes if they exist
+        if current_notes:
+            # Build version header
+            version_str = f"Version {version_number}" if version_number else "New Version"
+            date_str = str(effective_date) if effective_date else str(timezone.now().date())
+            header = f"--- {version_str} ({date_str}) ---"
+
+            parts.append(f"{header}\n{current_notes}")
+
+        return "\n\n".join(parts) if parts else ""
+
+    # ========================================================================
     # CLONING (for creating amendments)
     # ========================================================================
     def clone(self):
@@ -292,12 +326,16 @@ class ContractInfo(NetBoxModel):
         # Clear user-editable fields
         attrs["change_reason"] = ""
         attrs["effective_date"] = timezone.now().date()
+        attrs["notes"] = ""  # Clear notes for new version
 
-        # Handle cumulative notes - append to chain
-        if self.cumulative_notes:
-            attrs["cumulative_notes"] = (
-                f"{self.cumulative_notes}\n\n" f"--- Version {self.version + 1} ({timezone.now().date()}) ---\n"
-            )
+        # Build cumulative notes from previous version
+        # Include the previous version's notes in the cumulative chain
+        attrs["cumulative_notes"] = self._build_cumulative_notes(
+            previous_cumulative=self.cumulative_notes,
+            current_notes=self.notes,
+            version_number=self.version,
+            effective_date=self.effective_date
+        )
 
         # Store segments for copying after save (will be handled separately)
         attrs["_cloned_segments"] = list(self.segments.all())
@@ -305,13 +343,26 @@ class ContractInfo(NetBoxModel):
         return attrs
 
     def save(self, *args, **kwargs):
-        """Override save to handle version chain updates"""
+        """Override save to handle version chain updates and cumulative notes"""
         cloned_segments = getattr(self, "_cloned_segments", None)
         is_new = self.pk is None
 
         # Auto-set commitment_end_date to end_date if not specified
         if not self.commitment_end_date and self.end_date:
             self.commitment_end_date = self.end_date
+
+        # Update cumulative notes when saving a new version
+        # Skip if this was already handled by clone() (check if cumulative_notes already contains notes)
+        if is_new and self.previous_version and self.notes:
+            # Only update if cumulative_notes doesn't already contain the current notes
+            # (to avoid duplication when coming from clone())
+            if not self.cumulative_notes or self.notes not in self.cumulative_notes:
+                self.cumulative_notes = self._build_cumulative_notes(
+                    previous_cumulative=self.previous_version.cumulative_notes,
+                    current_notes=self.previous_version.notes,
+                    version_number=self.previous_version.version,
+                    effective_date=self.previous_version.effective_date
+                )
 
         # If this is a new version, we need to update previous version after save
         update_previous = is_new and self.previous_version and not self.previous_version.superseded_by
