@@ -21,7 +21,7 @@ class ContractInfoForm(NetBoxModelForm):
     contract_number = forms.CharField(max_length=100, required=False, help_text="Provider's contract reference number")
 
     charge_currency = forms.ChoiceField(
-        required=True, choices=CurrencyChoices, help_text="Currency for all charges (cannot be changed in amendments)"
+        required=False, choices=CurrencyChoices, help_text="Currency for all charges (cannot be changed in amendments)"
     )
 
     non_recurring_charge = forms.DecimalField(
@@ -32,7 +32,7 @@ class ContractInfoForm(NetBoxModelForm):
     )
 
     recurring_charge = forms.DecimalField(
-        max_digits=10, decimal_places=2, required=False, help_text="Recurring fee amount (required for new contracts)"
+        max_digits=10, decimal_places=2, required=False, help_text="Recurring fee amount (optional)"
     )
 
     recurring_charge_period = forms.ChoiceField(
@@ -43,7 +43,7 @@ class ContractInfoForm(NetBoxModelForm):
         required=False, min_value=0, help_text="Number of recurring charge periods (0 for no recurring charges)"
     )
 
-    start_date = forms.DateField(required=True, help_text="When this contract version starts")
+    start_date = forms.DateField(required=False, help_text="When this contract version starts (optional)")
 
     end_date = forms.DateField(required=False, help_text="When this contract version ends (optional)")
 
@@ -71,38 +71,13 @@ class ContractInfoForm(NetBoxModelForm):
             # For amendments, make currency read-only
             self.fields['charge_currency'].disabled = True
             self.fields['charge_currency'].help_text = "Currency cannot be changed in amendments (inherited from original contract)"
-        else:
-            # For new contracts, make recurring charges required
-            self.fields['recurring_charge'].required = True
-            self.fields['recurring_charge_period'].required = True
-            self.fields['number_of_recurring_charges'].required = True
-            self.fields['number_of_recurring_charges'].min_value = 1
 
     def clean(self):
+        """
+        Custom validation for ContractInfo form.
+        All fields are optional to allow creating contract stubs.
+        """
         cleaned_data = super().clean()
-
-        # If super().clean() returned None (validation errors), return early
-        if cleaned_data is None:
-            return cleaned_data
-
-        # Use the flag set in __init__ to determine if this is an amendment
-        is_new_contract = not getattr(self, '_is_amendment', False) and not self.instance.pk
-
-        # For new contracts (not amendments), require recurring charge fields
-        if is_new_contract:
-            recurring_charge = cleaned_data.get('recurring_charge')
-            recurring_charge_period = cleaned_data.get('recurring_charge_period')
-            number_of_recurring_charges = cleaned_data.get('number_of_recurring_charges')
-
-            if not recurring_charge:
-                self.add_error('recurring_charge', 'This field is required for new contracts.')
-            if not recurring_charge_period:
-                self.add_error('recurring_charge_period', 'This field is required for new contracts.')
-            if number_of_recurring_charges is None:
-                self.add_error('number_of_recurring_charges', 'This field is required for new contracts.')
-            elif number_of_recurring_charges < 1:
-                self.add_error('number_of_recurring_charges', 'Must be at least 1 for new contracts.')
-
         return cleaned_data
 
     class Meta:

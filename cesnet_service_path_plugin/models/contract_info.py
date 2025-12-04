@@ -61,7 +61,8 @@ class ContractInfo(NetBoxModel):
         max_length=3,
         choices=CurrencyChoices,
         default=CurrencyChoices.CZK,
-        help_text="Currency for all charges (cannot be changed in amendments)",
+        blank=True,
+        help_text="Currency for all charges (defaults to CZK if not specified, cannot be changed in amendments)",
     )
 
     # ========================================================================
@@ -70,8 +71,9 @@ class ContractInfo(NetBoxModel):
     non_recurring_charge = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=Decimal("0"),
+        null=True,
         blank=True,
+        default=Decimal("0"),
         help_text="One-time fees for this version (setup, installation, etc.)",
     )
 
@@ -95,7 +97,7 @@ class ContractInfo(NetBoxModel):
         null=True, blank=True, help_text="Number of recurring charge periods in this contract (optional for amendments)"
     )
 
-    start_date = models.DateField(help_text="When this contract version starts")
+    start_date = models.DateField(null=True, blank=True, help_text="When this contract version starts (optional)")
 
     end_date = models.DateField(null=True, blank=True, help_text="When this contract version ends (optional)")
 
@@ -114,7 +116,18 @@ class ContractInfo(NetBoxModel):
     # ========================================================================
     # CLONING CONFIGURATION
     # ========================================================================
-    clone_fields = []  # We handle cloning manually via clone() method
+    clone_fields = [
+        'contract_number',
+        'charge_currency',
+        'non_recurring_charge',
+        'recurring_charge',
+        'recurring_charge_period',
+        'number_of_recurring_charges',
+        'start_date',
+        'end_date',
+        'notes',
+        'segments',
+    ]
 
     class Meta:
         ordering = ("contract_number", "end_date")
@@ -250,21 +263,19 @@ class ContractInfo(NetBoxModel):
         Override clone() method to handle contract versioning.
         Called when the clone button is used in NetBox UI.
         Returns a dictionary of attributes for the cloned instance.
+
+        All standard fields are cloned via clone_fields.
+        This method only handles special version chain setup.
         """
-        # Get the base cloned attributes
+        # Get all cloned attributes from clone_fields
+        # This includes: contract_number, charges, dates, notes, segments
         attrs = super().clone()
 
-        # Set up versioning fields
-        attrs["previous_version"] = self
+        # Set up versioning fields (special handling for version chain)
+        # Use self.pk so it can be parsed correctly by the view
+        attrs["previous_version"] = self.pk
         attrs["superseded_by"] = None
         attrs["contract_type"] = ContractTypeChoices.AMENDMENT
-
-        # Clear user-editable fields
-        attrs["notes"] = ""  # Clear notes for new version
-
-        # Clone segments - return list of IDs (not objects!)
-        # NetBox's prepare_cloned_fields() will convert this to URL params
-        attrs["segments"] = [seg.pk for seg in self.segments.all()]
 
         return attrs
 
