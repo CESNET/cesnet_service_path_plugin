@@ -3,7 +3,7 @@ from .segment_circuit_mapping import (
     SegmentCircuitMappingBulkEditForm,
     SegmentCircuitMappingForm,
 )
-from .contract_info import ContractInfoForm
+from .contract_info import ContractInfoForm, ContractInfoFilterForm
 from .service_path import (
     ServicePathBulkEditForm,
     ServicePathFilterForm,
@@ -21,6 +21,7 @@ __all__ = [
     "SegmentCircuitMappingForm",
     "SegmentFilterForm",
     "ContractInfoForm",
+    "ContractInfoFilterForm",
     "SegmentForm",
     "ServicePathBulkEditForm",
     "ServicePathFilterForm",

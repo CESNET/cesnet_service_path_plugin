@@ -272,10 +272,10 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
         if has_info:
             # Only "Yes" selected, show segments with contract info
-            return queryset.filter(contract_info__isnull=False)
+            return queryset.filter(contracts__isnull=False).distinct()
         else:
             # Only "No" selected, show segments without contract info
-            return queryset.filter(contract_info__isnull=True)
+            return queryset.filter(contracts__isnull=True)
 
     def _check_contract_permission(self):
         """

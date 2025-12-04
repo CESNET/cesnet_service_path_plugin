@@ -3,25 +3,45 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from netbox.views import generic
 from utilities.views import register_model_view
 
-from cesnet_service_path_plugin.forms import ContractInfoForm
+from cesnet_service_path_plugin.filtersets import ContractInfoFilterSet
+from cesnet_service_path_plugin.forms import ContractInfoForm, ContractInfoFilterForm
 from cesnet_service_path_plugin.models import ContractInfo
+from cesnet_service_path_plugin.tables import ContractInfoTable
+
+
+@register_model_view(ContractInfo, "list", path="", detail=False)
+class ContractInfoListView(generic.ObjectListView):
+    """List view for ContractInfo objects with filtering and search"""
+    queryset = ContractInfo.objects.all()
+    table = ContractInfoTable
+    filterset = ContractInfoFilterSet
+    filterset_form = ContractInfoFilterForm
 
 
 @register_model_view(ContractInfo)
 class ContractInfoView(generic.ObjectView):
-    """
-    Redirect to the parent segment's detail view instead of showing a separate detail page
-    """
+    """Detail view for ContractInfo with version history and financial summary"""
+    queryset = ContractInfo.objects.prefetch_related('segments')
 
-    queryset = ContractInfo.objects.all()
+    def get_extra_context(self, request, instance):
+        """Add version history and related segments to context"""
+        context = super().get_extra_context(request, instance)
 
-    def get(self, request, *args, **kwargs):
-        obj = self.get_object(**kwargs)
-        # Check if segment exists before redirecting
-        if obj.segment is None:
-            return redirect("/")
-        # Redirect to the parent segment's detail view
-        return redirect(obj.segment.get_absolute_url())
+        # Get version history
+        version_history = instance.get_version_history()
+
+        # Get related segments
+        segments = instance.segments.all()
+
+        context.update({
+            'version_history': version_history,
+            'segments': segments,
+            'is_latest_version': instance.is_latest_version(),
+            'first_version': instance.get_first_version(),
+            'latest_version': instance.get_latest_version(),
+        })
+
+        return context
 
 
 @register_model_view(ContractInfo, "add", detail=False)
@@ -29,6 +49,31 @@ class ContractInfoView(generic.ObjectView):
 class ContractInfoEditView(generic.ObjectEditView):
     queryset = ContractInfo.objects.all()
     form = ContractInfoForm
+
+    def alter_object(self, obj, request, url_args, url_kwargs):
+        """
+        Hook to modify the object before saving.
+        Handle previous_version from clone URL.
+        """
+        # Check if previous_version is in the GET/POST parameters (from clone)
+        previous_version_ref = request.GET.get('previous_version') or request.POST.get('previous_version')
+
+        if previous_version_ref and not obj.pk:  # Only for new objects
+            try:
+                # Try to get by ID first
+                try:
+                    previous_version = ContractInfo.objects.get(pk=int(previous_version_ref))
+                except (ValueError, TypeError):
+                    # If not an ID, try by contract_number
+                    previous_version = ContractInfo.objects.get(contract_number=previous_version_ref)
+
+                # Set the version chain
+                obj.previous_version = previous_version
+
+            except ContractInfo.DoesNotExist:
+                pass  # If not found, just continue
+
+        return obj
 
     def get_return_url(self, request, obj=None):
         """

@@ -86,17 +86,26 @@ class ContractInfo(NetBoxModel):
     # ========================================================================
     # VERSION-SPECIFIC ATTRIBUTES - Change with each version
     # ========================================================================
-    recurring_charge = models.DecimalField(max_digits=10, decimal_places=2, help_text="Recurring fee amount")
+    recurring_charge = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Recurring fee amount (optional for amendments)"
+    )
 
     recurring_charge_period = models.CharField(
         max_length=20,
         choices=RecurringChargePeriodChoices,
-        default=RecurringChargePeriodChoices.MONTHLY,
-        help_text="Frequency of recurring charges",
+        null=True,
+        blank=True,
+        help_text="Frequency of recurring charges (optional for amendments)",
     )
 
     number_of_recurring_charges = models.PositiveIntegerField(
-        help_text="Number of recurring charge periods in this contract"
+        null=True,
+        blank=True,
+        help_text="Number of recurring charge periods in this contract (optional for amendments)"
     )
 
     start_date = models.DateField(help_text="When this contract version starts")
@@ -229,6 +238,8 @@ class ContractInfo(NetBoxModel):
     @property
     def total_recurring_cost(self):
         """Calculate total cost of all recurring charges"""
+        if self.recurring_charge is None or self.number_of_recurring_charges is None:
+            return 0
         return self.recurring_charge * self.number_of_recurring_charges
 
     @property
@@ -335,14 +346,14 @@ class ContractInfo(NetBoxModel):
             effective_date=self.effective_date
         )
 
-        # Store segments for copying after save (will be handled separately)
-        attrs["_cloned_segments"] = list(self.segments.all())
+        # Clone segments - return list of IDs (not objects!)
+        # NetBox's prepare_cloned_fields() will convert this to URL params
+        attrs["segments"] = [seg.pk for seg in self.segments.all()]
 
         return attrs
 
     def save(self, *args, **kwargs):
         """Override save to handle version chain updates and cumulative notes"""
-        cloned_segments = getattr(self, "_cloned_segments", None)
         is_new = self.pk is None
 
         # Auto-set contract_type based on previous_version
@@ -381,10 +392,6 @@ class ContractInfo(NetBoxModel):
         if update_previous:
             self.previous_version.superseded_by = self
             self.previous_version.save(update_fields=["superseded_by"])
-
-        # Copy M2M relationships from cloned contract
-        if cloned_segments is not None:
-            self.segments.set(cloned_segments)
 
     # ========================================================================
     # HELPER METHODS FOR UI
