@@ -58,8 +58,6 @@ class ContractInfoSerializer(NetBoxModelSerializer):
             "version",
             # Contract metadata
             "contract_number",
-            "effective_date",
-            "change_reason",
             # Relationships
             "segments",
             # Financial
@@ -71,10 +69,8 @@ class ContractInfoSerializer(NetBoxModelSerializer):
             # Dates
             "start_date",
             "end_date",
-            "commitment_end_date",
             # Notes
             "notes",
-            "cumulative_notes",
             # Computed
             "total_recurring_cost",
             "total_contract_value",

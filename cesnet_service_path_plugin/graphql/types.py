@@ -63,14 +63,6 @@ class ContractInfoType(NetBoxObjectType):
         """Total cost including non-recurring charge - only if user has permission"""
         return self.total_cost_including_setup
 
-    @field
-    def commitment_end_date(self, info) -> Optional[str]:
-        """Calculate the end date of the commitment period - only if user has permission"""
-        end_date = self.commitment_end_date
-        if end_date:
-            return end_date.isoformat()
-        return None
-
 
 @strawberry_django_type(Segment, filters=SegmentFilter)
 class SegmentType(NetBoxObjectType):

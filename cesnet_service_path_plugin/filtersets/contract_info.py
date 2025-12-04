@@ -24,10 +24,8 @@ class ContractInfoFilterSet(NetBoxModelFilterSet):
     recurring_charge_period = django_filters.MultipleChoiceFilter(choices=RecurringChargePeriodChoices)
 
     # Date filters
-    effective_date = django_filters.DateFilter()
     start_date = django_filters.DateFilter()
     end_date = django_filters.DateFilter()
-    commitment_end_date = django_filters.DateFilter()
 
     # Version chain filters
     is_active = django_filters.BooleanFilter(
@@ -48,10 +46,8 @@ class ContractInfoFilterSet(NetBoxModelFilterSet):
             "contract_type",
             "charge_currency",
             "recurring_charge_period",
-            "effective_date",
             "start_date",
             "end_date",
-            "commitment_end_date",
         ]
 
     def _filter_is_active(self, queryset, name, value):
@@ -86,10 +82,8 @@ class ContractInfoFilterSet(NetBoxModelFilterSet):
     def search(self, queryset, name, value):
         """Full-text search across contract fields"""
         contract_number = Q(contract_number__icontains=value)
-        change_reason = Q(change_reason__icontains=value)
         notes = Q(notes__icontains=value)
-        cumulative_notes = Q(cumulative_notes__icontains=value)
 
         return queryset.filter(
-            contract_number | change_reason | notes | cumulative_notes
+            contract_number | notes
         )

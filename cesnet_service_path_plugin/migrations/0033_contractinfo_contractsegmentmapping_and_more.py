@@ -35,15 +35,8 @@ def migrate_financial_info_to_contract(apps, schema_editor):
         # Determine end_date from segment's termination_date
         end_date = segment.termination_date if segment.termination_date else None
 
-        # Calculate commitment_end_date from commitment_period_months
-        commitment_end_date = None
-        if old_financial_info.commitment_period_months and start_date:
-            from dateutil.relativedelta import relativedelta
-
-            commitment_end_date = start_date + relativedelta(months=old_financial_info.commitment_period_months)
-
-        # Determine number_of_recurring_charges
-        number_of_recurring_charges = old_financial_info.commitment_period_months or 12
+        # Determine number_of_recurring_charges (convert commitment_period_months to number of charges)
+        number_of_recurring_charges = old_financial_info.commitment_period_months if old_financial_info.commitment_period_months else None
 
         # Create new ContractInfo
         contract = ContractInfo.objects.create(
@@ -51,18 +44,13 @@ def migrate_financial_info_to_contract(apps, schema_editor):
             superseded_by=None,
             contract_number="",
             contract_type="new",
-            change_reason="Migrated from SegmentFinancialInfo",
-            effective_date=start_date,
             charge_currency=old_financial_info.charge_currency,
-            provider=segment.provider,
             non_recurring_charge=old_financial_info.non_recurring_charge or Decimal("0"),
-            cumulative_notes=old_financial_info.notes or "",
             recurring_charge=old_financial_info.monthly_charge,
             recurring_charge_period="monthly",
             number_of_recurring_charges=number_of_recurring_charges,
             start_date=start_date,
             end_date=end_date,
-            commitment_end_date=commitment_end_date,
             notes=old_financial_info.notes or "",
             created=old_financial_info.created,
             last_updated=old_financial_info.last_updated,
@@ -91,25 +79,25 @@ def reverse_migrate_contract_to_financial_info(apps, schema_editor):
     old_content_type = ContentType.objects.get_for_model(SegmentFinancialInfo)
     new_content_type = ContentType.objects.get_for_model(ContractInfo)
 
-    migrated_contracts = ContractInfo.objects.filter(change_reason__contains="Migrated from SegmentFinancialInfo")
-
-    for contract in migrated_contracts:
+    for contract in ContractInfo.objects.all():
         mapping = ContractSegmentMapping.objects.filter(contract=contract).first()
         if not mapping:
             continue
 
         segment = mapping.segment
+
+        # Convert number_of_recurring_charges back to commitment_period_months
         commitment_period_months = (
             contract.number_of_recurring_charges if contract.recurring_charge_period == "monthly" else None
         )
 
         financial_info = SegmentFinancialInfo.objects.create(
             segment=segment,
-            monthly_charge=contract.recurring_charge,
+            monthly_charge=contract.recurring_charge or Decimal("0"),
             charge_currency=contract.charge_currency,
             non_recurring_charge=contract.non_recurring_charge if contract.non_recurring_charge > 0 else None,
             commitment_period_months=commitment_period_months,
-            notes=contract.cumulative_notes or contract.notes,
+            notes=contract.notes,
             created=contract.created,
             last_updated=contract.last_updated,
             custom_field_data=contract.custom_field_data,
@@ -141,40 +129,37 @@ class Migration(migrations.Migration):
                     "custom_field_data",
                     models.JSONField(blank=True, default=dict, encoder=utilities.json.CustomFieldJSONEncoder),
                 ),
-                ("contract_number", models.CharField(blank=True, max_length=100)),
-                ("contract_type", models.CharField(default="new", editable=False, max_length=20)),
-                ("change_reason", models.TextField(blank=True)),
-                ("effective_date", models.DateField()),
-                ("charge_currency", models.CharField(default="CZK", max_length=3)),
+                ("contract_number", models.CharField(blank=True, help_text="Provider's contract reference number", max_length=100)),
+                ("contract_type", models.CharField(default="new", editable=False, help_text="Type of contract (set automatically)", max_length=20)),
+                ("charge_currency", models.CharField(default="CZK", help_text="Currency for all charges (cannot be changed in amendments)", max_length=3)),
                 (
                     "non_recurring_charge",
-                    models.DecimalField(blank=True, decimal_places=2, default=Decimal("0"), max_digits=10),
+                    models.DecimalField(blank=True, decimal_places=2, default=Decimal("0"), help_text="One-time fees for this version (setup, installation, etc.)", max_digits=10),
                 ),
-                ("cumulative_notes", models.TextField(blank=True)),
-                ("recurring_charge", models.DecimalField(decimal_places=2, max_digits=10)),
-                ("recurring_charge_period", models.CharField(default="monthly", max_length=20)),
-                ("number_of_recurring_charges", models.PositiveIntegerField()),
-                ("start_date", models.DateField()),
-                ("end_date", models.DateField(blank=True, null=True)),
-                ("commitment_end_date", models.DateField(blank=True, null=True)),
-                ("notes", models.TextField(blank=True)),
+                ("recurring_charge", models.DecimalField(blank=True, decimal_places=2, help_text="Recurring fee amount (optional for amendments)", max_digits=10, null=True)),
+                ("recurring_charge_period", models.CharField(blank=True, help_text="Frequency of recurring charges (optional for amendments)", max_length=20, null=True)),
+                ("number_of_recurring_charges", models.PositiveIntegerField(blank=True, help_text="Number of recurring charge periods in this contract (optional for amendments)", null=True)),
+                ("start_date", models.DateField(help_text="When this contract version starts")),
+                ("end_date", models.DateField(blank=True, help_text="When this contract version ends (optional)", null=True)),
+                ("notes", models.TextField(blank=True, help_text="Notes specific to this version")),
                 (
                     "previous_version",
                     models.OneToOneField(
                         blank=True,
                         editable=False,
+                        help_text="Previous version of this contract (creates linear chain)",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="next_version_relation",
                         to="cesnet_service_path_plugin.contractinfo",
                     ),
                 ),
-                ("provider", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="circuits.provider")),
                 (
                     "superseded_by",
                     models.OneToOneField(
                         blank=True,
                         editable=False,
+                        help_text="Newer version that supersedes this contract",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="supersedes",
@@ -186,7 +171,7 @@ class Migration(migrations.Migration):
             options={
                 "verbose_name": "Contract Info",
                 "verbose_name_plural": "Contract Infos",
-                "ordering": ("contract_number", "-effective_date"),
+                "ordering": ("contract_number", "end_date"),
             },
             bases=(netbox.models.deletion.DeleteMixin, models.Model),
         ),
@@ -194,8 +179,8 @@ class Migration(migrations.Migration):
             name="ContractSegmentMapping",
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
-                ("added_date", models.DateField(auto_now_add=True)),
-                ("notes", models.TextField(blank=True)),
+                ("added_date", models.DateField(auto_now_add=True, help_text="When this segment was added to the contract")),
+                ("notes", models.TextField(blank=True, help_text="Notes about this segment-contract relationship")),
                 (
                     "contract",
                     models.ForeignKey(
@@ -220,6 +205,7 @@ class Migration(migrations.Migration):
             model_name="contractinfo",
             name="segments",
             field=models.ManyToManyField(
+                help_text="Network segments covered by this contract",
                 related_name="contracts",
                 through="cesnet_service_path_plugin.ContractSegmentMapping",
                 to="cesnet_service_path_plugin.segment",

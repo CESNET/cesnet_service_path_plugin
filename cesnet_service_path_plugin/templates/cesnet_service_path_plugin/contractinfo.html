@@ -35,16 +35,6 @@
                                 {% endif %}
                             </td>
                         </tr>
-                        <tr>
-                            <th scope="row">Effective Date</th>
-                            <td>{{ object.effective_date|placeholder }}</td>
-                        </tr>
-                        {% if object.change_reason %}
-                        <tr>
-                            <th scope="row">Change Reason</th>
-                            <td>{{ object.change_reason }}</td>
-                        </tr>
-                        {% endif %}
                     </table>
                 </div>
             </div>
@@ -121,24 +111,6 @@
                             <td>{{ object.recurring_charge_end_date }}</td>
                         </tr>
                         {% endif %}
-                        <tr>
-                            <th scope="row">Commitment End Date</th>
-                            <td>
-                                {{ object.commitment_end_date|placeholder }}
-                                {% if object.get_commitment_status %}
-                                    {% with status=object.get_commitment_status %}
-                                        <span class="badge text-bg-{{ status.color }} ms-2">
-                                            {{ status.status }}
-                                            {% if status.status == "In commitment" %}
-                                                ({{ status.days }} days remaining)
-                                            {% elif status.status == "Commitment ended" %}
-                                                (ended {{ status.days }} days ago)
-                                            {% endif %}
-                                        </span>
-                                    {% endwith %}
-                                {% endif %}
-                            </td>
-                        </tr>
                     </table>
                 </div>
             </div>
@@ -161,7 +133,6 @@
                             <tr>
                                 <th>Version</th>
                                 <th>Type</th>
-                                <th>Effective Date</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -177,7 +148,6 @@
                                         {{ version.get_contract_type_display }}
                                     </span>
                                 </td>
-                                <td>{{ version.effective_date }}</td>
                                 <td>
                                     {% if version.is_active %}
                                         <span class="badge text-bg-success">Active</span>
@@ -248,19 +218,11 @@
             {% endif %}
 
             <!-- Notes Card -->
-            {% if object.notes or object.cumulative_notes %}
+            {% if object.notes %}
             <div class="card mt-3">
                 <h5 class="card-header">Notes</h5>
                 <div class="card-body">
-                    {% if object.notes %}
-                        <h6>Version-Specific Notes:</h6>
-                        <pre class="text-muted">{{ object.notes }}</pre>
-                    {% endif %}
-
-                    {% if object.cumulative_notes %}
-                        <h6 class="mt-3">Cumulative Notes (All Versions):</h6>
-                        <pre class="text-muted">{{ object.cumulative_notes }}</pre>
-                    {% endif %}
+                    <pre class="text-muted">{{ object.notes }}</pre>
                 </div>
             </div>
             {% endif %}

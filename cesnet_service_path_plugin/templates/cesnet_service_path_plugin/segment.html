@@ -208,28 +208,6 @@
                                 {% endif %}
                                 {% if contract_info.commitment_period_months %}
                                     <tr>
-                                        <th scope="row">Commitment Period</th>
-                                        <td>{{ contract_info.commitment_period_months }} months</td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">Commitment End Date</th>
-                                        {% if contract_info.commitment_end_date %}
-                                            
-                                            <td>
-                                                <span class="badge text-bg-{{ contract_info.get_commitment_end_date_color }}">{{ contract_info.commitment_end_date }}</span>
-                                                <i class="mdi mdi-information text-primary" data-bs-toggle="tooltip"
-                                                data-bs-placement="right"
-                                                aria-label="{{ contract_info.get_commitment_end_date_tooltip }}"
-                                                data-bs-original-title="{{ contract_info.get_commitment_end_date_tooltip }}"></i>
-                                            </td>
-                                        {% else %}
-                                            <td><span class="badge text-bg-{{ contract_info.get_commitment_end_date_color }}">Set Segment Install Date </span>
-                                             <i class="mdi mdi-information text-primary" data-bs-toggle="tooltip"  data-bs-placement="right"  aria-label="Commitment end date will be set automatically once the segment install date is defined." data-bs-original-title="Commitment end date will be set automatically once the segment install date is defined."></i>
-                                             </td>
-                                        {% endif %}
-                                    
-                                    </tr>
-                                    <tr>
                                         <th scope="row">Total Commitment Cost</th>
                                         <td>
                                             <strong>{{ contract_info.total_commitment_cost|floatformat:2|spacecomma }} {{ contract_info.charge_currency }}</strong>

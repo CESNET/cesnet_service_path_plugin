@@ -88,15 +88,11 @@ class ContractInfoTable(NetBoxTable):
     )
 
     # Date fields
-    effective_date = tables.DateColumn(format="Y-m-d")
     start_date = tables.DateColumn(format="Y-m-d")
     end_date = tables.DateColumn(format="Y-m-d")
-    commitment_end_date = tables.DateColumn(format="Y-m-d")
 
     # Text fields
-    change_reason = tables.Column()
     notes = tables.Column()
-    cumulative_notes = tables.Column()
 
     # Computed field: number of recurring charges
     number_of_recurring_charges = tables.Column(
@@ -113,7 +109,6 @@ class ContractInfoTable(NetBoxTable):
             "version",
             "is_active",
             "contract_type",
-            "effective_date",
             "charge_currency",
             "recurring_charge",
             "recurring_charge_period",
@@ -122,13 +117,10 @@ class ContractInfoTable(NetBoxTable):
             "total_contract_value",
             "start_date",
             "end_date",
-            "commitment_end_date",
             "segments",
             "previous_version",
             "superseded_by",
-            "change_reason",
             "notes",
-            "cumulative_notes",
             "tags",
             "actions",
         )
@@ -137,7 +129,6 @@ class ContractInfoTable(NetBoxTable):
             "version",
             "is_active",
             "contract_type",
-            "effective_date",
             "charge_currency",
             "recurring_charge",
             "total_contract_value",

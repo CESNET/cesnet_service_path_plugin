@@ -54,12 +54,6 @@ class ContractInfo(NetBoxModel):
         help_text="Type of contract (set automatically)",
     )
 
-    change_reason = models.TextField(
-        blank=True, help_text="Reason for creating this version (required for amendments/renewals)"
-    )
-
-    effective_date = models.DateField(help_text="When this contract version becomes effective")
-
     # ========================================================================
     # FIXED ATTRIBUTES - Cannot change in amendments
     # ========================================================================
@@ -71,7 +65,7 @@ class ContractInfo(NetBoxModel):
     )
 
     # ========================================================================
-    # CUMULATIVE ATTRIBUTES - Sum across all versions
+    # ATTRIBUTES - copied or changed with each version
     # ========================================================================
     non_recurring_charge = models.DecimalField(
         max_digits=10,
@@ -81,17 +75,12 @@ class ContractInfo(NetBoxModel):
         help_text="One-time fees for this version (setup, installation, etc.)",
     )
 
-    cumulative_notes = models.TextField(blank=True, help_text="Accumulated notes across all versions")
-
-    # ========================================================================
-    # VERSION-SPECIFIC ATTRIBUTES - Change with each version
-    # ========================================================================
     recurring_charge = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Recurring fee amount (optional for amendments)"
+        help_text="Recurring fee amount (optional for amendments)",
     )
 
     recurring_charge_period = models.CharField(
@@ -103,18 +92,12 @@ class ContractInfo(NetBoxModel):
     )
 
     number_of_recurring_charges = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Number of recurring charge periods in this contract (optional for amendments)"
+        null=True, blank=True, help_text="Number of recurring charge periods in this contract (optional for amendments)"
     )
 
     start_date = models.DateField(help_text="When this contract version starts")
 
     end_date = models.DateField(null=True, blank=True, help_text="When this contract version ends (optional)")
-
-    commitment_end_date = models.DateField(
-        null=True, blank=True, help_text="End of commitment period (defaults to end_date if not specified)"
-    )
 
     notes = models.TextField(blank=True, help_text="Notes specific to this version")
 
@@ -134,7 +117,7 @@ class ContractInfo(NetBoxModel):
     clone_fields = []  # We handle cloning manually via clone() method
 
     class Meta:
-        ordering = ("contract_number", "-effective_date")
+        ordering = ("contract_number", "end_date")
         verbose_name = "Contract Info"
         verbose_name_plural = "Contract Infos"
 
@@ -209,15 +192,6 @@ class ContractInfo(NetBoxModel):
     # COMPUTED FINANCIAL PROPERTIES
     # ========================================================================
     @property
-    def total_cumulative_non_recurring(self):
-        """Sum all non-recurring charges across all versions of this contract"""
-        total = Decimal("0")
-        for version in self.get_version_history():
-            if version.non_recurring_charge:
-                total += version.non_recurring_charge
-        return total if total > 0 else None
-
-    @property
     def recurring_charge_end_date(self):
         """
         Calculate when recurring charges end based on:
@@ -263,57 +237,10 @@ class ContractInfo(NetBoxModel):
             if self.start_date > self.end_date:
                 raise ValidationError({"end_date": "End date cannot be earlier than start date"})
 
-        if self.commitment_end_date:
-            if self.start_date and self.commitment_end_date < self.start_date:
-                raise ValidationError({"commitment_end_date": "Commitment end date cannot be earlier than start date"})
-
-        # If this is an amendment/renewal, require change_reason
-        if (
-            self.contract_type in [ContractTypeChoices.AMENDMENT, ContractTypeChoices.RENEWAL]
-            and not self.change_reason
-        ):
-            raise ValidationError(
-                {"change_reason": f"Change reason is required for {self.get_contract_type_display()}"}
-            )
-
         # Fixed fields cannot change in amendments
         if self.previous_version:
             if self.charge_currency != self.previous_version.charge_currency:
                 raise ValidationError({"charge_currency": "Currency cannot be changed in amendments"})
-
-    # ========================================================================
-    # HELPER METHODS FOR CUMULATIVE NOTES
-    # ========================================================================
-    def _build_cumulative_notes(self, previous_cumulative="", current_notes="", version_number=None, effective_date=None):
-        """
-        Helper method to build cumulative notes by appending current version's notes
-        to the accumulated notes from previous versions.
-
-        Args:
-            previous_cumulative: Cumulative notes from previous versions
-            current_notes: Notes specific to current version
-            version_number: Version number for the header (optional)
-            effective_date: Date for the header (optional)
-
-        Returns:
-            Updated cumulative notes string
-        """
-        parts = []
-
-        # Add previous cumulative notes if they exist
-        if previous_cumulative:
-            parts.append(previous_cumulative)
-
-        # Add current version's notes if they exist
-        if current_notes:
-            # Build version header
-            version_str = f"Version {version_number}" if version_number else "New Version"
-            date_str = str(effective_date) if effective_date else str(timezone.now().date())
-            header = f"--- {version_str} ({date_str}) ---"
-
-            parts.append(f"{header}\n{current_notes}")
-
-        return "\n\n".join(parts) if parts else ""
 
     # ========================================================================
     # CLONING (for creating amendments)
@@ -333,18 +260,7 @@ class ContractInfo(NetBoxModel):
         attrs["contract_type"] = ContractTypeChoices.AMENDMENT
 
         # Clear user-editable fields
-        attrs["change_reason"] = ""
-        attrs["effective_date"] = timezone.now().date()
         attrs["notes"] = ""  # Clear notes for new version
-
-        # Build cumulative notes from previous version
-        # Include the previous version's notes in the cumulative chain
-        attrs["cumulative_notes"] = self._build_cumulative_notes(
-            previous_cumulative=self.cumulative_notes,
-            current_notes=self.notes,
-            version_number=self.version,
-            effective_date=self.effective_date
-        )
 
         # Clone segments - return list of IDs (not objects!)
         # NetBox's prepare_cloned_fields() will convert this to URL params
@@ -365,23 +281,6 @@ class ContractInfo(NetBoxModel):
             # Validate that contract_type is appropriate for a versioned contract
             elif self.contract_type not in [ContractTypeChoices.AMENDMENT, ContractTypeChoices.RENEWAL]:
                 self.contract_type = ContractTypeChoices.AMENDMENT
-
-        # Auto-set commitment_end_date to end_date if not specified
-        if not self.commitment_end_date and self.end_date:
-            self.commitment_end_date = self.end_date
-
-        # Update cumulative notes when saving a new version
-        # Skip if this was already handled by clone() (check if cumulative_notes already contains notes)
-        if is_new and self.previous_version and self.notes:
-            # Only update if cumulative_notes doesn't already contain the current notes
-            # (to avoid duplication when coming from clone())
-            if not self.cumulative_notes or self.notes not in self.cumulative_notes:
-                self.cumulative_notes = self._build_cumulative_notes(
-                    previous_cumulative=self.previous_version.cumulative_notes,
-                    current_notes=self.previous_version.notes,
-                    version_number=self.previous_version.version,
-                    effective_date=self.previous_version.effective_date
-                )
 
         # If this is a new version, we need to update previous version after save
         update_previous = is_new and self.previous_version and not self.previous_version.superseded_by
@@ -420,15 +319,15 @@ class ContractInfo(NetBoxModel):
 
     def get_commitment_status(self):
         """Get commitment period status"""
-        if not self.commitment_end_date:
+        if not self.end_date:
             return None
 
         today = timezone.now().date()
 
-        if self.commitment_end_date < today:
-            return {"color": "success", "status": "Commitment ended", "days": (today - self.commitment_end_date).days}
+        if self.end_date < today:
+            return {"color": "success", "status": "Commitment ended", "days": (today - self.end_date).days}
         else:
-            days_remaining = (self.commitment_end_date - today).days
+            days_remaining = (self.end_date - today).days
             if days_remaining <= 30:
                 color = "warning"
             else:

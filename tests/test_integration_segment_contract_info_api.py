@@ -35,7 +35,6 @@ def contract_info_id():
         json={
             "segments": [2],  # M2M field - list of segment IDs
             "contract_number": "TEST-2024-001",
-            "effective_date": str(today),
             "start_date": str(today),
             "end_date": str(today + timedelta(days=365)),
             "recurring_charge": "5000.00",
@@ -94,7 +93,6 @@ def test_update_contract_info(contract_info_id):
         json={
             "segments": [2],
             "contract_number": "TEST-2024-001",
-            "effective_date": str(today),
             "start_date": str(today),
             "end_date": str(today + timedelta(days=365)),
             "recurring_charge": "6000.00",
@@ -162,7 +160,6 @@ def versioned_contract_chain():
         json={
             "segments": [3],
             "contract_number": "VERSION-TEST-001",
-            "effective_date": str(today - timedelta(days=365)),
             "start_date": str(today - timedelta(days=365)),
             "end_date": str(today),
             "recurring_charge": "1000.00",
@@ -188,8 +185,6 @@ def versioned_contract_chain():
             "contract_number": "VERSION-TEST-001",
             "previous_version": v1_id,
             "contract_type": "amendment",
-            "effective_date": str(today - timedelta(days=180)),
-            "change_reason": "Price increase due to inflation",
             "start_date": str(today - timedelta(days=180)),
             "end_date": str(today + timedelta(days=185)),
             "recurring_charge": "1200.00",
@@ -215,8 +210,6 @@ def versioned_contract_chain():
             "contract_number": "VERSION-TEST-001",
             "previous_version": v2_id,
             "contract_type": "renewal",
-            "effective_date": str(today),
-            "change_reason": "Contract renewal for another year",
             "start_date": str(today),
             "end_date": str(today + timedelta(days=365)),
             "recurring_charge": "1300.00",
@@ -284,9 +277,9 @@ def test_contract_version_numbers(versioned_contract_chain):
     assert data["superseded_by"] is None
 
 
-def test_cumulative_notes(versioned_contract_chain):
-    """Test that cumulative notes accumulate correctly across versions."""
-    print("\n=== Testing Cumulative Notes ===")
+def test_contract_notes(versioned_contract_chain):
+    """Test that contract notes are stored correctly."""
+    print("\n=== Testing Contract Notes ===")
 
     v3_id = versioned_contract_chain["v3_id"]
 
@@ -294,20 +287,10 @@ def test_cumulative_notes(versioned_contract_chain):
     assert response.status_code == 200
     data = response.json()
 
-    # cumulative_notes should contain notes from previous versions
-    cumulative = data.get("cumulative_notes", "")
-    print(f"Cumulative notes: '{cumulative}'")
-    print(f"Current notes (v3): '{data.get('notes', '')}'")
-
-    # Check that cumulative notes contains historical information
-    # Note: The cumulative notes are built during save, so they should exist if notes were provided
-    if cumulative:
-        # If cumulative notes exist, verify they contain version history
-        assert "Version" in cumulative or "version" in cumulative.lower(), \
-            f"Cumulative notes should contain version headers, got: {cumulative}"
-    else:
-        # If empty, this might be expected behavior when created via API without notes in previous versions
-        print("Warning: Cumulative notes are empty - this may need investigation")
+    # Check that notes field exists and contains the expected value
+    notes = data.get("notes", "")
+    print(f"Current notes (v3): '{notes}'")
+    assert notes == "Renewal v3 notes", f"Expected 'Renewal v3 notes', got: {notes}"
 
 
 def test_computed_financial_fields(versioned_contract_chain):

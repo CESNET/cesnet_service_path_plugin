@@ -20,14 +20,6 @@ class ContractInfoForm(NetBoxModelForm):
 
     contract_number = forms.CharField(max_length=100, required=False, help_text="Provider's contract reference number")
 
-    effective_date = forms.DateField(required=True, help_text="When this contract version becomes effective")
-
-    change_reason = forms.CharField(
-        required=False,
-        widget=forms.Textarea(attrs={"rows": 3}),
-        help_text="Reason for creating this version (required for amendments/renewals)",
-    )
-
     charge_currency = forms.ChoiceField(
         required=True, choices=CurrencyChoices, help_text="Currency for all charges (cannot be changed in amendments)"
     )
@@ -37,13 +29,6 @@ class ContractInfoForm(NetBoxModelForm):
         decimal_places=2,
         required=False,
         help_text="One-time fees for this version (setup, installation, etc.)",
-    )
-
-    cumulative_notes = forms.CharField(
-        required=False,
-        disabled=True,
-        widget=forms.Textarea(attrs={"rows": 5, "readonly": "readonly"}),
-        help_text="Accumulated notes across all versions (read-only, automatically generated)",
     )
 
     recurring_charge = forms.DecimalField(
@@ -61,10 +46,6 @@ class ContractInfoForm(NetBoxModelForm):
     start_date = forms.DateField(required=True, help_text="When this contract version starts")
 
     end_date = forms.DateField(required=False, help_text="When this contract version ends (optional)")
-
-    commitment_end_date = forms.DateField(
-        required=False, help_text="End of commitment period (defaults to end_date if not specified)"
-    )
 
     notes = forms.CharField(
         required=False, widget=forms.Textarea(attrs={"rows": 3}), help_text="Notes specific to this version"
@@ -129,17 +110,13 @@ class ContractInfoForm(NetBoxModelForm):
         fields = [
             "segments",
             "contract_number",
-            "effective_date",
-            "change_reason",
             "charge_currency",
             "non_recurring_charge",
-            "cumulative_notes",
             "recurring_charge",
             "recurring_charge_period",
             "number_of_recurring_charges",
             "start_date",
             "end_date",
-            "commitment_end_date",
             "notes",
         ]
 
@@ -150,8 +127,6 @@ class ContractInfoForm(NetBoxModelForm):
         ),
         FieldSet(
             "contract_number",
-            "effective_date",
-            "change_reason",
             name="Contract Metadata",
         ),
         FieldSet(
@@ -165,12 +140,10 @@ class ContractInfoForm(NetBoxModelForm):
         FieldSet(
             "start_date",
             "end_date",
-            "commitment_end_date",
             name="Dates",
         ),
         FieldSet(
             "notes",
-            "cumulative_notes",
             name="Notes",
         ),
     )
@@ -207,12 +180,6 @@ class ContractInfoFilterForm(NetBoxModelFilterSetForm):
     )
 
     # Date filters
-    effective_date = forms.DateField(
-        required=False,
-        label="Effective Date",
-        widget=forms.DateInput(attrs={"type": "date"})
-    )
-
     start_date = forms.DateField(
         required=False,
         label="Start Date",
@@ -222,12 +189,6 @@ class ContractInfoFilterForm(NetBoxModelFilterSetForm):
     end_date = forms.DateField(
         required=False,
         label="End Date",
-        widget=forms.DateInput(attrs={"type": "date"})
-    )
-
-    commitment_end_date = forms.DateField(
-        required=False,
-        label="Commitment End Date",
         widget=forms.DateInput(attrs={"type": "date"})
     )
 
@@ -284,10 +245,8 @@ class ContractInfoFilterForm(NetBoxModelFilterSetForm):
             name="Financial",
         ),
         FieldSet(
-            "effective_date",
             "start_date",
             "end_date",
-            "commitment_end_date",
             name="Dates",
         ),
         FieldSet(
