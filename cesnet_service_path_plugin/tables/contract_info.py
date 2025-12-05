@@ -13,14 +13,8 @@ class ContractInfoTable(NetBoxTable):
     contract_number = tables.Column(linkify=True)
 
     # Version chain relationships
-    previous_version = tables.Column(
-        linkify=True,
-        verbose_name="Previous Version"
-    )
-    superseded_by = tables.Column(
-        linkify=True,
-        verbose_name="Superseded By"
-    )
+    previous_version = tables.Column(linkify=True, verbose_name="Previous Version")
+    superseded_by = tables.Column(linkify=True, verbose_name="Superseded By")
 
     # Choice fields with colored badges
     contract_type = ChoiceFieldColumn()
@@ -81,7 +75,7 @@ class ContractInfoTable(NetBoxTable):
     # Segments count with link
     segments = tables.TemplateColumn(
         template_code="""
-            <span class="badge bg-secondary">{{ record.segments.count }}</span>
+            <span class="badge text-bg-secondary">{{ record.segments.count }}</span>
         """,
         verbose_name="Segments",
         orderable=False,
@@ -129,7 +123,6 @@ class ContractInfoTable(NetBoxTable):
             "version",
             "is_active",
             "contract_type",
-            "charge_currency",
             "recurring_charge",
             "total_contract_value",
             "start_date",

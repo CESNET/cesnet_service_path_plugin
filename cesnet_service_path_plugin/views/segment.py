@@ -83,7 +83,7 @@ def generate_circuit_creation_url(segment):
 
 @register_model_view(Segment)
 class SegmentView(generic.ObjectView):
-    queryset = Segment.objects.all()
+    queryset = Segment.objects.prefetch_related('contracts')
 
     def get_extra_context(self, request, instance):
         circuits = instance.circuits.all()
@@ -100,10 +100,84 @@ class SegmentView(generic.ObjectView):
         # Check if user has permission to view contract info
         has_contract_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_contractinfo")
 
-        # Try to get contract info if user has permission
-        contract_info = None
+        # Fetch contract info using M:N relationship
+        contracts = None
+        contract_chains = None
+        contract_info = None  # The contract to display in the left card
+        selected_contract_id = None
+
         if has_contract_view_perm:
-            contract_info = getattr(instance, "contract_info", None)
+            # Fetch all contracts related to this segment
+            all_contracts = instance.contracts.all().order_by('contract_number', '-id')
+
+            logger.debug(f"=== Contract Info Debug for Segment {instance.pk} ({instance.name}) ===")
+            logger.debug(f"Total contracts found: {all_contracts.count()}")
+
+            # Log each contract
+            for idx, contract in enumerate(all_contracts, 1):
+                logger.debug(f"  Contract {idx}:")
+                logger.debug(f"    - ID: {contract.pk}")
+                logger.debug(f"    - Contract Number: {contract.contract_number}")
+                logger.debug(f"    - Version: v{contract.version}")
+                logger.debug(f"    - Type: {contract.get_contract_type_display()}")
+                logger.debug(f"    - Is Active: {contract.is_active}")
+                logger.debug(f"    - Superseded By: {contract.superseded_by}")
+                logger.debug(f"    - Previous Version: {contract.previous_version}")
+                logger.debug(f"    - Recurring Charge: {contract.charge_currency} {contract.recurring_charge}")
+                logger.debug(f"    - Start Date: {contract.start_date}")
+                logger.debug(f"    - End Date: {contract.end_date}")
+
+            # Get only active (latest) contracts
+            active_contracts = all_contracts.filter(superseded_by__isnull=True)
+            logger.debug(f"Active contracts (not superseded): {active_contracts.count()}")
+
+            # Group by contract chain (by first version)
+            contract_chains_dict = {}
+            for contract in all_contracts:
+                first_version = contract.get_first_version()
+                if first_version.pk not in contract_chains_dict:
+                    latest = first_version.get_latest_version()
+                    version_history = first_version.get_version_history()
+
+                    contract_chains_dict[first_version.pk] = {
+                        'first': first_version,
+                        'latest': latest,
+                        'version_count': latest.version,
+                        'is_active': latest.is_active,
+                        'version_history': version_history,
+                    }
+
+                    logger.debug(f"  Contract Chain for '{first_version.contract_number}':")
+                    logger.debug(f"    - First Version ID: {first_version.pk}")
+                    logger.debug(f"    - Latest Version ID: {latest.pk}")
+                    logger.debug(f"    - Total Versions: {latest.version}")
+                    logger.debug(f"    - Chain is Active: {latest.is_active}")
+
+            contract_chains = list(contract_chains_dict.values())
+            contracts = active_contracts
+
+            logger.debug(f"Total contract chains: {len(contract_chains)}")
+            logger.debug("=== End Contract Info Debug ===")
+
+            # Check if a specific contract version is requested via URL parameter
+            contract_version_id = request.GET.get('contract_version')
+            if contract_version_id:
+                try:
+                    # Try to get the requested contract version
+                    requested_contract = all_contracts.get(pk=int(contract_version_id))
+                    contract_info = requested_contract
+                    selected_contract_id = requested_contract.pk
+                    logger.debug(f"Displaying requested contract version: {requested_contract.pk} (v{requested_contract.version})")
+                except (ValueError, all_contracts.model.DoesNotExist):
+                    logger.warning(f"Requested contract version {contract_version_id} not found or not related to this segment")
+                    # Fall back to default behavior
+                    if active_contracts.exists():
+                        contract_info = active_contracts.first()
+            else:
+                # Default behavior: show the first active contract
+                if active_contracts.exists():
+                    contract_info = active_contracts.first()
+                    selected_contract_id = contract_info.pk
 
         # Build topology data for visualization
         topologies = {}
@@ -121,7 +195,10 @@ class SegmentView(generic.ObjectView):
             "circuits_table": circuits_table,
             "service_paths_table": service_paths_table,
             "create_circuit_url": generate_circuit_creation_url(instance),
-            "contract_info": contract_info,
+            "contract_info": contract_info,  # Currently selected contract to display
+            "selected_contract_id": selected_contract_id,  # ID of the selected contract for highlighting
+            "contracts": contracts,  # All active contracts
+            "contract_chains": contract_chains,  # Grouped by contract chain
             "has_contract_view_perm": has_contract_view_perm,
             "has_contract_add_perm": request.user.has_perm("cesnet_service_path_plugin.add_contractinfo"),
             "has_contract_change_perm": request.user.has_perm("cesnet_service_path_plugin.change_contractinfo"),
