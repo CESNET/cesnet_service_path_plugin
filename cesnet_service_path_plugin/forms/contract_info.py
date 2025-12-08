@@ -2,6 +2,7 @@ from django import forms
 from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
 from utilities.forms.fields import DynamicModelMultipleChoiceField, TagFilterField
 from utilities.forms.rendering import FieldSet
+from utilities.forms.widgets import DatePicker
 
 from cesnet_service_path_plugin.models import Segment, ContractInfo
 from cesnet_service_path_plugin.models.custom_choices import (
@@ -43,17 +44,6 @@ class ContractInfoForm(NetBoxModelForm):
         required=False, min_value=0, help_text="Number of recurring charge periods (0 for no recurring charges)"
     )
 
-    start_date = forms.DateField(
-        required=False,
-        help_text="When this contract version starts (optional)",
-        widget=forms.DateInput(attrs={"type": "date"})
-    )
-
-    end_date = forms.DateField(
-        required=False,
-        help_text="When this contract version ends (optional)",
-        widget=forms.DateInput(attrs={"type": "date"})
-    )
 
     notes = forms.CharField(
         required=False, widget=forms.Textarea(attrs={"rows": 3}), help_text="Notes specific to this version"
@@ -63,14 +53,18 @@ class ContractInfoForm(NetBoxModelForm):
         super().__init__(*args, **kwargs)
 
         # Check if this is an amendment (has previous_version)
-        instance = kwargs.get('instance')
-        initial = kwargs.get('initial') or {}
+        instance = kwargs.get("instance")
+        initial = kwargs.get("initial") or {}
 
         # Check for previous_version in initial data (from clone URL)
-        has_previous_version_in_initial = 'previous_version' in initial and initial['previous_version']
-        has_previous_version_on_instance = instance and hasattr(instance, 'previous_version') and instance.previous_version
+        has_previous_version_in_initial = "previous_version" in initial and initial["previous_version"]
+        has_previous_version_on_instance = (
+            instance and hasattr(instance, "previous_version") and instance.previous_version
+        )
 
-        is_amendment = (instance and instance.pk is None) and (has_previous_version_in_initial or has_previous_version_on_instance)
+        is_amendment = (instance and instance.pk is None) and (
+            has_previous_version_in_initial or has_previous_version_on_instance
+        )
 
         # Store this flag for use in clean()
         self._is_amendment = is_amendment
@@ -81,7 +75,7 @@ class ContractInfoForm(NetBoxModelForm):
         elif has_previous_version_in_initial:
             # Get previous version from initial data
             try:
-                prev_id = initial['previous_version']
+                prev_id = initial["previous_version"]
                 if isinstance(prev_id, int) or (isinstance(prev_id, str) and prev_id.isdigit()):
                     self._previous_version = ContractInfo.objects.get(pk=int(prev_id))
                 else:
@@ -94,15 +88,17 @@ class ContractInfoForm(NetBoxModelForm):
         if is_amendment:
             # For amendments, make currency field disabled in the UI
             # Note: disabled fields don't submit values, but we handle this in clean_charge_currency()
-            self.fields['charge_currency'].disabled = True
-            self.fields['charge_currency'].help_text = "Currency cannot be changed in amendments (inherited from original contract)"
+            self.fields["charge_currency"].disabled = True
+            self.fields["charge_currency"].help_text = (
+                "Currency cannot be changed in amendments (inherited from original contract)"
+            )
 
     def clean_charge_currency(self):
         """
         For amendments, enforce that currency matches the previous version.
         This prevents the issue where disabled fields don't submit values.
         """
-        charge_currency = self.cleaned_data.get('charge_currency')
+        charge_currency = self.cleaned_data.get("charge_currency")
 
         # For amendments, always use the previous version's currency
         if self._is_amendment and self._previous_version:
@@ -143,6 +139,10 @@ class ContractInfoForm(NetBoxModelForm):
             "end_date",
             "notes",
         ]
+        widgets = {
+            "start_date": DatePicker(),
+            "end_date": DatePicker(),
+        }
 
     fieldsets = (
         FieldSet(
@@ -155,11 +155,14 @@ class ContractInfoForm(NetBoxModelForm):
         ),
         FieldSet(
             "charge_currency",
+            "non_recurring_charge",
+            name="Charges",
+        ),
+        FieldSet(
             "recurring_charge",
             "recurring_charge_period",
             "number_of_recurring_charges",
-            "non_recurring_charge",
-            name="Charges",
+            name="Recurring Charges",
         ),
         FieldSet(
             "start_date",
@@ -179,42 +182,21 @@ class ContractInfoFilterForm(NetBoxModelFilterSetForm):
     model = ContractInfo
 
     # Text search (inherited from base, just needs to be defined)
-    contract_number = forms.CharField(
-        required=False,
-        label="Contract Number"
-    )
+    contract_number = forms.CharField(required=False, label="Contract Number")
 
-    contract_type = forms.MultipleChoiceField(
-        required=False,
-        choices=ContractTypeChoices,
-        label="Contract Type"
-    )
+    contract_type = forms.MultipleChoiceField(required=False, choices=ContractTypeChoices, label="Contract Type")
 
     # Financial filters
-    charge_currency = forms.MultipleChoiceField(
-        required=False,
-        choices=CurrencyChoices,
-        label="Currency"
-    )
+    charge_currency = forms.MultipleChoiceField(required=False, choices=CurrencyChoices, label="Currency")
 
     recurring_charge_period = forms.MultipleChoiceField(
-        required=False,
-        choices=RecurringChargePeriodChoices,
-        label="Recurring Charge Period"
+        required=False, choices=RecurringChargePeriodChoices, label="Recurring Charge Period"
     )
 
     # Date filters
-    start_date = forms.DateField(
-        required=False,
-        label="Start Date",
-        widget=forms.DateInput(attrs={"type": "date"})
-    )
+    start_date = forms.DateField(required=False, label="Start Date", widget=forms.DateInput(attrs={"type": "date"}))
 
-    end_date = forms.DateField(
-        required=False,
-        label="End Date",
-        widget=forms.DateInput(attrs={"type": "date"})
-    )
+    end_date = forms.DateField(required=False, label="End Date", widget=forms.DateInput(attrs={"type": "date"}))
 
     # Version chain filters
     is_active = forms.NullBooleanField(
@@ -227,7 +209,7 @@ class ContractInfoFilterForm(NetBoxModelFilterSetForm):
                 ("true", "Active"),
                 ("false", "Superseded"),
             ]
-        )
+        ),
     )
 
     has_previous_version = forms.NullBooleanField(
@@ -240,15 +222,12 @@ class ContractInfoFilterForm(NetBoxModelFilterSetForm):
                 ("true", "Has Previous Version"),
                 ("false", "First Version (v1)"),
             ]
-        )
+        ),
     )
 
     # Segments filter
     segments = DynamicModelMultipleChoiceField(
-        queryset=Segment.objects.all(),
-        required=False,
-        label="Segments",
-        help_text="Filter by associated segments"
+        queryset=Segment.objects.all(), required=False, label="Segments", help_text="Filter by associated segments"
     )
 
     # Tags filter
