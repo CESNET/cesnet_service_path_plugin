@@ -67,10 +67,39 @@ class ContractInfoForm(NetBoxModelForm):
         # Store this flag for use in clean()
         self._is_amendment = is_amendment
 
+        # Store the previous version for currency validation
+        if has_previous_version_on_instance:
+            self._previous_version = instance.previous_version
+        elif has_previous_version_in_initial:
+            # Get previous version from initial data
+            try:
+                prev_id = initial['previous_version']
+                if isinstance(prev_id, int) or (isinstance(prev_id, str) and prev_id.isdigit()):
+                    self._previous_version = ContractInfo.objects.get(pk=int(prev_id))
+                else:
+                    self._previous_version = None
+            except (ContractInfo.DoesNotExist, ValueError, KeyError):
+                self._previous_version = None
+        else:
+            self._previous_version = None
+
         if is_amendment:
-            # For amendments, make currency read-only
-            self.fields['charge_currency'].disabled = True
+            # For amendments, make currency read-only in the UI
+            self.fields['charge_currency'].widget.attrs['readonly'] = True
             self.fields['charge_currency'].help_text = "Currency cannot be changed in amendments (inherited from original contract)"
+
+    def clean_charge_currency(self):
+        """
+        For amendments, enforce that currency matches the previous version.
+        This prevents the issue where disabled fields don't submit values.
+        """
+        charge_currency = self.cleaned_data.get('charge_currency')
+
+        # For amendments, always use the previous version's currency
+        if self._is_amendment and self._previous_version:
+            return self._previous_version.charge_currency
+
+        return charge_currency
 
     def clean(self):
         """

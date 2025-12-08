@@ -1,4 +1,3 @@
-from django.shortcuts import redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from netbox.views import generic
 from utilities.views import register_model_view
@@ -15,6 +14,7 @@ class CloneActiveContractOnly(BaseCloneObject):
     Custom clone action that only allows cloning of active (non-superseded) contract versions.
     This prevents database integrity errors from attempting to clone older versions.
     """
+
     @classmethod
     def get_url(cls, obj):
         # Only allow cloning if the contract is active (not superseded)
@@ -26,6 +26,7 @@ class CloneActiveContractOnly(BaseCloneObject):
 @register_model_view(ContractInfo, "list", path="", detail=False)
 class ContractInfoListView(generic.ObjectListView):
     """List view for ContractInfo objects with filtering and search"""
+
     queryset = ContractInfo.objects.all()
     table = ContractInfoTable
     filterset = ContractInfoFilterSet
@@ -35,7 +36,8 @@ class ContractInfoListView(generic.ObjectListView):
 @register_model_view(ContractInfo)
 class ContractInfoView(generic.ObjectView):
     """Detail view for ContractInfo with version history and financial summary"""
-    queryset = ContractInfo.objects.prefetch_related('segments')
+
+    queryset = ContractInfo.objects.prefetch_related("segments")
     actions = (CloneActiveContractOnly, EditObject, DeleteObject)
 
     def get_extra_context(self, request, instance):
@@ -48,13 +50,15 @@ class ContractInfoView(generic.ObjectView):
         # Get related segments
         segments = instance.segments.all()
 
-        context.update({
-            'version_history': version_history,
-            'segments': segments,
-            'is_latest_version': instance.is_latest_version(),
-            'first_version': instance.get_first_version(),
-            'latest_version': instance.get_latest_version(),
-        })
+        context.update(
+            {
+                "version_history": version_history,
+                "segments": segments,
+                "is_latest_version": instance.is_latest_version(),
+                "first_version": instance.get_first_version(),
+                "latest_version": instance.get_latest_version(),
+            }
+        )
 
         return context
 
@@ -71,7 +75,7 @@ class ContractInfoEditView(generic.ObjectEditView):
         Handle previous_version from clone URL.
         """
         # Check if previous_version is in the GET/POST parameters (from clone)
-        previous_version_ref = request.GET.get('previous_version') or request.POST.get('previous_version')
+        previous_version_ref = request.GET.get("previous_version") or request.POST.get("previous_version")
 
         if previous_version_ref and not obj.pk:  # Only for new objects
             try:
