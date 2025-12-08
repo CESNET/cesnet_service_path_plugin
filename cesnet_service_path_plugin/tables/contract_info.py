@@ -122,6 +122,21 @@ class ContractInfoTable(NetBoxTable):
         attrs={"td": {"class": "text-end"}},
     )
 
+    # Actions column with custom "New Version" button for active contracts
+    actions = columns.ActionsColumn(
+        extra_buttons="""
+        {% load helpers %}
+        {% if record.is_active and perms.cesnet_service_path_plugin.add_contractinfo %}
+            {% action_url record 'add' as clone_url %}
+            <a href="{{ clone_url }}?previous_version={{ record.pk }}&contract_number={{ record.contract_number|urlencode }}&charge_currency={{ record.charge_currency }}&recurring_charge={{ record.recurring_charge }}&recurring_charge_period={{ record.recurring_charge_period }}&number_of_recurring_charges={{ record.number_of_recurring_charges }}&non_recurring_charge={{ record.non_recurring_charge }}{% if record.start_date %}&start_date={{ record.start_date|date:'Y-m-d' }}{% endif %}{% if record.end_date %}&end_date={{ record.end_date|date:'Y-m-d' }}{% endif %}{% if record.notes %}&notes={{ record.notes|urlencode }}{% endif %}{% for segment in record.segments.all %}&segments={{ segment.pk }}{% endfor %}"
+               title="Create New Version"
+               class="btn btn-sm btn-success">
+                <i class="mdi mdi-content-copy" aria-hidden="true"></i>
+            </a>
+        {% endif %}
+        """
+    )
+
     class Meta(NetBoxTable.Meta):
         model = ContractInfo
         fields = (
