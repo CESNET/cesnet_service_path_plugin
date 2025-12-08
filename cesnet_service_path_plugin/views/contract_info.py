@@ -14,6 +14,8 @@ class CloneActiveContractOnly(BaseCloneObject):
     Custom clone action that only allows cloning of active (non-superseded) contract versions.
     This prevents database integrity errors from attempting to clone older versions.
     """
+    label = 'New Version'
+    template_name = 'buttons/clone_custom.html'
 
     @classmethod
     def get_url(cls, obj):

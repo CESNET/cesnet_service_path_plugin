@@ -188,7 +188,7 @@
                                 <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?contract_number={{ contract_info.contract_number|urlencode }}&charge_currency={{ contract_info.charge_currency|urlencode }}&non_recurring_charge={{ contract_info.non_recurring_charge }}&recurring_charge={{ contract_info.recurring_charge }}&recurring_charge_period={{ contract_info.recurring_charge_period|urlencode }}&number_of_recurring_charges={{ contract_info.number_of_recurring_charges }}&start_date={{ contract_info.start_date|date:'Y-m-d' }}&end_date={{ contract_info.end_date|date:'Y-m-d' }}&notes={{ contract_info.notes|urlencode }}&segments={{ object.pk }}&previous_version={{ contract_info.pk }}&contract_type=amendment&return_url={{ request.path|urlencode }}"
                                    class="btn btn-outline-success btn-sm"
                                    title="Clone to create new version">
-                                    <i class="mdi mdi-content-copy" aria-hidden="true"></i> Clone
+                                    <i class="mdi mdi-content-copy" aria-hidden="true"></i> New Version
                                 </a>
                             {% endif %}
                         </div>
