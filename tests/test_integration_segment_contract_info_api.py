@@ -306,7 +306,7 @@ def test_computed_financial_fields(versioned_contract_chain):
     # Check computed fields
     assert "total_recurring_cost" in data
     assert "total_contract_value" in data
-    assert "recurring_charge_end_date" in data
+    assert "commitment_end_date" in data
 
     # Validate calculations
     recurring_charge = float(data["recurring_charge"])

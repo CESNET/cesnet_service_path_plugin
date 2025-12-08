@@ -2,11 +2,25 @@ from django.shortcuts import redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from netbox.views import generic
 from utilities.views import register_model_view
+from netbox.object_actions import CloneObject as BaseCloneObject, EditObject, DeleteObject
 
 from cesnet_service_path_plugin.filtersets import ContractInfoFilterSet
 from cesnet_service_path_plugin.forms import ContractInfoForm, ContractInfoFilterForm
 from cesnet_service_path_plugin.models import ContractInfo
 from cesnet_service_path_plugin.tables import ContractInfoTable
+
+
+class CloneActiveContractOnly(BaseCloneObject):
+    """
+    Custom clone action that only allows cloning of active (non-superseded) contract versions.
+    This prevents database integrity errors from attempting to clone older versions.
+    """
+    @classmethod
+    def get_url(cls, obj):
+        # Only allow cloning if the contract is active (not superseded)
+        if not obj.is_active:
+            return None
+        return super().get_url(obj)
 
 
 @register_model_view(ContractInfo, "list", path="", detail=False)
@@ -22,6 +36,7 @@ class ContractInfoListView(generic.ObjectListView):
 class ContractInfoView(generic.ObjectView):
     """Detail view for ContractInfo with version history and financial summary"""
     queryset = ContractInfo.objects.prefetch_related('segments')
+    actions = (CloneActiveContractOnly, EditObject, DeleteObject)
 
     def get_extra_context(self, request, instance):
         """Add version history and related segments to context"""

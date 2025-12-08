@@ -83,7 +83,35 @@ class ContractInfoTable(NetBoxTable):
 
     # Date fields
     start_date = tables.DateColumn(format="Y-m-d")
-    end_date = tables.DateColumn(format="Y-m-d")
+
+    end_date = tables.TemplateColumn(
+        template_code="""
+            {% if record.end_date %}
+                <span class="badge text-bg-{{ record.get_end_date_color }}"
+                      title="{{ record.get_end_date_tooltip }}">
+                    {{ record.end_date }}
+                </span>
+            {% else %}
+                <span class="text-muted">—</span>
+            {% endif %}
+        """,
+        verbose_name="End Date",
+    )
+
+    commitment_end_date = tables.TemplateColumn(
+        template_code="""
+            {% if record.commitment_end_date %}
+                <span class="badge text-bg-{{ record.get_commitment_end_date_color }}"
+                      title="{{ record.get_commitment_end_date_tooltip }}">
+                    {{ record.commitment_end_date }}
+                </span>
+            {% else %}
+                <span class="text-muted">—</span>
+            {% endif %}
+        """,
+        verbose_name="Commitment End Date",
+        orderable=False,
+    )
 
     # Text fields
     notes = tables.Column()
@@ -111,6 +139,7 @@ class ContractInfoTable(NetBoxTable):
             "total_contract_value",
             "start_date",
             "end_date",
+            "commitment_end_date",
             "segments",
             "previous_version",
             "superseded_by",
@@ -127,5 +156,6 @@ class ContractInfoTable(NetBoxTable):
             "total_contract_value",
             "start_date",
             "end_date",
+            "commitment_end_date",
             "segments",
         )

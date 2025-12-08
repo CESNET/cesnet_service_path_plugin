@@ -103,12 +103,26 @@
                         </tr>
                         <tr>
                             <th scope="row">End Date</th>
-                            <td>{{ object.end_date|placeholder }}</td>
+                            <td>
+                                {% if object.end_date %}
+                                    <span class="badge text-bg-{{ object.get_end_date_color }}"
+                                          title="{{ object.get_end_date_tooltip }}">
+                                        {{ object.end_date }}
+                                    </span>
+                                {% else %}
+                                    {{ ''|placeholder }}
+                                {% endif %}
+                            </td>
                         </tr>
-                        {% if object.recurring_charge_end_date %}
+                        {% if object.commitment_end_date %}
                         <tr>
-                            <th scope="row">Recurring Charges End</th>
-                            <td>{{ object.recurring_charge_end_date }}</td>
+                            <th scope="row">Commitment End Date</th>
+                            <td>
+                                <span class="badge text-bg-{{ object.get_commitment_end_date_color }}"
+                                      title="{{ object.get_commitment_end_date_tooltip }}">
+                                    {{ object.commitment_end_date }}
+                                </span>
+                            </td>
                         </tr>
                         {% endif %}
                     </table>

@@ -176,7 +176,7 @@
                             <a href="{{ contract_info.get_absolute_url }}"
                                class="btn btn-outline-primary btn-sm"
                                title="View full contract details">
-                                <i class="mdi mdi-eye" aria-hidden="true"></i> View
+                                <i class="mdi mdi-eye" aria-hidden="true"></i> Detail View
                             </a>
                             {% if has_contract_change_perm %}
                                 <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_edit' pk=contract_info.pk %}"
@@ -184,7 +184,7 @@
                                     <i class="mdi mdi-pencil" aria-hidden="true"></i> Edit
                                 </a>
                             {% endif %}
-                            {% if has_contract_add_perm %}
+                            {% if has_contract_add_perm and contract_info.is_active %}
                                 <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?contract_number={{ contract_info.contract_number|urlencode }}&charge_currency={{ contract_info.charge_currency|urlencode }}&non_recurring_charge={{ contract_info.non_recurring_charge }}&recurring_charge={{ contract_info.recurring_charge }}&recurring_charge_period={{ contract_info.recurring_charge_period|urlencode }}&number_of_recurring_charges={{ contract_info.number_of_recurring_charges }}&start_date={{ contract_info.start_date|date:'Y-m-d' }}&end_date={{ contract_info.end_date|date:'Y-m-d' }}&notes={{ contract_info.notes|urlencode }}&segments={{ object.pk }}&previous_version={{ contract_info.pk }}&contract_type=amendment&return_url={{ request.path|urlencode }}"
                                    class="btn btn-outline-success btn-sm"
                                    title="Clone to create new version">
@@ -277,12 +277,26 @@
                             </tr>
                             <tr>
                                 <th scope="row">End Date</th>
-                                <td>{{ contract_info.end_date|placeholder }}</td>
+                                <td>
+                                    {% if contract_info.end_date %}
+                                        <span class="badge text-bg-{{ contract_info.get_end_date_color }}"
+                                              title="{{ contract_info.get_end_date_tooltip }}">
+                                            {{ contract_info.end_date }}
+                                        </span>
+                                    {% else %}
+                                        {{ ''|placeholder }}
+                                    {% endif %}
+                                </td>
                             </tr>
-                            {% if contract_info.recurring_charge_end_date %}
+                            {% if contract_info.commitment_end_date %}
                                 <tr>
-                                    <th scope="row">Recurring Charges End</th>
-                                    <td>{{ contract_info.recurring_charge_end_date }}</td>
+                                    <th scope="row">Commitment End Date</th>
+                                    <td>
+                                        <span class="badge text-bg-{{ contract_info.get_commitment_end_date_color }}"
+                                              title="{{ contract_info.get_commitment_end_date_tooltip }}">
+                                            {{ contract_info.commitment_end_date }}
+                                        </span>
+                                    </td>
                                 </tr>
                             {% endif %}
                             {% if contract_info.notes %}

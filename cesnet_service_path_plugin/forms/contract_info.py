@@ -78,6 +78,17 @@ class ContractInfoForm(NetBoxModelForm):
         All fields are optional to allow creating contract stubs.
         """
         cleaned_data = super().clean()
+
+        # Prevent cloning of non-active (superseded) contracts
+        # This can happen if a user manually manipulates the URL
+        if self.instance.pk is None:  # Only for new instances (create/clone)
+            previous_version = self.instance.previous_version
+            if previous_version and not previous_version.is_active:
+                raise forms.ValidationError(
+                    "Cannot create a new version from a superseded contract. "
+                    f"Please clone from the active version (v{previous_version.get_latest_version().version}) instead."
+                )
+
         return cleaned_data
 
     class Meta:

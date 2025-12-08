@@ -117,16 +117,16 @@ class ContractInfo(NetBoxModel):
     # CLONING CONFIGURATION
     # ========================================================================
     clone_fields = [
-        'contract_number',
-        'charge_currency',
-        'non_recurring_charge',
-        'recurring_charge',
-        'recurring_charge_period',
-        'number_of_recurring_charges',
-        'start_date',
-        'end_date',
-        'notes',
-        'segments',
+        "contract_number",
+        "charge_currency",
+        "non_recurring_charge",
+        "recurring_charge",
+        "recurring_charge_period",
+        "number_of_recurring_charges",
+        "start_date",
+        "end_date",
+        "notes",
+        "segments",
     ]
 
     class Meta:
@@ -205,9 +205,9 @@ class ContractInfo(NetBoxModel):
     # COMPUTED FINANCIAL PROPERTIES
     # ========================================================================
     @property
-    def recurring_charge_end_date(self):
+    def commitment_end_date(self):
         """
-        Calculate when recurring charges end based on:
+        Calculate when the commitment period ends based on:
         start_date + (recurring_charge_period × number_of_recurring_charges)
         """
         if not all([self.start_date, self.recurring_charge_period, self.number_of_recurring_charges]):
@@ -345,6 +345,76 @@ class ContractInfo(NetBoxModel):
                 color = "info"
 
             return {"color": color, "status": "In commitment", "days": days_remaining}
+
+    def get_end_date_color(self):
+        """
+        Color code the contract end date based on proximity to current date.
+        Red - 30+ days to the end
+        Orange - within 30 days
+        Green - the end date already passed
+        Gray - no end date set.
+        """
+        if not self.end_date:
+            return "secondary"
+
+        today = timezone.now().date()
+        end_date = self.end_date
+
+        if end_date < today:
+            return "success"
+        elif (end_date - today).days <= 30:
+            return "warning"
+        else:
+            return "danger"
+
+    def get_end_date_tooltip(self):
+        """Generate tooltip text for contract end date."""
+        if not self.end_date:
+            return "No contract end date set."
+
+        end_date = self.end_date
+        today = timezone.now().date()
+
+        if end_date < today:
+            return f"Contract ended on {end_date}."
+        else:
+            days_remaining = (end_date - today).days
+            return f"Contract ends on {end_date} ({days_remaining} days remaining)."
+
+    def get_commitment_end_date_color(self):
+        """
+        Color code the commitment end date based on proximity to current date.
+        Red - 30+ days to the end
+        Orange - within 30 days
+        Green - the commitment already passed
+        Gray - no commitment period calculated.
+        """
+        if not self.commitment_end_date:
+            return "secondary"
+
+        today = timezone.now().date()
+        commitment_date = self.commitment_end_date
+
+        if commitment_date < today:
+            return "success"
+        elif (commitment_date - today).days <= 30:
+            return "warning"
+        else:
+            return "danger"
+
+    def get_commitment_end_date_tooltip(self):
+        """Generate tooltip text for commitment end date (based on recurring charges)."""
+        if not self.commitment_end_date:
+            return "No commitment period calculated (insufficient payment schedule data)."
+
+        commitment_date = self.commitment_end_date
+        today = timezone.now().date()
+
+        if commitment_date < today:
+            return f"Commitment period ended on {commitment_date}."
+        else:
+            days_remaining = (commitment_date - today).days
+            return f"Commitment period ends on {commitment_date} ({days_remaining} days remaining)."
 
 
 class ContractSegmentMapping(models.Model):

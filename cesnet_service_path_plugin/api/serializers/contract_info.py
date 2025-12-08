@@ -42,7 +42,7 @@ class ContractInfoSerializer(NetBoxModelSerializer):
     # Read-only computed fields
     total_recurring_cost = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_contract_value = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    recurring_charge_end_date = serializers.DateField(read_only=True)
+    commitment_end_date = serializers.DateField(read_only=True)
 
     class Meta:
         model = ContractInfo
@@ -74,7 +74,7 @@ class ContractInfoSerializer(NetBoxModelSerializer):
             # Computed
             "total_recurring_cost",
             "total_contract_value",
-            "recurring_charge_end_date",
+            "commitment_end_date",
             # NetBox standard
             "created",
             "last_updated",
