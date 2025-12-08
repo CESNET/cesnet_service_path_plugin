@@ -242,7 +242,7 @@
                             <tr>
                                 <th scope="row">Recurring Charge</th>
                                 <td class="text-end">
-                                    <strong>{{ contract_info.charge_currency }} {{ contract_info.recurring_charge|floatformat:2 }}</strong>
+                                    <strong>{{ contract_info.charge_currency }} {{ contract_info.recurring_charge|floatformat:2|spacecomma }}</strong>
                                 </td>
                             </tr>
                             <tr>
@@ -256,19 +256,19 @@
                             <tr>
                                 <th scope="row">Total Recurring Cost</th>
                                 <td class="text-end">
-                                    <strong>{{ contract_info.charge_currency }} {{ contract_info.total_recurring_cost|floatformat:2 }}</strong>
+                                    <strong>{{ contract_info.charge_currency }} {{ contract_info.total_recurring_cost|floatformat:2|spacecomma }}</strong>
                                 </td>
                             </tr>
                             {% if contract_info.non_recurring_charge %}
                                 <tr>
                                     <th scope="row">Non-Recurring Charge</th>
-                                    <td class="text-end">{{ contract_info.charge_currency }} {{ contract_info.non_recurring_charge|floatformat:2 }}</td>
+                                    <td class="text-end">{{ contract_info.charge_currency }} {{ contract_info.non_recurring_charge|floatformat:2|spacecomma }}</td>
                                 </tr>
                             {% endif %}
                             <tr class="table-active">
                                 <th scope="row">Total Contract Value</th>
                                 <td class="text-end">
-                                    <strong>{{ contract_info.charge_currency }} {{ contract_info.total_contract_value|floatformat:2 }}</strong>
+                                    <strong>{{ contract_info.charge_currency }} {{ contract_info.total_contract_value|floatformat:2|spacecomma }}</strong>
                                 </td>
                             </tr>
                             <tr>

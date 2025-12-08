@@ -1,6 +1,7 @@
 {% extends 'generic/object.html' %}
 {% load helpers %}
 {% load plugins %}
+{% load custom_filters %}
 {% load render_table from django_tables2 %}
 
 {% block content %}
@@ -54,7 +55,7 @@
                         </tr>
                         <tr>
                             <th scope="row">Recurring Charge</th>
-                            <td class="text-end">{{ object.charge_currency }} {{ object.recurring_charge|floatformat:2 }}</td>
+                            <td class="text-end">{{ object.charge_currency }} {{ object.recurring_charge|floatformat:2|spacecomma }}</td>
                         </tr>
                         <tr>
                             <th scope="row">Recurring Period</th>
@@ -70,23 +71,23 @@
                         </tr>
                         <tr>
                             <th scope="row">Total Recurring Cost</th>
-                            <td class="text-end"><strong>{{ object.charge_currency }} {{ object.total_recurring_cost|floatformat:2 }}</strong></td>
+                            <td class="text-end"><strong>{{ object.charge_currency }} {{ object.total_recurring_cost|floatformat:2|spacecomma }}</strong></td>
                         </tr>
                         {% if object.non_recurring_charge %}
                         <tr>
                             <th scope="row">Non-Recurring Charge</th>
-                            <td class="text-end">{{ object.charge_currency }} {{ object.non_recurring_charge|floatformat:2 }}</td>
+                            <td class="text-end">{{ object.charge_currency }} {{ object.non_recurring_charge|floatformat:2|spacecomma }}</td>
                         </tr>
                         {% endif %}
                         {% if object.total_cumulative_non_recurring %}
                         <tr>
                             <th scope="row">Cumulative Non-Recurring</th>
-                            <td class="text-end"><em>{{ object.charge_currency }} {{ object.total_cumulative_non_recurring|floatformat:2 }}</em></td>
+                            <td class="text-end"><em>{{ object.charge_currency }} {{ object.total_cumulative_non_recurring|floatformat:2|spacecomma }}</em></td>
                         </tr>
                         {% endif %}
                         <tr class="table-active">
                             <th scope="row">Total Contract Value</th>
-                            <td class="text-end"><strong>{{ object.charge_currency }} {{ object.total_contract_value|floatformat:2 }}</strong></td>
+                            <td class="text-end"><strong>{{ object.charge_currency }} {{ object.total_contract_value|floatformat:2|spacecomma }}</strong></td>
                         </tr>
                     </table>
                 </div>
