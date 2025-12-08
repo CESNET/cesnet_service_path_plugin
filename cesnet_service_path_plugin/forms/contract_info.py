@@ -92,8 +92,9 @@ class ContractInfoForm(NetBoxModelForm):
             self._previous_version = None
 
         if is_amendment:
-            # For amendments, make currency read-only in the UI
-            self.fields['charge_currency'].widget.attrs['readonly'] = True
+            # For amendments, make currency field disabled in the UI
+            # Note: disabled fields don't submit values, but we handle this in clean_charge_currency()
+            self.fields['charge_currency'].disabled = True
             self.fields['charge_currency'].help_text = "Currency cannot be changed in amendments (inherited from original contract)"
 
     def clean_charge_currency(self):
