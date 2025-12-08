@@ -5,6 +5,139 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2025-12-08
+
+### Added
+
+- **Contract Information Management System**: Complete replacement of SegmentFinancialInfo with ContractInfo
+  - Versioned contract system with linear version chains (similar to Git commits)
+  - Support for contract amendments and renewals through NetBox clone functionality
+  - Many-to-many relationship between contracts and segments (one contract can cover multiple segments)
+  - Contract metadata tracking: contract number, type (new/amendment/renewal), effective dates
+  - Enhanced recurring charge tracking with configurable periods (monthly, quarterly, annually, etc.)
+  - Commitment end date calculation and tracking with visual indicators
+  - Cumulative notes system preserving history across contract versions
+  - Contract version history visualization in UI
+
+- **Contract Versioning Features**:
+  - Linear version chain using linked list pattern (previous_version/superseded_by)
+  - Automatic version numbering (v1, v2, v3...)
+  - Version navigation: get first version, latest version, full version history
+  - Active/superseded contract status tracking
+  - Clone functionality for creating amendments and renewals
+
+- **Contract Financial Tracking**:
+  - Recurring charges with customizable periods (monthly, quarterly, semi-annually, annually, bi-annually)
+  - Number of recurring charge periods tracking
+  - Non-recurring charges for setup/installation fees
+  - Multi-currency support with immutable currency (set at contract creation)
+  - Automatic financial calculations:
+    - Total recurring cost (recurring charge × number of periods)
+    - Total contract value (recurring + non-recurring charges)
+    - Commitment end date (start date + recurring periods)
+
+- **Contract UI Components**:
+  - ContractInfo list view with advanced filtering
+  - Contract detail view with version history timeline
+  - Color-coded date badges for contract status (green/orange/red/gray)
+  - Interactive tooltips showing days remaining and contract status
+  - Version chain visualization showing contract evolution
+  - Financial summary panel with all calculations
+  - Navigation menu integration
+
+- **Contract API Enhancements**:
+  - New `/api/plugins/cesnet-service-path-plugin/contract-info/` endpoint
+  - Support for versioning fields in API:
+    - `previous_version`: Link to previous contract version
+    - `superseded_by`: Link to superseding contract version
+    - `is_active`: Boolean indicating if contract is current version
+    - `version`: Calculated version number
+  - Computed financial fields in API responses
+  - Advanced filtering: by active status, version status, contract type, currency, dates
+
+- **Segment View Enhancements**:
+  - M:N contract relationship support in segment detail view
+  - Display all contracts associated with a segment
+  - Color-coded contract status indicators
+  - Contract end date and commitment end date visualization
+
+- **GraphQL Support**:
+  - Updated GraphQL schema for ContractInfo model
+  - Support for querying contract versions and relationships
+  - Financial calculations available in GraphQL queries
+
+### Changed
+
+- **Breaking**: Replaced SegmentFinancialInfo model with ContractInfo model
+  - Changed from 1:1 segment-financial relationship to M:N segment-contract relationship
+  - Financial information now managed through contracts rather than directly on segments
+  - API endpoint changed from `/segment-financial-info/` to `/contract-info/`
+
+- **Database Schema**:
+  - Removed SegmentFinancialInfo table
+  - Added ContractInfo table with versioning support
+  - Added ContractSegmentMapping join table for M:N relationships
+  - Migration automatically converts existing financial data to contracts
+
+- **Financial Field Changes**:
+  - Renamed `monthly_charge` to `recurring_charge` with configurable period
+  - Added `recurring_charge_period` field (monthly, quarterly, annually, etc.)
+  - Renamed `commitment_period_months` to `number_of_recurring_charges`
+  - Renamed `recurring_charge_end_date` to `commitment_end_date` for clarity
+  - Made recurring charge fields nullable to support amendments without recurring charges
+
+- **Model Improvements**:
+  - Currency is now immutable after contract creation (cannot be changed in amendments)
+  - All contract attributes can be updated through versioning (except currency)
+  - Enhanced clone functionality for proper M2M relationship handling
+  - Improved date calculations and validations
+
+- **Color-Coded Date Visualization**:
+  - Contract end dates now show color-coded status badges
+  - Commitment end dates display with visual indicators:
+    - Green: Date has passed
+    - Orange: Within 30 days of expiration
+    - Red: More than 30 days remaining
+    - Gray: Date not set
+  - Interactive tooltips showing exact dates and days remaining
+
+### Removed
+
+- **Breaking**: SegmentFinancialInfo model and related components
+  - Removed `/api/plugins/cesnet-service-path-plugin/segment-financial-info/` endpoint
+  - Removed SegmentFinancialInfo views, forms, tables, and serializers
+  - Removed direct financial relationship from segments
+
+### Fixed
+
+- Improved decimal handling in financial calculations
+- Enhanced date validation for contract periods
+- Better error handling for version chain operations
+- Fixed M2M relationship serialization in API responses
+
+### Migration Notes
+
+- **Database Migration Required**: Migration 0033 automatically converts SegmentFinancialInfo to ContractInfo
+- **Data Preservation**: All existing financial data is preserved during migration:
+  - Monthly charges → recurring charges (monthly period)
+  - Commitment period months → number of recurring charges
+  - Segment install/termination dates → contract start/end dates
+  - Notes and tags are fully preserved
+  - Created/updated timestamps are maintained
+- **API Breaking Change**: Update API clients to use `/contract-info/` endpoint instead of `/segment-financial-info/`
+- **Permission Updates**: New permissions for ContractInfo (view, add, change, delete)
+- **M:N Relationships**: Segments can now be associated with multiple contracts
+- **Versioning Workflow**: Use NetBox clone functionality to create contract amendments
+
+### Upgrade Instructions
+
+1. **Backup your database** before upgrading (important for any major version)
+2. Update the plugin: `pip install --upgrade cesnet_service_path_plugin`
+3. Run migrations: `python manage.py migrate cesnet_service_path_plugin`
+4. Update API integrations to use new `/contract-info/` endpoint
+5. Review and update user permissions for ContractInfo model
+6. Test contract creation and amendment workflow in UI
+
 ## [5.3.0] - 2025-11-19
 
 ### Added
