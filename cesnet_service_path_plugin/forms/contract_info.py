@@ -43,9 +43,17 @@ class ContractInfoForm(NetBoxModelForm):
         required=False, min_value=0, help_text="Number of recurring charge periods (0 for no recurring charges)"
     )
 
-    start_date = forms.DateField(required=False, help_text="When this contract version starts (optional)")
+    start_date = forms.DateField(
+        required=False,
+        help_text="When this contract version starts (optional)",
+        widget=forms.DateInput(attrs={"type": "date"})
+    )
 
-    end_date = forms.DateField(required=False, help_text="When this contract version ends (optional)")
+    end_date = forms.DateField(
+        required=False,
+        help_text="When this contract version ends (optional)",
+        widget=forms.DateInput(attrs={"type": "date"})
+    )
 
     notes = forms.CharField(
         required=False, widget=forms.Textarea(attrs={"rows": 3}), help_text="Notes specific to this version"
