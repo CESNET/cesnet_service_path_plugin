@@ -119,7 +119,6 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Automatic cost calculations**:
   - Total recurring cost (recurring charge × number of periods)
   - Total contract value (recurring + non-recurring charges)
-- **Cumulative notes system** preserving history across contract versions
 - **Permission-based access control** - contract data visible only to authorized users
 - **Full REST API and GraphQL support** with versioning fields
 - **Advanced filtering**: by active status, contract type, currency, dates
@@ -170,7 +169,6 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Multi-currency support** with immutable currency (set at contract creation)
 - **Start and end dates** for contract validity period
 - **Commitment end date** automatic calculation
-- **Cumulative notes** preserving history across versions
 - **Many-to-many segment relationships** via ContractSegmentMapping
 - **Automatic version numbering** and history tracking
 - **Permission-based visibility**
@@ -585,7 +583,6 @@ Contract detail pages show:
 - **Segment relationships**: All segments covered by this contract
 - **Financial summary**: All charges and automatic calculations
 - **Date visualization**: Color-coded badges for contract and commitment end dates
-- **Cumulative notes**: History of all notes from previous versions
 
 Segments detail pages show:
 - All contracts associated with the segment
@@ -684,8 +681,7 @@ Contract API responses include versioning and financial fields:
   "commitment_end_date": "2028-01-01",
   "total_recurring_cost": "36000.00",
   "total_contract_value": "41000.00",
-  "notes": "Price adjustment",
-  "cumulative_notes": "v1: Initial contract\nv2: Price adjustment"
+  "notes": "Price adjustment"
 }
 ```
 

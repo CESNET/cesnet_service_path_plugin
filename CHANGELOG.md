@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Contract metadata tracking: contract number, type (new/amendment/renewal), effective dates
   - Enhanced recurring charge tracking with configurable periods (monthly, quarterly, annually, etc.)
   - Commitment end date calculation and tracking with visual indicators
-  - Cumulative notes system preserving history across contract versions
   - Contract version history visualization in UI
 
 - **Contract Versioning Features**:
