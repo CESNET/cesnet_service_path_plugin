@@ -195,7 +195,7 @@
                     {% else %}
                         <div class="card-actions">
                             {% if has_contract_add_perm %}
-                                <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}"
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?segments={{ object.pk }}&return_url={{ request.path }}"
                                    class="btn btn-outline-success btn-sm">
                                     <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add Contract Info
                                 </a>
@@ -311,7 +311,7 @@
                             <i class="mdi mdi-information-outline" aria-hidden="true"></i>
                             No contract information available for this segment.
                             {% if has_contract_add_perm %}
-                                <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}">
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?segments={{ object.pk }}&return_url={{ request.path }}">
                                     Add contract information
                                 </a>
                             {% endif %}
