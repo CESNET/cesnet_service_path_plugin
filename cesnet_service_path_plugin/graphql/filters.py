@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 from cesnet_service_path_plugin.models import (
     Segment,
     SegmentCircuitMapping,
+    ContractInfo,
     ServicePath,
     ServicePathSegmentMapping,
 )
@@ -24,9 +25,53 @@ from cesnet_service_path_plugin.models import (
 __all__ = (
     "SegmentFilter",
     "SegmentCircuitMappingFilter",
+    "ContractInfoFilter",
     "ServicePathFilter",
     "ServicePathSegmentMappingFilter",
 )
+
+
+@strawberry_django.filter(ContractInfo, lookups=True)
+class ContractInfoFilter(NetBoxModelFilterMixin):
+    """GraphQL filter for ContractInfo model"""
+
+    # Basic fields
+    contract_number: FilterLookup[str] | None = strawberry_django.filter_field()
+    contract_type: FilterLookup[str] | None = strawberry_django.filter_field()
+
+    # Financial fields
+    charge_currency: FilterLookup[str] | None = strawberry_django.filter_field()
+    recurring_charge_period: FilterLookup[str] | None = strawberry_django.filter_field()
+
+    # Date fields
+    start_date: FilterLookup[str] | None = strawberry_django.filter_field()
+    end_date: FilterLookup[str] | None = strawberry_django.filter_field()
+
+    # Notes
+    notes: FilterLookup[str] | None = strawberry_django.filter_field()
+
+    # Related segments
+    segments: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
+
+    @strawberry_django.filter_field
+    def is_active(self, value: bool, prefix: str) -> Q:
+        """Filter contracts based on whether they are active (not superseded)"""
+        if value:
+            # Active contracts: superseded_by is null
+            return Q(**{f"{prefix}superseded_by__isnull": True})
+        else:
+            # Superseded contracts: superseded_by is not null
+            return Q(**{f"{prefix}superseded_by__isnull": False})
+
+    @strawberry_django.filter_field
+    def has_previous_version(self, value: bool, prefix: str) -> Q:
+        """Filter contracts based on whether they have a previous version"""
+        if value:
+            # Has previous version: previous_version is not null
+            return Q(**{f"{prefix}previous_version__isnull": False})
+        else:
+            # No previous version (v1): previous_version is null
+            return Q(**{f"{prefix}previous_version__isnull": True})
 
 
 @strawberry_django.filter(Segment, lookups=True)
@@ -73,25 +118,26 @@ class SegmentFilter(NetBoxModelFilterMixin):
     )
 
     @strawberry_django.filter_field
-    def has_financial_info(self, value: bool, prefix: str, info: Info) -> Q:
-        """Filter segments based on whether they have associated financial info"""
+    def has_contracts(self, value: bool, prefix: str, info: Info) -> Q:
+        """Filter segments based on whether they have associated contracts (M:N relationship)"""
 
         # Check permission first
-        if not self._check_financial_permission(info):
+        if not self._check_contract_permission(info):
             # Return a condition that matches all segments (no filtering)
-            # This prevents leaking information about which segments have financial data
+            # This prevents leaking information about which segments have contract data
             return Q()
 
         if value:
-            # Filter for segments WITH financial info
-            return Q(**{f"{prefix}financial_info__isnull": False})
+            # Filter for segments WITH contracts (M:N relationship via contracts field)
+            return Q(**{f"{prefix}contracts__isnull": False})
         else:
-            # Filter for segments WITHOUT financial info
-            return Q(**{f"{prefix}financial_info__isnull": True})
+            # Filter for segments WITHOUT contracts
+            # This needs to exclude segments that have any contracts
+            return ~Q(**{f"{prefix}contracts__isnull": False})
 
-    def _check_financial_permission(self, info: Info) -> bool:
+    def _check_contract_permission(self, info: Info) -> bool:
         """
-        Check if the current user has permission to view financial info.
+        Check if the current user has permission to view contract info.
         Returns True if user has permission, False otherwise.
         """
         # Access the request context from GraphQL info
@@ -102,7 +148,7 @@ class SegmentFilter(NetBoxModelFilterMixin):
         if not request or not hasattr(request, "user"):
             return False
 
-        return request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
+        return request.user.has_perm("cesnet_service_path_plugin.view_contractinfo")
 
     # Custom filter methods with decorator approach
     @strawberry_django.filter_field

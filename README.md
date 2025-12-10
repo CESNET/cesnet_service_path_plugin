@@ -22,7 +22,7 @@ A NetBox plugin for managing service paths and segments in network infrastructur
   - [Currency Configuration](#currency-configuration)
 - [Geographic Path Data](#geographic-path-data)
 - [Topology Visualization](#topology-visualization)
-- [Financial Information Management](#financial-information-management)
+- [Contract Information Management](#contract-information-management)
 - [API Usage](#api-usage)
 - [Development](#development)
 - [Navigation and UI](#navigation-and-ui)
@@ -36,8 +36,9 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - Interactive geographic path visualization using Leaflet maps (introduced in version 5.0.x)
 - **Interactive topology visualization using Cytoscape.js** (new in 5.2.1)
 - Support for KML, KMZ, and GeoJSON path data
-- **Financial information tracking for segments** (introduced in 5.2.0)
-- **Commitment end date tracking with visual indicators** (new in 5.2.1)
+- **Contract Information Management System with versioning** (new in 5.4.0, replaces financial info from 5.2.x)
+- **Versioned contract tracking for segments** with amendment and renewal support
+- **Commitment end date tracking with visual indicators**
 - Service path and segment relationship management
 - Advanced filtering and search capabilities
 - REST API and GraphQL support
@@ -46,6 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version |
 |----------------|----------------|
+|     4.4        |      5.4.x     |
 |     4.4        |      5.3.x     |
 |     4.4        |      5.2.x     |
 |     4.4        |      5.1.x     |
@@ -72,8 +74,9 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Geographic path visualization with actual route data**
 - **Interactive topology visualization** showing segment connections and circuit terminations
 - Segment types (dark fiber, optical spectrum, ethernet) with type specific data
-- **Financial information tracking with multi-currency support**
-- **Commitment end date tracking** with color-coded status indicators (new in 5.2.1)
+- **Contract information tracking with versioning support** (new in 5.4.0)
+- **Many-to-many contract relationships** - segments can have multiple contracts
+- **Commitment end date tracking** with color-coded status indicators
 - Define ownership type (new in 5.3.0)
 
 ### Topology Visualization (New in 5.2.1)
@@ -89,24 +92,36 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
   - Circuit detail pages show topologies for related segments/service paths
 - **Toggle between topologies** when multiple topologies are available
 
-### Financial Information Management
-- **Monthly charge tracking** with configurable currencies
-- **Non-recurring charge** (one-time setup/installation fees)
-- **Commitment period** tracking in months
-- **Commitment end date** automatic calculation and tracking (new in 5.2.1)
-- **Visual commitment status indicators** with color coding:
+### Contract Information Management (New in 5.4.0)
+- **Versioned contract system** with linear version chains (similar to Git)
+  - Create contract amendments and renewals using NetBox clone functionality
+  - Automatic version numbering (v1, v2, v3...)
+  - Version history timeline showing contract evolution
+  - Active/superseded contract status tracking
+- **Many-to-many segment relationships** - one contract can cover multiple segments
+- **Contract metadata tracking**:
+  - Contract number and type (new/amendment/renewal)
+  - Contract start and end dates
+  - Effective dates for amendments
+  - Change reason documentation
+- **Enhanced financial tracking**:
+  - **Recurring charges** with customizable periods (monthly, quarterly, annually, etc.)
+  - Number of recurring charge periods
+  - **Non-recurring charges** for setup/installation fees
+  - **Multi-currency support** with immutable currency (set at contract creation)
+- **Commitment end date** automatic calculation and tracking
+- **Visual status indicators** with color coding:
   - 🔴 Red: More than 30 days remaining
   - 🟠 Orange: Within 30 days of expiration
-  - 🟢 Green: Commitment period ended
-  - ⚫ Gray: No commitment period set
-- **Interactive tooltips** showing days remaining until commitment end
+  - 🟢 Green: Contract/commitment period ended
+  - ⚫ Gray: Date not set
+- **Interactive tooltips** showing days remaining and contract status
 - **Automatic cost calculations**:
-  - Total commitment cost (monthly × commitment period)
-  - Total cost including setup fees
-- **Permission-based access control** - financial data visible only to authorized users
-- **Multi-currency support** with configurable currency list
-- **Integrated with segment detail view** - no separate navigation required
-- **REST API support** - financial data included in segment API responses
+  - Total recurring cost (recurring charge × number of periods)
+  - Total contract value (recurring + non-recurring charges)
+- **Permission-based access control** - contract data visible only to authorized users
+- **Full REST API and GraphQL support** with versioning fields
+- **Advanced filtering**: by active status, contract type, currency, dates
 
 ### Geographic Features
 - **Interactive map visualization** with multiple tile layers (OpenStreetMap, satellite, topographic) and multiple color schema (status, provider, segment type)
@@ -142,16 +157,20 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - Circuit associations
 - **Geographic path geometry** storage (MultiLineString)
 - **Path metadata** including length, source format, and notes
-- **Financial information** (optional one-to-one relationship)
+- **Contract relationships** (many-to-many through ContractSegmentMapping)
 - Automated status monitoring
 
-### Segment Financial Info
-- **Monthly charges** with currency selection
+### Contract Info (New in 5.4.0)
+- **Version chain management** using linked list pattern (previous_version/superseded_by)
+- **Contract metadata**: number, type (new/amendment/renewal), effective dates
+- **Recurring charges** with configurable periods (monthly, quarterly, annually, etc.)
 - **Non-recurring charges** for setup/installation
-- **Commitment period** tracking in months
-- **Commitment end date** automatic calculation (new in 5.2.1)
-- **Automatic cost calculations**
-- **Notes** field for additional financial context
+- **Number of recurring charge periods** for contract commitment
+- **Multi-currency support** with immutable currency (set at contract creation)
+- **Start and end dates** for contract validity period
+- **Commitment end date** automatic calculation
+- **Many-to-many segment relationships** via ContractSegmentMapping
+- **Automatic version numbering** and history tracking
 - **Permission-based visibility**
 
 ### Geographic Path Data
@@ -513,65 +532,117 @@ Topologies visualize:
 - Responsive design adapts to different screen sizes
 - Automatic layout algorithms for optimal node placement
 
-## Financial Information Management
+## Contract Information Management
 
-### Adding Financial Information
+### Overview
 
-Financial information can be added to any segment through the segment detail view:
+Version 5.4.0 introduces a comprehensive Contract Information Management system that replaces the previous financial information model. The new system supports:
+- **Versioned contracts** with amendment and renewal tracking
+- **Many-to-many relationships** between contracts and segments
+- **Enhanced financial tracking** with flexible recurring charge periods
+- **Contract lifecycle management** with version history
 
-1. Navigate to a segment's detail page
-2. Click "Add Financial Info" (requires appropriate permissions)
-3. Fill in the financial details:
-   - **Monthly Charge**: Regular recurring fee
-   - **Currency**: Select from configured currencies
-   - **Non-recurring Charge**: One-time setup/installation fee
-   - **Commitment Period**: Number of months for contract commitment
+### Creating Contracts
+
+Contracts can be created and managed through the Contract Info menu:
+
+1. Navigate to **Service Paths → Contract Info**
+2. Click "Add" to create a new contract
+3. Fill in the contract details:
+   - **Contract Number**: Provider's contract reference
+   - **Segments**: Select one or more segments covered by this contract
+   - **Recurring Charge**: Regular fee amount (optional for amendments)
+   - **Recurring Charge Period**: Frequency (monthly, quarterly, annually, etc.)
+   - **Number of Periods**: How many charge periods in the contract
+   - **Currency**: Select currency (cannot be changed later)
+   - **Non-recurring Charge**: One-time setup/installation fees
+   - **Start/End Dates**: Contract validity period
    - **Notes**: Additional context or details
 
-### Viewing Financial Information
+### Creating Contract Amendments
 
-Financial information is displayed on the segment detail page for users with view permissions:
-- Monthly charge with currency
-- Non-recurring charge (if applicable)
-- Commitment period in months
-- **Commitment end date** with color-coded status badge (new in 5.2.1)
-- Automatically calculated total costs
-- Additional notes
+To create an amendment to an existing contract:
 
-### Commitment End Date Tracking (New in 5.2.1)
+1. Navigate to the contract detail page
+2. Use the **Clone** button in NetBox
+3. The system will:
+   - Create a new version linked to the original
+   - Set the contract type to "Amendment"
+   - Preserve the currency (immutable)
+   - Allow you to modify all other fields
+4. Fill in the **Change Reason** to document what changed
+5. Save the amendment
+
+The original contract will be marked as superseded, and the new version becomes active.
+
+### Viewing Contract Information
+
+Contract detail pages show:
+- **Version information**: Version number, type (new/amendment/renewal)
+- **Version history timeline**: All versions of the contract with navigation
+- **Segment relationships**: All segments covered by this contract
+- **Financial summary**: All charges and automatic calculations
+- **Date visualization**: Color-coded badges for contract and commitment end dates
+
+Segments detail pages show:
+- All contracts associated with the segment
+- Contract status and version information
+- Contract end dates with visual indicators
+- Quick links to contract details
+
+### Commitment End Date Tracking
 
 The plugin automatically calculates and tracks commitment end dates:
 
-- **Automatic calculation**: Based on segment install date + commitment period
+- **Automatic calculation**: Based on contract start date + number of recurring periods
 - **Visual status indicators** with color coding:
-  - 🔴 **Red badge**: More than 30 days until commitment ends
-  - 🟠 **Orange badge**: Within 30 days of commitment end (action required soon)
-  - 🟢 **Green badge**: Commitment period has ended
-  - ⚫ **Gray badge**: No commitment period set or install date not defined
-- **Interactive tooltips**: Hover over the badge to see:
-  - Exact commitment end date
+  - 🔴 **Red badge**: More than 30 days remaining
+  - 🟠 **Orange badge**: Within 30 days of expiration (action required soon)
+  - 🟢 **Green badge**: Contract/commitment period has ended
+  - ⚫ **Gray badge**: Date not set
+- **Interactive tooltips**: Hover over badges to see:
+  - Exact end dates
   - Days remaining until expiration
-  - Status message
+  - Contract status
 
-**Note**: Commitment end date is calculated when both the segment install date and commitment period are set. If the install date is missing, a gray badge indicates that the date will be calculated once the install date is defined.
+### Contract Versioning
+
+The versioning system works like a Git commit chain:
+
+- **Linear history**: Each contract version links to its predecessor
+- **Active version**: The latest version in the chain is the active contract
+- **Version navigation**: View any version in the history
+- **Automatic numbering**: Versions are automatically numbered (v1, v2, v3...)
+- **Superseding**: Older versions are marked as superseded by newer ones
 
 ### Permission Requirements
 
-Financial information has separate permissions from segments:
-- **View**: `cesnet_service_path_plugin.view_segmentfinancialinfo`
-- **Add**: `cesnet_service_path_plugin.add_segmentfinancialinfo`
-- **Change**: `cesnet_service_path_plugin.change_segmentfinancialinfo`
-- **Delete**: `cesnet_service_path_plugin.delete_segmentfinancialinfo`
+Contract information has separate permissions:
+- **View**: `cesnet_service_path_plugin.view_contractinfo`
+- **Add**: `cesnet_service_path_plugin.add_contractinfo`
+- **Change**: `cesnet_service_path_plugin.change_contractinfo`
+- **Delete**: `cesnet_service_path_plugin.delete_contractinfo`
 
-Users without view permission will not see financial information in the UI or API responses.
+Users without view permission will not see contract information in the UI or API responses.
 
 ### Financial Calculations
 
 The plugin automatically calculates:
-- **Total Commitment Cost**: Monthly charge × Commitment period (months)
-- **Total Cost Including Setup**: Total commitment cost + Non-recurring charge
+- **Total Recurring Cost**: Recurring charge × Number of periods
+- **Total Contract Value**: Total recurring cost + Non-recurring charge
+- **Commitment End Date**: Start date + (Number of periods × Period frequency)
 
 These calculations are available in both the UI and API responses.
+
+### Migration from Financial Info
+
+If upgrading from version 5.2.x or 5.3.x:
+- Migration 0033 automatically converts all SegmentFinancialInfo to ContractInfo
+- All data is preserved: charges, currencies, notes, tags, timestamps
+- Monthly charges become recurring charges (monthly period)
+- Commitment period months become number of recurring charges
+- Segment dates are used for contract start/end dates
+- One-to-one relationships become many-to-many via ContractSegmentMapping
 
 ## API Usage
 
@@ -582,34 +653,45 @@ The plugin provides comprehensive REST API and GraphQL support:
 - `/api/plugins/cesnet-service-path-plugin/segments/` - Segment management
 - `/api/plugins/cesnet-service-path-plugin/service-paths/` - Service path management
 - `/api/plugins/cesnet-service-path-plugin/segments/{id}/geojson-api/` - Geographic data
-- `/api/plugins/cesnet-service-path-plugin/segment-financial-info/` - Financial information management
+- `/api/plugins/cesnet-service-path-plugin/contract-info/` - Contract information management (new in 5.4.0)
 
-#### Example of segment with path file PATCH and POST 
+#### Example of segment with path file PATCH and POST
 See [detailed example in docs](./docs/API_path.md).
 
-#### Financial Information in API
+#### Contract Information in API (New in 5.4.0)
 
-Segment API responses include a `financial_info` field:
+Contract API responses include versioning and financial fields:
 ```json
 {
   "id": 1,
-  "name": "Example Segment",
-  "financial_info": {
-    "monthly_charge": "1000.00",
-    "charge_currency": "EUR",
-    "non_recurring_charge": "5000.00",
-    "commitment_period_months": 36,
-    "commitment_end_date": "2028-11-07",
-    "total_commitment_cost": "36000.00",
-    "total_cost_including_setup": "41000.00",
-    "notes": "Special discount applied"
-  }
+  "contract_number": "CTR-2025-001",
+  "contract_type": "amendment",
+  "version": 2,
+  "is_active": true,
+  "previous_version": 1,
+  "superseded_by": null,
+  "segments": [1, 2, 3],
+  "recurring_charge": "1000.00",
+  "recurring_charge_period": "monthly",
+  "number_of_recurring_charges": 36,
+  "charge_currency": "EUR",
+  "non_recurring_charge": "5000.00",
+  "start_date": "2025-01-01",
+  "end_date": "2028-01-01",
+  "commitment_end_date": "2028-01-01",
+  "total_recurring_cost": "36000.00",
+  "total_contract_value": "41000.00",
+  "notes": "Price adjustment"
 }
 ```
 
-**Note**: The `financial_info` field will be `null` if:
-- No financial information exists for the segment
-- The authenticated user lacks view permissions
+**Versioning Fields**:
+- `version`: Calculated version number
+- `is_active`: Boolean indicating if this is the current version
+- `previous_version`: ID of the previous contract version (null for v1)
+- `superseded_by`: ID of the newer version that supersedes this one (null if active)
+
+**Note**: Contract information will only be visible to users with view permissions.
 
 ### Geographic API Features
 
@@ -658,17 +740,24 @@ query {
   }
 }
 
-# Query financial information with commitment end date (new in 5.2.1)
+# Query contract information with versioning (new in 5.4.0)
 query {
-  segment_list {
+  contract_info_list(filters: {isActive: true}) {
     id
-    name
-    financialInfo {
-      monthlyCharge
-      chargeCurrency
-      commitmentPeriodMonths
-      commitmentEndDate
-      totalCommitmentCost
+    contractNumber
+    contractType
+    version
+    isActive
+    recurringCharge
+    recurringChargePeriod
+    numberOfRecurringCharges
+    chargeCurrency
+    commitmentEndDate
+    totalRecurringCost
+    totalContractValue
+    segments {
+      id
+      name
     }
   }
 }
@@ -676,12 +765,13 @@ query {
 
 #### GraphQL Features
 
-- **Full model access**: Query Segments, ServicePaths, and all mapping types
+- **Full model access**: Query Segments, ServicePaths, ContractInfo, and all mapping types
 - **Geographic fields**: GeoJSON geometry, path coordinates, bounding boxes
-- **Advanced filtering**: Status, dates, providers, sites, path data availability
-- **Nested relationships**: Query related circuits, providers, locations in single request
+- **Advanced filtering**: Status, dates, providers, sites, path data availability, contract versioning
+- **Nested relationships**: Query related circuits, providers, locations, contracts in single request
 - **Type-specific data**: Query segment type information and technical specifications
-- **Commitment tracking**: Query commitment end dates and financial calculations (new in 5.2.1)
+- **Contract versioning**: Query contract versions, version chains, and active contracts (new in 5.4.0)
+- **Financial calculations**: Query commitment end dates and contract value calculations
 
 ## Development
 
@@ -734,6 +824,7 @@ The plugin adds a **Service Paths** menu with:
 - **Segments** - List and manage network segments with quick Add/Import buttons
 - **Segments Map** - Interactive map view of all segments
 - **Service Paths** - Manage service path definitions with quick Add/Import buttons
+- **Contract Info** - Manage contracts with versioning support (new in 5.4.0)
 - **Mappings** - Relationship management tools with quick Add/Import buttons
 
 ### UI Features
@@ -748,7 +839,8 @@ The plugin adds a **Service Paths** menu with:
 - **Bulk operations**: Edit, delete, and import multiple records at once
 - **Advanced search**: Full-text search across names, comments, network labels, and path notes
 - **Topology visualization cards**: Interactive network graphs on detail pages (new in 5.2.1)
-- **Commitment status badges**: Color-coded indicators for financial commitments (new in 5.2.1)
+- **Contract version timeline**: Visual representation of contract history and amendments (new in 5.4.0)
+- **Commitment status badges**: Color-coded indicators for contract commitments (new in 5.4.0)
 
 ### Template Extensions
 
@@ -758,13 +850,13 @@ Automatic integration with existing NetBox models:
 - **Site/Location pages**: Display connected segments
 - **Tenant pages**: Show associated provider information
 
-### Financial Information Display
+### Contract Information Display
 
-Financial information appears on segment detail pages when:
+Contract information appears on segment detail pages when:
 - User has view permission
-- Segment has financial information attached
-- Displayed in a dedicated panel with all cost details and calculations
-- Shows commitment end date with color-coded status badge (new in 5.2.1)
+- Segment has contract relationships
+- Displayed in a dedicated panel showing all associated contracts
+- Shows contract version, status, and commitment end dates with color-coded badges (new in 5.4.0)
 
 ## Troubleshooting
 
@@ -775,10 +867,11 @@ Financial information appears on segment detail pages when:
 3. **Path upload fails**: Check file format and ensure it contains LineString geometries
 4. **Map not loading**: Verify JavaScript console for tile layer errors
 5. **Library version mismatch**: If you encounter errors about missing libraries, check that library package names match your OS version (e.g., `libgdal34` vs `libgdal32`)
-6. **Financial info not visible**: Check user permissions for `view_segmentfinancialinfo`
+6. **Contract info not visible**: Check user permissions for `view_contractinfo`
 7. **Currency not appearing**: Verify plugin configuration in `configuration/plugins.py`
-8. **Topology not rendering**: Check browser console for Cytoscape.js CDN errors (new in 5.2.1)
-9. **Commitment end date not showing**: Ensure segment has both install date and commitment period defined (new in 5.2.1)
+8. **Topology not rendering**: Check browser console for Cytoscape.js CDN errors
+9. **Commitment end date not showing**: Ensure contract has start date and number of recurring charges defined
+10. **Migration from 5.2.x/5.3.x**: If upgrading, ensure migration 0033 runs successfully to convert SegmentFinancialInfo to ContractInfo
 
 ### Debug Mode
 

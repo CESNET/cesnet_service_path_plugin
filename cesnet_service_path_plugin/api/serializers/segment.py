@@ -10,8 +10,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
 
-from cesnet_service_path_plugin.api.serializers.segment_financial_info import (
-    SegmentFinancialInfoSerializer,
+from cesnet_service_path_plugin.api.serializers.contract_info import (
+    ContractInfoSerializer,
 )
 from cesnet_service_path_plugin.models.segment import Segment
 from cesnet_service_path_plugin.utils import (
@@ -44,7 +44,7 @@ class SegmentSerializer(NetBoxModelSerializer):
     # Only include lightweight path info
     has_path_data = serializers.SerializerMethodField(read_only=True)
 
-    financial_info = serializers.SerializerMethodField(read_only=True)
+    contract_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Segment
@@ -73,7 +73,7 @@ class SegmentSerializer(NetBoxModelSerializer):
             "path_notes",
             "has_path_data",
             "path_file",
-            "financial_info",
+            "contract_info",
             "tags",
         )
         brief_fields = (
@@ -91,22 +91,22 @@ class SegmentSerializer(NetBoxModelSerializer):
     def get_has_path_data(self, obj):
         return obj.has_path_data()
 
-    def get_financial_info(self, obj):
+    def get_contract_info(self, obj):
         """
-        Only include financial info if the user has permission to view it
+        Only include contract info if the user has permission to view it
         """
         request = self.context.get("request")
         if not request:
             return None
 
-        # Check if user has permission to view financial info
-        if not request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo"):
+        # Check if user has permission to view contract info
+        if not request.user.has_perm("cesnet_service_path_plugin.view_contractinfo"):
             return None
 
-        # Fetch and serialize financial info if user has permission
-        financial_info = getattr(obj, "financial_info", None)
-        if financial_info:
-            return SegmentFinancialInfoSerializer(financial_info, context=self.context).data
+        # Fetch and serialize contract info if user has permission
+        contract_info = getattr(obj, "contract_info", None)
+        if contract_info:
+            return ContractInfoSerializer(contract_info, context=self.context).data
         return None
 
     def update(self, instance, validated_data):

@@ -11,7 +11,7 @@ from decimal import Decimal
 from cesnet_service_path_plugin.models import (
     Segment,
     SegmentCircuitMapping,
-    SegmentFinancialInfo,
+    ContractInfo,
     ServicePath,
     ServicePathSegmentMapping,
 )
@@ -19,6 +19,7 @@ from cesnet_service_path_plugin.models import (
 # Import the GraphQL filters
 from .filters import (
     SegmentCircuitMappingFilter,
+    ContractInfoFilter,
     SegmentFilter,
     ServicePathFilter,
     ServicePathSegmentMappingFilter,
@@ -36,40 +37,64 @@ class PathBounds:
     ymax: float
 
 
-@strawberry_django_type(SegmentFinancialInfo)
-class SegmentFinancialInfoType(NetBoxObjectType):
+@strawberry_django_type(ContractInfo, filters=ContractInfoFilter)
+class ContractInfoType(NetBoxObjectType):
     """
-    GraphQL type for SegmentFinancialInfo with permission checking.
-    Financial data will only be exposed if user has view permission.
+    GraphQL type for ContractInfo with permission checking.
+    Contract data will only be exposed if user has view permission.
     """
 
     id: auto
-    monthly_charge: auto
+    contract_number: auto
+    contract_type: auto
+
+    # Financial fields
+    recurring_charge: auto
+    recurring_charge_period: auto
+    number_of_recurring_charges: auto
     charge_currency: auto
     non_recurring_charge: auto
-    commitment_period_months: auto
+
+    # Date fields
+    start_date: auto
+    end_date: auto
+
+    # Notes
     notes: auto
 
-    # Related segment (simplified reference)
-    segment: Annotated["SegmentType", lazy(".types")]
+    # Related segments (M:N relationship)
+    segments: List[Annotated["SegmentType", lazy(".types")]]
+
+    # Versioning fields (read-only)
+    previous_version: Optional[Annotated["ContractInfoType", lazy(".types")]]
+    superseded_by: Optional[Annotated["ContractInfoType", lazy(".types")]]
 
     @field
-    def total_commitment_cost(self, info) -> Optional[Decimal]:
-        """Calculate total cost over commitment period - only if user has permission"""
+    def version(self, info) -> int:
+        """Calculate version number by counting predecessors"""
+        return self.version
+
+    @field
+    def is_active(self, info) -> bool:
+        """Check if this is the active (not superseded) version"""
+        return self.is_active
+
+    @field
+    def total_recurring_cost(self, info) -> Optional[Decimal]:
+        """Calculate total recurring cost - only if user has permission"""
         # Permission check happens at the query level, so if we're here, user has access
-        return self.total_commitment_cost
+        return self.total_recurring_cost
 
     @field
-    def total_cost_including_setup(self, info) -> Optional[Decimal]:
-        """Total cost including non-recurring charge - only if user has permission"""
-        return self.total_cost_including_setup
+    def total_contract_value(self, info) -> Optional[Decimal]:
+        """Total contract value including non-recurring charge - only if user has permission"""
+        return self.total_contract_value
 
     @field
     def commitment_end_date(self, info) -> Optional[str]:
-        """Calculate the end date of the commitment period - only if user has permission"""
-        end_date = self.commitment_end_date
-        if end_date:
-            return end_date.isoformat()
+        """Calculate commitment end date based on start date and recurring periods"""
+        if hasattr(self, 'commitment_end_date') and self.commitment_end_date:
+            return self.commitment_end_date.isoformat()
         return None
 
 
@@ -104,32 +129,32 @@ class SegmentType(NetBoxObjectType):
     circuits: List[Annotated["CircuitType", lazy("circuits.graphql.types")]]
 
     @field
-    def financial_info(self, info) -> Optional[Annotated["SegmentFinancialInfoType", lazy(".types")]]:
+    def contracts(self, info) -> List[Annotated["ContractInfoType", lazy(".types")]]:
         """
-        Return financial info only if user has permission to view it.
-        This mimics the REST API behavior.
+        Return contracts only if user has permission to view them.
+        This mimics the REST API behavior for M:N relationships.
         """
         request = info.context.get("request")
 
         if not request:
-            return None
+            return []
 
-        # Check if user has permission to view financial info
-        has_financial_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_segmentfinancialinfo")
+        # Check if user has permission to view contract info
+        has_contract_view_perm = request.user.has_perm("cesnet_service_path_plugin.view_contractinfo")
 
-        if not has_financial_view_perm:
-            return None
+        if not has_contract_view_perm:
+            return []
 
-        # Try to get financial info if user has permission
-        financial_info = getattr(self, "financial_info", None)
-
-        return financial_info if financial_info else None
+        # Return all contracts associated with this segment if user has permission
+        if hasattr(self, "contracts"):
+            return list(self.contracts.all())
+        return []
 
     @field
-    def has_financial_info(self) -> bool:
-        """Whether this segment has associated financial info"""
-        if hasattr(self, "financial_info") and self.financial_info is not None:
-            return True
+    def has_contracts(self) -> bool:
+        """Whether this segment has associated contracts"""
+        if hasattr(self, "contracts"):
+            return self.contracts.exists()
         return False
 
     @field

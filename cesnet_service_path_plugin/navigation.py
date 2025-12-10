@@ -18,6 +18,17 @@ _menu_items = (
         ),
     ),
     PluginMenuItem(
+        link="plugins:cesnet_service_path_plugin:contractinfo_list",
+        link_text="Contract Info",
+        buttons=(
+            PluginMenuButton(
+                link="plugins:cesnet_service_path_plugin:contractinfo_add",
+                title="Add",
+                icon_class="mdi mdi-plus-thick",
+            ),
+        ),
+    ),
+    PluginMenuItem(
         link="plugins:cesnet_service_path_plugin:segments_map",
         link_text="Segments Map",
     ),

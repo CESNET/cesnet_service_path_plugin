@@ -53,3 +53,69 @@ class KindChoices(ChoiceSet):
         (CORE, "Core", "blue"),
         (CUSTOMER, "Customer", "green"),
     ]
+
+
+class ContractTypeChoices(ChoiceSet):
+    """
+    Contract type indicates how the contract was created.
+    - New: Original contract
+    - Renewal: New contract period after previous expired
+    - Amendment: Modification to existing contract terms
+    """
+
+    key = "cesnet_service_path_plugin.choices.contract_type"
+
+    NEW = "new"
+    RENEWAL = "renewal"
+    AMENDMENT = "amendment"
+
+    CHOICES = [
+        (NEW, "New Contract", "blue"),
+        (RENEWAL, "Renewal", "green"),
+        (AMENDMENT, "Amendment", "orange"),
+    ]
+
+
+class CurrencyChoices(ChoiceSet):
+    """
+    Currency codes following ISO 4217 standard.
+    Default choices can be overridden in plugin configuration.
+    """
+
+    key = "cesnet_service_path_plugin.choices.currency"
+
+    CZK = "CZK"
+    EUR = "EUR"
+    USD = "USD"
+    GBP = "GBP"
+    PLN = "PLN"
+    HUF = "HUF"
+
+    CHOICES = [
+        (CZK, "Czech Koruna (CZK)", "blue"),
+        (EUR, "Euro (EUR)", "green"),
+        (USD, "US Dollar (USD)", "cyan"),
+        (GBP, "British Pound (GBP)", "purple"),
+        (PLN, "Polish Zloty (PLN)", "orange"),
+        (HUF, "Hungarian Forint (HUF)", "yellow"),
+    ]
+
+
+class RecurringChargePeriodChoices(ChoiceSet):
+    """
+    Frequency of recurring charges in contracts.
+    """
+
+    key = "cesnet_service_path_plugin.choices.recurring_charge_period"
+
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    SEMI_ANNUALLY = "semi_annually"
+    ANNUALLY = "annually"
+
+    CHOICES = [
+        (MONTHLY, "Monthly", "blue"),
+        (QUARTERLY, "Quarterly", "green"),
+        (SEMI_ANNUALLY, "Semi-Annually", "orange"),
+        (ANNUALLY, "Annually", "purple"),
+    ]

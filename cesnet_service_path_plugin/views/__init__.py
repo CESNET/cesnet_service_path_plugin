@@ -22,10 +22,10 @@ from .segment_circuit_mapping import (
     SegmentCircuitMappingListView,
     SegmentCircuitMappingView,
 )
-from .segment_financial_info import (
-    SegmentFinancialInfoDeleteView,
-    SegmentFinancialInfoEditView,
-    SegmentFinancialInfoView,
+from .contract_info import (
+    ContractInfoDeleteView,
+    ContractInfoEditView,
+    ContractInfoView,
 )
 from .service_path import (
     ServicePathBulkDeleteView,
@@ -59,9 +59,9 @@ __all__ = [
     "SegmentCircuitMappingView",
     "SegmentDeleteView",
     "SegmentEditView",
-    "SegmentFinancialInfoDeleteView",
-    "SegmentFinancialInfoEditView",
-    "SegmentFinancialInfoView",
+    "ContractInfoDeleteView",
+    "ContractInfoEditView",
+    "ContractInfoView",
     "SegmentListView",
     "SegmentsMapView",
     "SegmentView",

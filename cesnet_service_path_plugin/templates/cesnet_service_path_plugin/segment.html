@@ -160,116 +160,230 @@
                     </table>
                 </div>
             </div>
-            <!-- Financial Information Card -->
-            {% if has_financial_view_perm %}
-                <div class="card">
-                    <h5 class="card-header">
-                        Financial Information
-                        {% if financial_info %}
-                            <div class="card-actions">
-                                {% if has_financial_change_perm %}
-                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_edit' pk=financial_info.pk %}" 
-                                       class="btn btn-outline-warning btn-sm">
-                                        <i class="mdi mdi-pencil" aria-hidden="true"></i> Edit
-                                    </a>
-                                {% endif %}
-                                {% if has_financial_delete_perm %}
-                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_delete' pk=financial_info.pk %}" 
-                                       class="btn btn-outline-danger btn-sm">
-                                        <i class="mdi mdi-delete" aria-hidden="true"></i> Delete
-                                    </a>
-                                {% endif %}
-                            </div>
-                        {% else %}
-                            <div class="card-actions">
-                                {% if has_financial_add_perm %}
-                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}" 
-                                       class="btn btn-outline-success btn-sm">
-                                        <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add Financial Info
-                                    </a>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                    </h5>
-                    <div class="card-body">
-                        {% if financial_info %}
-                            <table class="table table-hover attr-table">
-                                <tr>
-                                    <th scope="row">Monthly Charge</th>
-                                    <td>
-                                        <strong>{{ financial_info.monthly_charge|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</strong>
-                                    </td>
-                                </tr>
-                                {% if financial_info.non_recurring_charge %}
-                                    <tr>
-                                        <th scope="row">Non-Recurring Charge</th>
-                                        <td>{{ financial_info.non_recurring_charge|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</td>
-                                    </tr>
-                                {% endif %}
-                                {% if financial_info.commitment_period_months %}
-                                    <tr>
-                                        <th scope="row">Commitment Period</th>
-                                        <td>{{ financial_info.commitment_period_months }} months</td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">Commitment End Date</th>
-                                        {% if financial_info.commitment_end_date %}
-                                            
-                                            <td>
-                                                <span class="badge text-bg-{{ financial_info.get_commitment_end_date_color }}">{{ financial_info.commitment_end_date }}</span>
-                                                <i class="mdi mdi-information text-primary" data-bs-toggle="tooltip"
-                                                data-bs-placement="right"
-                                                aria-label="{{ financial_info.get_commitment_end_date_tooltip }}"
-                                                data-bs-original-title="{{ financial_info.get_commitment_end_date_tooltip }}"></i>
-                                            </td>
-                                        {% else %}
-                                            <td><span class="badge text-bg-{{ financial_info.get_commitment_end_date_color }}">Set Segment Install Date </span>
-                                             <i class="mdi mdi-information text-primary" data-bs-toggle="tooltip"  data-bs-placement="right"  aria-label="Commitment end date will be set automatically once the segment install date is defined." data-bs-original-title="Commitment end date will be set automatically once the segment install date is defined."></i>
-                                             </td>
-                                        {% endif %}
-                                    
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">Total Commitment Cost</th>
-                                        <td>
-                                            <strong>{{ financial_info.total_commitment_cost|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}</strong>
-                                        </td>
-                                    </tr>
-                                    {% if financial_info.non_recurring_charge %}
-                                        <tr>
-                                            <th scope="row">Total Cost (incl. Setup)</th>
-                                            <td>
-                                                <strong class="text-primary">
-                                                    {{ financial_info.total_cost_including_setup|floatformat:2|spacecomma }} {{ financial_info.charge_currency }}
-                                                </strong>
-                                            </td>
-                                        </tr>
-                                    {% endif %}
-                                {% endif %}
-                                {% if financial_info.notes %}
-                                    <tr>
-                                        <th scope="row">Notes</th>
-                                        <td>{{ financial_info.notes|linebreaks }}</td>
-                                    </tr>
-                                {% endif %}
-                            </table>
-                        {% else %}
-                            <div class="text-muted">
-                                <i class="mdi mdi-information-outline" aria-hidden="true"></i>
-                                No financial information available for this segment.
-                                {% if has_financial_add_perm %}
-                                    <a href="{% url 'plugins:cesnet_service_path_plugin:segmentfinancialinfo_add' %}?segment={{ object.pk }}&return_url={{ request.path }}">
-                                        Add financial information
-                                    </a>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
             {% plugin_right_page object %}
         </div>
     </div>
+
+    <!-- Contract Information Card - Full Width - two columns -->
+    {% if has_contract_view_perm %}
+    <div class="row mb-3">
+        <div class="col-6">
+            <div class="card">
+                <h5 class="card-header">
+                    Active Contract Information
+                    {% if contract_info %}
+                        <div class="card-actions">
+                            <a href="{{ contract_info.get_absolute_url }}"
+                               class="btn btn-outline-primary btn-sm"
+                               title="View full contract details">
+                                <i class="mdi mdi-eye" aria-hidden="true"></i> Detail View
+                            </a>
+                            {% if has_contract_change_perm %}
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_edit' pk=contract_info.pk %}"
+                                   class="btn btn-outline-warning btn-sm">
+                                    <i class="mdi mdi-pencil" aria-hidden="true"></i> Edit
+                                </a>
+                            {% endif %}
+                            {% if has_contract_add_perm and contract_info.is_active %}
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?contract_number={{ contract_info.contract_number|urlencode }}&charge_currency={{ contract_info.charge_currency|urlencode }}&non_recurring_charge={{ contract_info.non_recurring_charge }}&recurring_charge={{ contract_info.recurring_charge }}&recurring_charge_period={{ contract_info.recurring_charge_period|urlencode }}&number_of_recurring_charges={{ contract_info.number_of_recurring_charges }}&start_date={{ contract_info.start_date|date:'Y-m-d' }}&end_date={{ contract_info.end_date|date:'Y-m-d' }}&notes={{ contract_info.notes|urlencode }}&segments={{ object.pk }}&previous_version={{ contract_info.pk }}&contract_type=amendment&return_url={{ request.path|urlencode }}"
+                                   class="btn btn-outline-success btn-sm"
+                                   title="Clone to create new version">
+                                    <i class="mdi mdi-content-copy" aria-hidden="true"></i> New Version
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="card-actions">
+                            {% if has_contract_add_perm %}
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?segments={{ object.pk }}&return_url={{ request.path }}"
+                                   class="btn btn-outline-success btn-sm">
+                                    <i class="mdi mdi-plus-thick" aria-hidden="true"></i> Add Contract Info
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </h5>
+                <div class="card-body">
+                    {% if contract_info %}
+                        <table class="table table-hover attr-table">
+                            <tr>
+                                <th scope="row">Contract Number</th>
+                                <td>
+                                    <a href="{{ contract_info.get_absolute_url }}">{{ contract_info.contract_number|placeholder }}</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Contract Type</th>
+                                <td>
+                                    <span class="badge text-bg-{{ contract_info.get_contract_type_color }}">
+                                        {{ contract_info.get_contract_type_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Version</th>
+                                <td>
+                                    <span class="badge text-bg-info">v{{ contract_info.version }}</span>
+                                    {% if contract_info.is_active %}
+                                        <span class="badge text-bg-success ms-2">Active</span>
+                                    {% else %}
+                                        <span class="badge text-bg-secondary ms-2">Superseded</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Currency</th>
+                                <td>
+                                    <span class="badge text-bg-{{ contract_info.get_currency_color }}">
+                                        {{ contract_info.get_charge_currency_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Recurring Charge</th>
+                                <td class="text-end">
+                                    <strong>{{ contract_info.charge_currency }} {{ contract_info.recurring_charge|floatformat:2|spacecomma }}</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Recurring Period</th>
+                                <td>{{ contract_info.get_recurring_charge_period_display|placeholder }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Number of Charges</th>
+                                <td class="text-end">{{ contract_info.number_of_recurring_charges|placeholder }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Total Recurring Cost</th>
+                                <td class="text-end">
+                                    <strong>{{ contract_info.charge_currency }} {{ contract_info.total_recurring_cost|floatformat:2|spacecomma }}</strong>
+                                </td>
+                            </tr>
+                            {% if contract_info.non_recurring_charge %}
+                                <tr>
+                                    <th scope="row">Non-Recurring Charge</th>
+                                    <td class="text-end">{{ contract_info.charge_currency }} {{ contract_info.non_recurring_charge|floatformat:2|spacecomma }}</td>
+                                </tr>
+                            {% endif %}
+                            <tr class="table-active">
+                                <th scope="row">Total Contract Value</th>
+                                <td class="text-end">
+                                    <strong>{{ contract_info.charge_currency }} {{ contract_info.total_contract_value|floatformat:2|spacecomma }}</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Start Date</th>
+                                <td>{{ contract_info.start_date|placeholder }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">End Date</th>
+                                <td>
+                                    {% if contract_info.end_date %}
+                                        <span class="badge text-bg-{{ contract_info.get_end_date_color }}"
+                                              title="{{ contract_info.get_end_date_tooltip }}">
+                                            {{ contract_info.end_date }}
+                                        </span>
+                                    {% else %}
+                                        {{ ''|placeholder }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% if contract_info.commitment_end_date %}
+                                <tr>
+                                    <th scope="row">Commitment End Date</th>
+                                    <td>
+                                        <span class="badge text-bg-{{ contract_info.get_commitment_end_date_color }}"
+                                              title="{{ contract_info.get_commitment_end_date_tooltip }}">
+                                            {{ contract_info.commitment_end_date }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if contract_info.notes %}
+                                <tr>
+                                    <th scope="row">Notes</th>
+                                    <td>{{ contract_info.notes|linebreaks }}</td>
+                                </tr>
+                            {% endif %}
+                        </table>
+                    {% else %}
+                        <div class="text-muted">
+                            <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+                            No contract information available for this segment.
+                            {% if has_contract_add_perm %}
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:contractinfo_add' %}?segments={{ object.pk }}&return_url={{ request.path }}">
+                                    Add contract information
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="card">
+                <h5 class="card-header">Contract Version History</h5>
+                <div class="card-body">
+                    {% if contract_chains %}
+                        {% for chain in contract_chains %}
+                            {% if chain.version_history %}
+                                <h5 class="mb-3 {% if not forloop.first %}mt-4{% endif %}">
+                                    {{ chain.latest.contract_number|default:"Contract" }}
+                                    <span class="badge text-bg-secondary ms-2">{{ chain.version_count }} version{{ chain.version_count|pluralize }}</span>
+                                </h5>
+                                <table class="table table-hover table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Version</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for version in chain.version_history %}
+                                        <tr {% if version.pk == selected_contract_id %}class="table-active"{% endif %}>
+                                            <td>
+                                                <span class="badge text-bg-info">v{{ version.version }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge text-bg-{{ version.get_contract_type_color }}">
+                                                    {{ version.get_contract_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if version.is_active %}
+                                                    <span class="badge text-bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge text-bg-secondary">Superseded</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if version.pk != selected_contract_id %}
+                                                    <a href="?contract_version={{ version.pk }}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="mdi mdi-eye"></i> View
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">Current</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-muted">
+                            <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+                            No contract version history available.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     
     <!-- Technical Specifications Card - Full Width -->
     {% if object.has_type_specific_data %}
