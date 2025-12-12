@@ -47,7 +47,7 @@ query SegmentDetails($id: ID!) {
       id
       name
     }
-    type_specific_technicals
+    type_specific_data
     has_type_specific_data
     has_path_data
     path_length_km
@@ -76,7 +76,7 @@ query DarkFiber {
     id
     name
     segment_type
-    type_specific_technicals
+    type_specific_data
     has_path_data
     has_type_specific_data
   }
@@ -92,11 +92,11 @@ query DarkFiberDetails($id: ID!) {
     id
     name
     segment_type
-    type_specific_technicals
+    type_specific_data
   }
 }
 ```
-Example response for `type_specific_technicals`:
+Example response for `type_specific_data`:
 ```json
 {
   "id": 1,
@@ -126,11 +126,11 @@ query OpticalSpectrumDetails($id: ID!) {
     id
     name
     segment_type
-    type_specific_technicals
+    type_specific_data
   }
 }
 ```
-Example response for `type_specific_technicals`:
+Example response for `type_specific_data`:
 ```json
 {
   "id": 2,
@@ -156,11 +156,11 @@ query EthernetServiceDetails($id: ID!) {
     id
     name
     segment_type
-    type_specific_technicals
+    type_specific_data
   }
 }
 ```
-Example response for `type_specific_technicals`:
+Example response for `type_specific_data`:
 ```json
 {
   "id": 3,
@@ -179,7 +179,7 @@ Example response for `type_specific_technicals`:
 }
 ```
 
-**Note**: The `type_specific_technicals` field returns `null` if no technical data exists for the segment.
+**Note**: The `type_specific_data` field returns `null` if no technical data exists for the segment.
 ### Complex filtering - Active dark fiber segments with path data
 ```graphql
 query ActiveDarkFiberWithPaths {

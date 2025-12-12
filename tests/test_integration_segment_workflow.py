@@ -39,7 +39,7 @@ def test_two_step_creation_dark_fiber():
 
     Step 1: Create segment with basic info (no technical data)
     Step 2: Add dark fiber technical data via separate endpoint
-    Step 3: Verify segment includes type_specific_technicals
+    Step 3: Verify segment includes type_specific_data
     """
     print("\n=== Testing Two-Step Segment Creation (Dark Fiber) ===")
 
@@ -65,7 +65,7 @@ def test_two_step_creation_dark_fiber():
     print(f"Created segment with ID: {segment_id}")
 
     # Verify no technical data yet
-    assert seg_response.json()["type_specific_technicals"] is None
+    assert seg_response.json()["type_specific_data"] is None
 
     try:
         # STEP 2: Add dark fiber technical data
@@ -90,7 +90,7 @@ def test_two_step_creation_dark_fiber():
         print("Dark fiber data created successfully")
 
         # STEP 3: Verify segment now includes technical data
-        print("Step 3: Verifying segment includes type_specific_technicals...")
+        print("Step 3: Verifying segment includes type_specific_data...")
         verify_response = requests.get(
             f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/segments/{segment_id}/",
             headers=HEADERS,
@@ -99,11 +99,11 @@ def test_two_step_creation_dark_fiber():
         assert verify_response.status_code == 200
         segment_data = verify_response.json()
 
-        # Verify type_specific_technicals is populated
-        assert segment_data["type_specific_technicals"] is not None
-        assert segment_data["type_specific_technicals"]["fiber_mode"] == "single_mode"
-        assert segment_data["type_specific_technicals"]["single_mode_subtype"] == "g652d"
-        assert float(segment_data["type_specific_technicals"]["total_loss"]) == 8.5
+        # Verify type_specific_data is populated
+        assert segment_data["type_specific_data"] is not None
+        assert segment_data["type_specific_data"]["fiber_mode"] == "single_mode"
+        assert segment_data["type_specific_data"]["single_mode_subtype"] == "g652d"
+        assert float(segment_data["type_specific_data"]["total_loss"]) == 8.5
 
         print("✓ Two-step workflow completed successfully!")
 
@@ -150,8 +150,8 @@ def test_segment_without_technical_data():
         assert get_response.status_code == 200
         segment_data = get_response.json()
 
-        # Verify type_specific_technicals is None (no data)
-        assert segment_data["type_specific_technicals"] is None
+        # Verify type_specific_data is None (no data)
+        assert segment_data["type_specific_data"] is None
 
         print("✓ Segment without technical data is valid")
 
@@ -188,7 +188,7 @@ def test_adding_technical_data_later():
 
     try:
         # Initially no technical data
-        assert seg_response.json()["type_specific_technicals"] is None
+        assert seg_response.json()["type_specific_data"] is None
 
         # Wait some time, then add technical data
         print("Adding optical spectrum data later...")
@@ -210,8 +210,8 @@ def test_adding_technical_data_later():
             headers=HEADERS,
         )
 
-        assert verify_response.json()["type_specific_technicals"] is not None
-        assert float(verify_response.json()["type_specific_technicals"]["wavelength"]) == 1550.12
+        assert verify_response.json()["type_specific_data"] is not None
+        assert float(verify_response.json()["type_specific_data"]["wavelength"]) == 1550.12
 
         print("✓ Technical data successfully added later")
 
@@ -284,7 +284,7 @@ def test_changing_segment_type():
 
         # Verify dark fiber data is deleted (cascade or manual cleanup needed)
         # Note: This depends on whether changing segment_type triggers cascade delete
-        # The segment should now have type_specific_technicals = None
+        # The segment should now have type_specific_data = None
         updated_seg = requests.get(
             f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/segments/{segment_id}/",
             headers=HEADERS,
@@ -313,8 +313,8 @@ def test_changing_segment_type():
             headers=HEADERS,
         )
 
-        assert final_seg.json()["type_specific_technicals"] is not None
-        assert final_seg.json()["type_specific_technicals"]["port_speed"] == 10000
+        assert final_seg.json()["type_specific_data"] is not None
+        assert final_seg.json()["type_specific_data"]["port_speed"] == 10000
 
         print("✓ Segment type changed successfully with new technical data")
 
@@ -326,13 +326,13 @@ def test_changing_segment_type():
         )
 
 
-def test_type_specific_technicals_field_consistency():
+def test_type_specific_data_field_consistency():
     """
-    Test that type_specific_technicals always returns data matching segment_type.
+    Test that type_specific_data always returns data matching segment_type.
 
     Verify that the computed field correctly maps to the appropriate technical data model.
     """
-    print("\n=== Testing type_specific_technicals Field Consistency ===")
+    print("\n=== Testing type_specific_data Field Consistency ===")
 
     test_cases = [
         {
@@ -391,7 +391,7 @@ def test_type_specific_technicals_field_consistency():
 
             assert tech_response.status_code == 201
 
-            # Get segment and verify type_specific_technicals
+            # Get segment and verify type_specific_data
             seg_get = requests.get(
                 f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/segments/{segment_id}/",
                 headers=HEADERS,
@@ -400,14 +400,14 @@ def test_type_specific_technicals_field_consistency():
             assert seg_get.status_code == 200
             segment_data = seg_get.json()
 
-            # Verify type_specific_technicals is populated
-            assert segment_data["type_specific_technicals"] is not None
+            # Verify type_specific_data is populated
+            assert segment_data["type_specific_data"] is not None
 
             # Verify correct field value
             verify_field = test_case["verify_field"]
             verify_value = test_case["verify_value"]
 
-            actual_value = segment_data["type_specific_technicals"][verify_field]
+            actual_value = segment_data["type_specific_data"][verify_field]
             if isinstance(verify_value, float):
                 assert float(actual_value) == verify_value
             else:
@@ -423,11 +423,11 @@ def test_type_specific_technicals_field_consistency():
             )
 
 
-def test_list_view_includes_type_specific_technicals():
+def test_list_view_includes_type_specific_data():
     """
-    Test that the segment list API includes type_specific_technicals field.
+    Test that the segment list API includes type_specific_data field.
     """
-    print("\n=== Testing List View Includes type_specific_technicals ===")
+    print("\n=== Testing List View Includes type_specific_data ===")
 
     # Create a segment with technical data
     seg_response = requests.post(
@@ -473,12 +473,12 @@ def test_list_view_includes_type_specific_technicals():
         our_segment = next((s for s in segments if s["id"] == segment_id), None)
         assert our_segment is not None, f"Segment {segment_id} not found in list response"
 
-        # Verify type_specific_technicals is included in list view
-        assert "type_specific_technicals" in our_segment
-        assert our_segment["type_specific_technicals"] is not None
-        assert our_segment["type_specific_technicals"]["fiber_mode"] == "single_mode"
+        # Verify type_specific_data is included in list view
+        assert "type_specific_data" in our_segment
+        assert our_segment["type_specific_data"] is not None
+        assert our_segment["type_specific_data"]["fiber_mode"] == "single_mode"
 
-        print("✓ List view includes type_specific_technicals")
+        print("✓ List view includes type_specific_data")
 
     finally:
         # Cleanup

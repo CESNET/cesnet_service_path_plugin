@@ -114,14 +114,14 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Has Path Data",
     )
 
-    # Type specific data filter
     has_type_specific_data = django_filters.ChoiceFilter(
         choices=[
+            ("", "Any"),
             (True, "Yes"),
             (False, "No"),
         ],
         method="_has_type_specific_data",
-        label="Has Type Specific Data",
+        label="Has Type-Specific Data",
     )
 
     # =============================================================================
@@ -199,7 +199,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "site_b",
             "location_b",
             "has_path_data",
-            "has_type_specific_data",
         ]
 
     def _at_any_site(self, queryset, name, value):
@@ -268,25 +267,34 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             return queryset.filter(path_geometry__isnull=True)
 
     def _has_type_specific_data(self, queryset, name, value):
-        """Filter segments by whether they have type-specific data"""
-        if value == "" or value is None:
-            return queryset  # No filtering
+        """
+        Filter segments based on whether they have type-specific data or not.
+        Checks if the segment has any of the type-specific models:
+        - DarkFiberSegmentData (dark_fiber_data)
+        - OpticalSpectrumData (optical_spectrum_data)
+        - EthernetServiceData (ethernet_service_data)
+        """
+        if value in (None, "", []):
+            # Nothing selected, show all segments
+            return queryset
 
         has_data = value in [True, "True", "true", "1"]
 
         if has_data:
-            # Has data: at least one of the three models exists
+            # Only "Yes" selected, show segments with type-specific data
+            # Check if segment has any of the three type-specific data models
             return queryset.filter(
                 Q(dark_fiber_data__isnull=False)
                 | Q(optical_spectrum_data__isnull=False)
                 | Q(ethernet_service_data__isnull=False)
             )
         else:
-            # No data: none of the three models exist
+            # Only "No" selected, show segments without type-specific data
+            # Must not have any of the three type-specific data models
             return queryset.filter(
-                dark_fiber_data__isnull=True,
-                optical_spectrum_data__isnull=True,
-                ethernet_service_data__isnull=True,
+                Q(dark_fiber_data__isnull=True)
+                & Q(optical_spectrum_data__isnull=True)
+                & Q(ethernet_service_data__isnull=True)
             )
 
     def _parse_smart_numeric_value(self, value, field_type="float"):

@@ -117,7 +117,10 @@ class DarkFiberSegmentData(NetBoxModel):
         verbose_name_plural = "Dark Fiber Technical Data"
 
     def __str__(self):
-        return f"Dark Fiber Data for {self.segment.name}"
+        try:
+            return f"Dark Fiber Data for {self.segment.name}"
+        except Exception:
+            return f"Dark Fiber Data (segment #{self.pk})"
 
     def get_absolute_url(self):
         # Redirect to the parent segment's detail page

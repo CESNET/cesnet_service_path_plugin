@@ -78,9 +78,14 @@ class OpticalSpectrumSegmentData(NetBoxModel):
         verbose_name_plural = "Optical Spectrum Technical Data"
 
     def __str__(self):
-        if self.wavelength:
-            return f"Optical Spectrum Data for {self.segment.name} ({self.wavelength}nm)"
-        return f"Optical Spectrum Data for {self.segment.name}"
+        try:
+            if self.wavelength:
+                return f"Optical Spectrum Data for {self.segment.name} ({self.wavelength}nm)"
+            return f"Optical Spectrum Data for {self.segment.name}"
+        except Exception:
+            if self.wavelength:
+                return f"Optical Spectrum Data (segment #{self.pk}, {self.wavelength}nm)"
+            return f"Optical Spectrum Data (segment #{self.pk})"
 
     def get_absolute_url(self):
         # Redirect to the parent segment's detail page

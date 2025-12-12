@@ -34,12 +34,12 @@ logger = logging.getLogger(__name__)
 
 class SegmentBaseSerializer(NetBoxModelSerializer):
     """
-    Base serializer for Segment with common fields and type-specific technicals logic.
+    Base serializer for Segment with common fields and type-specific data logic.
 
     This base class provides:
     - Common nested serializers (provider, sites, locations, circuits)
-    - Computed field: type_specific_technicals
-    - Method to retrieve type-specific technical data
+    - Computed field: type_specific_data
+    - Method to retrieve type-specific technical data from relational models
 
     Subclasses:
     - SegmentSerializer: Lightweight serializer for list views
@@ -54,8 +54,8 @@ class SegmentBaseSerializer(NetBoxModelSerializer):
     location_b = LocationSerializer(required=False, nested=True)
     circuits = CircuitSerializer(required=False, many=True, nested=True)
 
-    # Computed field: type_specific_technicals (maps to the appropriate nested data based on segment_type)
-    type_specific_technicals = serializers.SerializerMethodField(read_only=True)
+    # Computed field: type_specific_data (returns data from relational models based on segment_type)
+    type_specific_data = serializers.SerializerMethodField(read_only=True)
 
     contract_info = serializers.SerializerMethodField(read_only=True)
 
@@ -64,12 +64,12 @@ class SegmentBaseSerializer(NetBoxModelSerializer):
         # Fields will be defined in subclasses
         fields = []
 
-    def get_type_specific_technicals(self, obj):
+    def get_type_specific_data(self, obj):
         """
-        Return type-specific technical data based on segment_type.
+        Return type-specific technical data from relational models based on segment_type.
 
-        This computed field provides a consistent interface: data is always under
-        'type_specific_technicals' key, with the type determined by segment_type.
+        Returns structured data from DarkFiberSegmentData, OpticalSpectrumSegmentData,
+        or EthernetServiceSegmentData depending on the segment's type.
         """
         if obj.segment_type == 'dark_fiber' and hasattr(obj, 'dark_fiber_data'):
             return DarkFiberSegmentDataSerializer(obj.dark_fiber_data, context=self.context).data
@@ -133,7 +133,6 @@ class SegmentSerializer(SegmentBaseSerializer):
             "location_b",
             "circuits",
             "type_specific_data",
-            "type_specific_technicals",
             # Only basic path info, no heavy geometry
             "path_length_km",
             "path_source_format",
@@ -251,7 +250,6 @@ class SegmentDetailSerializer(SegmentBaseSerializer):
             "location_b",
             "circuits",
             "type_specific_data",
-            "type_specific_technicals",
             # All path geometry fields
             "path_geometry_geojson",
             "path_coordinates",

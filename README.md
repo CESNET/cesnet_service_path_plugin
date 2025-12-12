@@ -47,6 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version |
 |----------------|----------------|
+|     4.4        |      5.5.x     |
 |     4.4        |      5.4.x     |
 |     4.4        |      5.3.x     |
 |     4.4        |      5.2.x     |
@@ -73,7 +74,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - Automatic status tracking based on dates
 - **Geographic path visualization with actual route data**
 - **Interactive topology visualization** showing segment connections and circuit terminations
-- Segment types (dark fiber, optical spectrum, ethernet) with type specific data
+- **Segment types with relational data models** (dark fiber, optical spectrum, ethernet service) - type-specific technical parameters stored in dedicated models (improved in 5.5.0)
 - **Contract information tracking with versioning support** (new in 5.4.0)
 - **Many-to-many contract relationships** - segments can have multiple contracts
 - **Commitment end date tracking** with color-coded status indicators
@@ -158,6 +159,10 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Geographic path geometry** storage (MultiLineString)
 - **Path metadata** including length, source format, and notes
 - **Contract relationships** (many-to-many through ContractSegmentMapping)
+- **Type-specific technical data** stored in relational models (OneToOne relationships):
+  - `DarkFiberSegmentData`: Fiber specifications, attenuation, connectors
+  - `OpticalSpectrumSegmentData`: Wavelength, dispersion, modulation
+  - `EthernetServiceSegmentData`: Port speed, VLAN, encapsulation, MTU
 - Automated status monitoring
 
 ### Contract Info (New in 5.4.0)
@@ -658,6 +663,35 @@ The plugin provides comprehensive REST API and GraphQL support:
 #### Example of segment with path file PATCH and POST
 See [detailed example in docs](./docs/API_path.md).
 
+#### Type-Specific Technical Data in API (Architecture improved in 5.5.0)
+
+Segment API responses include type-specific technical parameters via the `type_specific_data` computed field:
+
+```json
+{
+  "id": 1,
+  "name": "Example Dark Fiber Segment",
+  "segment_type": "dark_fiber",
+  "type_specific_data": {
+    "id": 1,
+    "segment": 1,
+    "fiber_mode": "single_mode",
+    "single_mode_subtype": "G.652D",
+    "fiber_attenuation_max": "0.3500",
+    "total_loss": "2.50",
+    "connector_type_side_a": "LC/APC",
+    "connector_type_side_b": "LC/APC"
+  }
+}
+```
+
+**What changed in 5.5.0**: `type_specific_data` is now a computed field that returns structured data from relational models (DarkFiberSegmentData, OpticalSpectrumSegmentData, or EthernetServiceSegmentData) instead of a JSON blob. The field name remains the same for API compatibility, but the underlying architecture is now fully relational with proper database constraints and validation.
+
+**Type-Specific Data Endpoints**:
+- `/api/plugins/cesnet-service-path-plugin/dark-fiber-segment-data/` - Dark fiber specifications
+- `/api/plugins/cesnet-service-path-plugin/optical-spectrum-segment-data/` - Optical spectrum parameters
+- `/api/plugins/cesnet-service-path-plugin/ethernet-service-segment-data/` - Ethernet service details
+
 #### Contract Information in API (New in 5.4.0)
 
 Contract API responses include versioning and financial fields:
@@ -707,12 +741,14 @@ Access the GraphQL API at `/graphql/` with full support for:
 #### Query Examples
 
 ```graphql
-# Query segments with path data
+# Query segments with path data and type-specific information
 query {
   segment_list(filters: {hasPathData: true}) {
     id
     name
     networkLabel
+    segmentType
+    typeSpecificData
     pathLengthKm
     pathGeometryGeojson
     provider {
@@ -769,7 +805,7 @@ query {
 - **Geographic fields**: GeoJSON geometry, path coordinates, bounding boxes
 - **Advanced filtering**: Status, dates, providers, sites, path data availability, contract versioning
 - **Nested relationships**: Query related circuits, providers, locations, contracts in single request
-- **Type-specific data**: Query segment type information and technical specifications
+- **Type-specific technical data**: Query dark fiber, optical spectrum, or ethernet service parameters via relational models
 - **Contract versioning**: Query contract versions, version chains, and active contracts (new in 5.4.0)
 - **Financial calculations**: Query commitment end dates and contract value calculations
 

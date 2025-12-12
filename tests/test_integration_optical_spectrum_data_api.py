@@ -57,8 +57,8 @@ def base_segment():
     segment_id = segment_data["id"]
     print(f"Created segment with ID: {segment_id}")
 
-    # Verify type_specific_technicals is None (no technical data yet)
-    assert segment_data["type_specific_technicals"] is None
+    # Verify type_specific_data is None (no technical data yet)
+    assert segment_data["type_specific_data"] is None
 
     yield segment_id
 
@@ -129,7 +129,7 @@ def test_retrieve_optical_spectrum_data(base_segment):
 
 
 def test_segment_includes_technical_data(base_segment):
-    """Test that segment API includes type_specific_technicals field."""
+    """Test that segment API includes type_specific_data field."""
     print(f"\n=== Verifying Segment Includes Technical Data (ID: {base_segment}) ===")
 
     response = requests.get(
@@ -141,11 +141,11 @@ def test_segment_includes_technical_data(base_segment):
 
     data = response.json()
 
-    # Verify type_specific_technicals is populated
-    assert data["type_specific_technicals"] is not None
-    assert data["type_specific_technicals"]["segment"]["id"] == base_segment
-    assert float(data["type_specific_technicals"]["wavelength"]) == 1550.12
-    assert data["type_specific_technicals"]["modulation_format"] == "dp_qpsk"
+    # Verify type_specific_data is populated
+    assert data["type_specific_data"] is not None
+    assert data["type_specific_data"]["segment"]["id"] == base_segment
+    assert float(data["type_specific_data"]["wavelength"]) == 1550.12
+    assert data["type_specific_data"]["modulation_format"] == "dp_qpsk"
 
 
 def test_update_optical_spectrum_data(base_segment):
@@ -175,7 +175,7 @@ def test_update_optical_spectrum_data(base_segment):
         headers=HEADERS,
     )
     seg_data = seg_response.json()
-    assert float(seg_data["type_specific_technicals"]["wavelength"]) == 1552.52
+    assert float(seg_data["type_specific_data"]["wavelength"]) == 1552.52
 
 
 def test_wavelength_validation():
@@ -243,13 +243,13 @@ def test_delete_optical_spectrum_data(base_segment):
     )
     assert get_response.status_code == 404
 
-    # Verify segment type_specific_technicals is now None
+    # Verify segment type_specific_data is now None
     seg_response = requests.get(
         f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/segments/{base_segment}/",
         headers=HEADERS,
     )
     seg_data = seg_response.json()
-    assert seg_data["type_specific_technicals"] is None
+    assert seg_data["type_specific_data"] is None
 
 
 def test_cascade_delete_on_segment_deletion():

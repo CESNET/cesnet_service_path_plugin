@@ -69,9 +69,14 @@ class EthernetServiceSegmentData(NetBoxModel):
         verbose_name_plural = "Ethernet Service Technical Data"
 
     def __str__(self):
-        if self.port_speed:
-            return f"Ethernet Service Data for {self.segment.name} ({self.port_speed} Mbps)"
-        return f"Ethernet Service Data for {self.segment.name}"
+        try:
+            if self.port_speed:
+                return f"Ethernet Service Data for {self.segment.name} ({self.port_speed} Mbps)"
+            return f"Ethernet Service Data for {self.segment.name}"
+        except Exception:
+            if self.port_speed:
+                return f"Ethernet Service Data (segment #{self.pk}, {self.port_speed} Mbps)"
+            return f"Ethernet Service Data (segment #{self.pk})"
 
     def get_absolute_url(self):
         # Redirect to the parent segment's detail page

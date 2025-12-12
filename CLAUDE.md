@@ -7,7 +7,7 @@
 - **Type**: NetBox Plugin (Django application)
 - **Language**: Python 3.10+
 - **Framework**: Django with NetBox Plugin Framework
-- **Current Version**: 5.3.0
+- **Current Version**: 5.5.0
 - **License**: Apache-2.0
 
 ## Core Purpose
@@ -85,11 +85,15 @@ Represents a physical network segment between two locations.
 - `install_date`, `termination_date`: Lifecycle dates
 - `status`: Active, Planned, Offline, etc. (customizable)
 - `ownership_type`: Leased, Owned, etc.
-- `segment_type`: Dark fiber, optical spectrum, ethernet, etc.
-- `type_specific_data`: JSON field for type-specific technical parameters
+- `segment_type`: Dark fiber, optical spectrum, ethernet service
 - `path_geometry`: PostGIS MultiLineString (geographic route)
 - `path_length_km`: Calculated path length
 - `circuits`: Many-to-Many through SegmentCircuitMapping
+
+**Type-Specific Data Models (OneToOne relationships):**
+- `DarkFiberSegmentData`: Fiber mode, attenuation, connectors, etc.
+- `OpticalSpectrumSegmentData`: Wavelength, dispersion, modulation, etc.
+- `EthernetServiceSegmentData`: Port speed, VLAN, encapsulation, MTU, etc.
 
 **Geographic Features:**
 - Stores actual geographic paths (not just A-to-B lines)
@@ -153,6 +157,50 @@ Tracks legal agreements and financial information for segments.
 **ContractSegmentMapping:**
 - Links contract versions to segments
 - Supports multiple segments per contract
+
+### 5. Type-Specific Data Models
+
+Three specialized models store technical parameters for different segment types using OneToOne relationships with Segment:
+
+**DarkFiberSegmentData** (`models/dark_fiber_data.py`):
+- `fiber_mode`: Single-mode or Multimode
+- `single_mode_subtype`: G.652D, G.655, G.657A1, etc.
+- `multimode_subtype`: OM1, OM2, OM3, OM4, OM5
+- `jacket_type`: Indoor, Outdoor, Armored, etc.
+- `fiber_attenuation_max`: Maximum attenuation (dB/km)
+- `total_loss`: End-to-end optical loss (dB)
+- `total_length`: Physical cable length (km)
+- `number_of_fibers`: Fiber strand count
+- `connector_type_side_a`, `connector_type_side_b`: LC/APC, SC/UPC, etc.
+
+**OpticalSpectrumSegmentData** (`models/optical_spectrum_data.py`):
+- `wavelength`: Center wavelength (nm) - C-band/L-band
+- `spectral_slot_width`: Optical channel bandwidth (GHz)
+- `itu_grid_position`: ITU-T G.694.1 channel number
+- `chromatic_dispersion`: Dispersion at wavelength (ps/nm)
+- `pmd_tolerance`: Polarization mode dispersion (ps)
+- `modulation_format`: NRZ, PAM4, QPSK, 16QAM, etc.
+
+**EthernetServiceSegmentData** (`models/ethernet_service_data.py`):
+- `port_speed`: Bandwidth (Mbps)
+- `vlan_id`: Primary VLAN tag (1-4094)
+- `vlan_tags`: Additional VLANs for QinQ
+- `encapsulation_type`: 802.1Q, 802.1ad, MPLS, MEF E-Line, etc.
+- `interface_type`: RJ45, SFP, SFP+, QSFP+, QSFP28, etc.
+- `mtu_size`: Maximum transmission unit (bytes)
+
+**Architecture Benefits:**
+- **Database constraints**: Field validation at DB level (NOT NULL, CHECK, ranges)
+- **Indexed fields**: Fast queries on individual parameters
+- **Type safety**: Django ORM prevents invalid data types
+- **Maintainability**: Add fields via migrations, not JSON schema updates
+- **API clarity**: Structured objects, not JSON blobs
+
+**API Access:**
+```python
+# Computed field on Segment API
+segment['type_specific_technicals']  # Returns appropriate model data
+```
 
 ## Key Features
 

@@ -57,6 +57,24 @@ class EthernetServiceSegmentDataDeleteView(generic.ObjectDeleteView):
     """
     queryset = EthernetServiceSegmentData.objects.all()
 
+    def get(self, request, *args, **kwargs):
+        """Store the segment reference before the object might be deleted."""
+        obj = self.get_object(**kwargs)
+        try:
+            self._segment_url = obj.segment.get_absolute_url() if obj.segment else None
+        except Exception:
+            self._segment_url = None
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Store the segment reference before the object is deleted."""
+        obj = self.get_object(**kwargs)
+        try:
+            self._segment_url = obj.segment.get_absolute_url() if obj.segment else None
+        except Exception:
+            self._segment_url = None
+        return super().post(request, *args, **kwargs)
+
     def get_return_url(self, request, obj=None):
         """
         Return to the parent segment's detail view after delete.
@@ -67,9 +85,9 @@ class EthernetServiceSegmentDataDeleteView(generic.ObjectDeleteView):
             if url_has_allowed_host_and_scheme(return_url, allowed_hosts={request.get_host()}, require_https=True):
                 return return_url
 
-        # Default: return to segment detail if we have an object
-        if obj and obj.segment:
-            return obj.segment.get_absolute_url()
+        # Use the stored segment URL if available
+        if hasattr(self, '_segment_url') and self._segment_url:
+            return self._segment_url
 
         # Fallback to default behavior
         return super().get_return_url(request, obj)

@@ -117,7 +117,6 @@ class SegmentForm(NetBoxModelForm):
             help_text += ". Upload a new file to replace the current path."
             self.fields["path_file"].help_text = help_text
 
-
     def _validate_dates(self, install_date, termination_date):
         """
         WARN: Workaround InlineFields does not display ValidationError messages in the field.
@@ -328,17 +327,6 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         help_text="Filter segments that have path geometry data",
     )
 
-    has_type_specific_data = forms.ChoiceField(
-        required=False,
-        choices=[
-            ("", "Any"),
-            (True, "Yes"),
-            (False, "No"),
-        ],
-        label=_("Has Type-Specific Data"),
-        help_text="Filter segments that have type-specific data defined",
-    )
-
     has_contract_info = forms.ChoiceField(
         required=False,
         choices=[
@@ -348,6 +336,17 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         ],
         label=_("Has Contract Info"),
         help_text="Filter segments that have contract info defined",
+    )
+
+    has_type_specific_data = forms.ChoiceField(
+        required=False,
+        choices=[
+            ("", "Any"),
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        label=_("Has Type-Specific Data"),
+        help_text="Filter segments that have type-specific data defined",
     )
 
     # =============================================================================
@@ -467,8 +466,8 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
             "segment_type",
             "network_label",
             "has_path_data",
-            "has_type_specific_data",
             "has_contract_info",
+            "has_type_specific_data",
             name="Basic",
         ),
         FieldSet(

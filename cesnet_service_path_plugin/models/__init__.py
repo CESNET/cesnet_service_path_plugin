@@ -1,12 +1,7 @@
 from .segment import Segment
 from .segment_circuit_mapping import SegmentCircuitMapping
 from .contract_info import ContractInfo
-from .segment_types import (
-    SegmentTypeChoices,
-    get_all_segment_types,
-    get_segment_type_schema,
-    validate_segment_type_data,
-)
+from .segment_types import SegmentTypeChoices
 from .service_path import ServicePath
 from .service_path_segment_mapping import ServicePathSegmentMapping
 
@@ -44,10 +39,6 @@ __all__ = [
     "DarkFiberSegmentData",
     "OpticalSpectrumSegmentData",
     "EthernetServiceSegmentData",
-    # Legacy functions (keep for backward compatibility during transition)
-    "get_all_segment_types",
-    "get_segment_type_schema",
-    "validate_segment_type_data",
     # Choices
     "CurrencyChoices",
     "RecurringChargePeriodChoices",

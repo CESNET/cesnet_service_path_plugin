@@ -157,8 +157,8 @@ class SegmentType(NetBoxObjectType):
         return False
 
     @field
-    def type_specific_technicals(self) -> Optional[strawberry.scalars.JSON]:
-        """Type-specific technical data from related models"""
+    def type_specific_data(self) -> Optional[strawberry.scalars.JSON]:
+        """Type-specific technical data from relational models (DarkFiberSegmentData, OpticalSpectrumSegmentData, or EthernetServiceSegmentData)"""
         # Import serializers to get the data in the same format as REST API
         from cesnet_service_path_plugin.api.serializers.dark_fiber_data_serializer import (
             DarkFiberSegmentDataSerializer,
