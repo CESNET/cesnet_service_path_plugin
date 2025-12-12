@@ -1,5 +1,4 @@
 import logging
-from decimal import Decimal
 
 from circuits.models import Circuit, Provider
 from dcim.models import Location, Site
@@ -22,11 +21,16 @@ from utilities.forms.rendering import FieldSet, InlineFields
 from utilities.forms.widgets.datetime import DatePicker
 
 from cesnet_service_path_plugin.models import Segment
-from cesnet_service_path_plugin.models.custom_choices import StatusChoices, OwnershipTypeChoices
-from cesnet_service_path_plugin.models.segment_types import (
-    SEGMENT_TYPE_SCHEMAS,
-    SegmentTypeChoices,
+from cesnet_service_path_plugin.models.custom_choices import (
+    StatusChoices,
+    OwnershipTypeChoices,
+    SingleModeFiberSubtypeChoices,
+    ConnectorTypeChoices,
+    ModulationFormatChoices,
+    EncapsulationTypeChoices,
+    InterfaceTypeChoices,
 )
+from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 from cesnet_service_path_plugin.utils import (
     determine_file_format_from_extension,
     process_path_data,
@@ -98,21 +102,12 @@ class SegmentForm(NetBoxModelForm):
         widget=forms.Select(
             attrs={
                 "class": "form-control",
-                "onchange": "updateTypeSpecificFields(this.value)",
             }
         ),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Add dynamic fields for type-specific data
-        self.add_type_specific_fields()
-
-        # Pre-populate type-specific fields if editing existing object
-        # IMPORTANT: This must happen AFTER add_type_specific_fields()
-        if self.instance.pk and self.instance.type_specific_data:
-            self.populate_type_specific_fields()
 
         # If editing existing segment with path data, show some info
         if self.instance.pk and self.instance.path_geometry:
@@ -122,141 +117,6 @@ class SegmentForm(NetBoxModelForm):
             help_text += ". Upload a new file to replace the current path."
             self.fields["path_file"].help_text = help_text
 
-    def add_type_specific_fields(self):
-        """Dynamically add fields for all segment types"""
-        for segment_type, schema in SEGMENT_TYPE_SCHEMAS.items():
-            for field_name, field_config in schema.items():
-                form_field_name = f"type_{field_name}"
-
-                # Create appropriate form field based on schema
-                if field_config["type"] == "decimal":
-                    field = forms.DecimalField(
-                        label=field_config["label"],
-                        required=False,
-                        min_value=field_config.get("min_value"),
-                        max_value=field_config.get("max_value"),
-                        max_digits=field_config.get("max_digits", 8),
-                        decimal_places=field_config.get("decimal_places", 2),
-                        help_text=field_config.get("help_text", ""),
-                        widget=forms.NumberInput(
-                            attrs={
-                                "class": "form-control",
-                                "data-type-field": segment_type,
-                                "step": "any",
-                            }
-                        ),
-                    )
-                elif field_config["type"] == "integer":
-                    field = forms.IntegerField(
-                        label=field_config["label"],
-                        required=False,
-                        min_value=field_config.get("min_value"),
-                        max_value=field_config.get("max_value"),
-                        help_text=field_config.get("help_text", ""),
-                        widget=forms.NumberInput(
-                            attrs={
-                                "class": "form-control",
-                                "data-type-field": segment_type,
-                            }
-                        ),
-                    )
-                elif field_config["type"] == "choice":
-                    choices = [("", "--------")] + [(c, c) for c in field_config.get("choices", [])]
-                    field = forms.ChoiceField(
-                        label=field_config["label"],
-                        required=False,
-                        choices=choices,
-                        help_text=field_config.get("help_text", ""),
-                        widget=forms.Select(
-                            attrs={
-                                "class": "form-select",
-                                "data-type-field": segment_type,
-                            }
-                        ),
-                    )
-                elif field_config["type"] == "multichoice":
-                    choices = [(c, c) for c in field_config.get("choices", [])]
-                    field = forms.MultipleChoiceField(
-                        label=field_config["label"],
-                        required=False,
-                        choices=choices,
-                        help_text=field_config.get("help_text", ""),
-                        widget=forms.SelectMultiple(
-                            attrs={
-                                "class": "form-select",
-                                "data-type-field": segment_type,
-                            }
-                        ),
-                    )
-                else:  # string
-                    field = forms.CharField(
-                        label=field_config["label"],
-                        required=False,
-                        max_length=field_config.get("max_length", 255),
-                        help_text=field_config.get("help_text", ""),
-                        widget=forms.TextInput(
-                            attrs={
-                                "class": "form-control",
-                                "data-type-field": segment_type,
-                            }
-                        ),
-                    )
-
-                self.fields[form_field_name] = field
-
-    def populate_type_specific_fields(self):
-        """Populate type-specific fields with existing data"""
-        type_data = self.instance.type_specific_data or {}
-
-        for field_name, value in type_data.items():
-            form_field_name = f"type_{field_name}"
-
-            if form_field_name in self.fields:
-                # Convert value to appropriate type for the form field
-                field = self.fields[form_field_name]
-                converted_value = value
-
-                if isinstance(field, forms.DecimalField):
-                    # Ensure decimal values are properly converted
-                    if isinstance(value, (int, float, str)):
-                        try:
-                            converted_value = Decimal(str(value))
-                        except (ValueError, TypeError) as e:
-                            logger.warning(
-                                f"Failed to convert value '{value}' to Decimal for field '{form_field_name}': {e}"
-                            )
-                            converted_value = value
-
-                elif isinstance(field, forms.IntegerField):
-                    # Ensure integer values are properly converted
-                    if isinstance(value, (float, str)):
-                        try:
-                            converted_value = int(value)
-                        except (ValueError, TypeError) as e:
-                            logger.warning(
-                                f"Failed to convert value '{value}' to int for field '{form_field_name}': {e}"
-                            )
-                            converted_value = value
-
-                # Set initial value
-                self.fields[form_field_name].initial = converted_value
-
-                # CRUCIAL FIX: Also set the value in self.initial if it exists
-                if not hasattr(self, "initial"):
-                    self.initial = {}
-                self.initial[form_field_name] = converted_value
-
-            else:
-                logging.warning(f"DEBUG: Form field {form_field_name} not found in self.fields")
-                logging.debug(
-                    f"DEBUG: Available form fields starting with 'type_': {[f for f in self.fields.keys() if f.startswith('type_')]}"
-                )
-
-    def get_initial_for_field(self, field, field_name):
-        """Override to ensure our type-specific initial values are used"""
-        if field_name.startswith("type_") and hasattr(self, "initial") and field_name in self.initial:
-            return self.initial[field_name]
-        return super().get_initial_for_field(field, field_name)
 
     def _validate_dates(self, install_date, termination_date):
         """
@@ -294,13 +154,6 @@ class SegmentForm(NetBoxModelForm):
         except Exception as e:
             raise ValidationError(f"Error processing file '{uploaded_file.name}': {str(e)}")
 
-    def _convert_to_json_serializable(self, value):
-        """Convert value to JSON serializable format"""
-        if isinstance(value, Decimal):
-            # Convert Decimal to float for JSON serialization
-            return float(value)
-        return value
-
     def clean(self):
         super().clean()
 
@@ -319,26 +172,6 @@ class SegmentForm(NetBoxModelForm):
             except ValidationError as e:
                 self.add_error("path_file", e)
 
-        segment_type = self.cleaned_data.get("segment_type")
-
-        if segment_type:
-            # Collect type-specific data from form
-            type_specific_data = {}
-            schema = SEGMENT_TYPE_SCHEMAS.get(segment_type, {})
-
-            for field_name, field_config in schema.items():
-                form_field_name = f"type_{field_name}"
-                value = self.cleaned_data.get(form_field_name)
-
-                # Only include non-empty values
-                if value is not None and value != "":
-                    # Convert to JSON serializable format
-                    type_specific_data[field_name] = self._convert_to_json_serializable(value)
-                elif field_config.get("required", False):
-                    self.add_error(form_field_name, "This field is required for this segment type.")
-
-            self.cleaned_data["type_specific_data"] = type_specific_data
-
         return self.cleaned_data
 
     def save(self, commit=True):
@@ -353,10 +186,6 @@ class SegmentForm(NetBoxModelForm):
             # Only clear path data if no file was uploaded and we're not preserving existing data
             # This allows editing other fields without losing path data
             pass
-
-        # Handle type-specific data
-        if "type_specific_data" in self.cleaned_data:
-            instance.type_specific_data = self.cleaned_data["type_specific_data"]
 
         if commit:
             instance.save()
@@ -410,12 +239,6 @@ class SegmentForm(NetBoxModelForm):
             "site_b",
             "location_b",
             name="Side B",
-        ),
-        # Dynamic fieldset for type-specific fields (removed 'classes' parameter)
-        FieldSet(
-            # Fields will be dynamically shown/hidden via JavaScript
-            *[f"type_{field}" for schema in SEGMENT_TYPE_SCHEMAS.values() for field in schema.keys()],
-            name="Segment Type Technical Specifications",
         ),
         FieldSet(
             "path_file",
@@ -534,16 +357,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
     # Dark Fiber specific filters
     fiber_type = forms.MultipleChoiceField(
         required=False,
-        choices=[
-            ("G.652D", "G.652D"),
-            ("G.655", "G.655"),
-            ("G.657A1", "G.657A1"),
-            ("G.657A2", "G.657A2"),
-            ("G.652B", "G.652B"),
-            ("G.652C", "G.652C"),
-            ("G.653", "G.653"),
-            ("G.654E", "G.654E"),
-        ],
+        choices=SingleModeFiberSubtypeChoices,
         label=_("Fiber Type"),
         help_text="Filter by ITU-T fiber standard designation",
     )
@@ -578,17 +392,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     connector_type = forms.MultipleChoiceField(
         required=False,
-        choices=[
-            ("LC/APC", "LC/APC"),
-            ("LC/UPC", "LC/UPC"),
-            ("SC/APC", "SC/APC"),
-            ("SC/UPC", "SC/UPC"),
-            ("FC/APC", "FC/APC"),
-            ("FC/UPC", "FC/UPC"),
-            ("ST/UPC", "ST/UPC"),
-            ("E2000/APC", "E2000/APC"),
-            ("MTP/MPO", "MTP/MPO"),
-        ],
+        choices=ConnectorTypeChoices,
         label=_("Connector Type"),
     )
 
@@ -616,15 +420,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     modulation_format = forms.MultipleChoiceField(
         required=False,
-        choices=[
-            ("NRZ", "NRZ"),
-            ("PAM4", "PAM4"),
-            ("QPSK", "QPSK"),
-            ("16QAM", "16QAM"),
-            ("64QAM", "64QAM"),
-            ("DP-QPSK", "DP-QPSK"),
-            ("DP-16QAM", "DP-16QAM"),
-        ],
+        choices=ModulationFormatChoices,
         label=_("Modulation Format"),
     )
 
@@ -645,32 +441,13 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     encapsulation_type = forms.MultipleChoiceField(
         required=False,
-        choices=[
-            ("Untagged", "Untagged"),
-            ("IEEE 802.1Q", "IEEE 802.1Q"),
-            ("IEEE 802.1ad (QinQ)", "IEEE 802.1ad (QinQ)"),
-            ("IEEE 802.1ah (PBB)", "IEEE 802.1ah (PBB)"),
-            ("MPLS", "MPLS"),
-            ("MEF E-Line", "MEF E-Line"),
-            ("MEF E-LAN", "MEF E-LAN"),
-        ],
+        choices=EncapsulationTypeChoices,
         label=_("Encapsulation Type"),
     )
 
     interface_type = forms.MultipleChoiceField(
         required=False,
-        choices=[
-            ("RJ45", "RJ45"),
-            ("SFP", "SFP"),
-            ("SFP+", "SFP+"),
-            ("QSFP+", "QSFP+"),
-            ("QSFP28", "QSFP28"),
-            ("QSFP56", "QSFP56"),
-            ("OSFP", "OSFP"),
-            ("CFP", "CFP"),
-            ("CFP2", "CFP2"),
-            ("CFP4", "CFP4"),
-        ],
+        choices=InterfaceTypeChoices,
         label=_("Interface Type"),
     )
 
@@ -686,6 +463,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         FieldSet(
             "name",
             "status",
+            "ownership_type",
             "segment_type",
             "network_label",
             "has_path_data",

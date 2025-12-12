@@ -65,4 +65,31 @@ urlpatterns = (
         "contract-info/<int:pk>/",
         include(get_model_urls("cesnet_service_path_plugin", "contractinfo")),
     ),
+    # DarkFiberSegmentData views
+    path(
+        "dark-fiber-data/",
+        include(get_model_urls("cesnet_service_path_plugin", "darkfibersegmentdata", detail=False)),
+    ),
+    path(
+        "dark-fiber-data/<int:pk>/",
+        include(get_model_urls("cesnet_service_path_plugin", "darkfibersegmentdata")),
+    ),
+    # OpticalSpectrumSegmentData views
+    path(
+        "optical-spectrum-data/",
+        include(get_model_urls("cesnet_service_path_plugin", "opticalspectrumsegmentdata", detail=False)),
+    ),
+    path(
+        "optical-spectrum-data/<int:pk>/",
+        include(get_model_urls("cesnet_service_path_plugin", "opticalspectrumsegmentdata")),
+    ),
+    # EthernetServiceSegmentData views
+    path(
+        "ethernet-service-data/",
+        include(get_model_urls("cesnet_service_path_plugin", "ethernetservicesegmentdata", detail=False)),
+    ),
+    path(
+        "ethernet-service-data/<int:pk>/",
+        include(get_model_urls("cesnet_service_path_plugin", "ethernetservicesegmentdata")),
+    ),
 )

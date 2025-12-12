@@ -47,7 +47,7 @@ query SegmentDetails($id: ID!) {
       id
       name
     }
-    type_specific_data
+    type_specific_technicals
     has_type_specific_data
     has_path_data
     path_length_km
@@ -75,12 +75,111 @@ query DarkFiber {
   ) {
     id
     name
-    type_specific_data
+    segment_type
+    type_specific_technicals
     has_path_data
     has_type_specific_data
   }
 }
 ```
+
+### Type-Specific Technical Data Examples
+
+#### Dark Fiber Segment with Technical Details
+```graphql
+query DarkFiberDetails($id: ID!) {
+  segment(id: $id) {
+    id
+    name
+    segment_type
+    type_specific_technicals
+  }
+}
+```
+Example response for `type_specific_technicals`:
+```json
+{
+  "id": 1,
+  "segment": {
+    "id": 123,
+    "url": "http://netbox/api/plugins/cesnet-service-path-plugin/segments/123/",
+    "display": "Segment 123"
+  },
+  "fiber_mode": "single_mode",
+  "single_mode_subtype": "g652d",
+  "multimode_subtype": null,
+  "jacket_type": "lszh",
+  "fiber_attenuation_max": "0.25",
+  "total_loss": "5.50",
+  "total_length": "22.00",
+  "number_of_fibers": 48,
+  "connector_type_side_a": "lc_apc",
+  "connector_type_side_b": "lc_apc",
+  "comments": ""
+}
+```
+
+#### Optical Spectrum Segment with Technical Details
+```graphql
+query OpticalSpectrumDetails($id: ID!) {
+  segment(id: $id) {
+    id
+    name
+    segment_type
+    type_specific_technicals
+  }
+}
+```
+Example response for `type_specific_technicals`:
+```json
+{
+  "id": 2,
+  "segment": {
+    "id": 456,
+    "url": "http://netbox/api/plugins/cesnet-service-path-plugin/segments/456/",
+    "display": "Segment 456"
+  },
+  "wavelength": "1550.12",
+  "spectral_slot_width": "50.00",
+  "itu_grid_position": 23,
+  "chromatic_dispersion": "16.50",
+  "pmd_tolerance": "2.10",
+  "modulation_format": "dp_qpsk",
+  "comments": ""
+}
+```
+
+#### Ethernet Service Segment with Technical Details
+```graphql
+query EthernetServiceDetails($id: ID!) {
+  segment(id: $id) {
+    id
+    name
+    segment_type
+    type_specific_technicals
+  }
+}
+```
+Example response for `type_specific_technicals`:
+```json
+{
+  "id": 3,
+  "segment": {
+    "id": 789,
+    "url": "http://netbox/api/plugins/cesnet-service-path-plugin/segments/789/",
+    "display": "Segment 789"
+  },
+  "port_speed": 10000,
+  "vlan_id": 100,
+  "vlan_tags": "100,200,300",
+  "encapsulation_type": "dot1q",
+  "interface_type": "sfp_plus",
+  "mtu_size": 9000,
+  "comments": ""
+}
+```
+
+**Note**: The `type_specific_technicals` field returns `null` if no technical data exists for the segment.
 ### Complex filtering - Active dark fiber segments with path data
 ```graphql
 query ActiveDarkFiberWithPaths {

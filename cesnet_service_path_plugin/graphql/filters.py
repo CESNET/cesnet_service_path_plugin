@@ -165,12 +165,19 @@ class SegmentFilter(NetBoxModelFilterMixin):
     def has_type_specific_data(self, value: bool, prefix: str) -> Q:
         """Filter segments based on whether they have type-specific data"""
         if value:
-            # Has type-specific data: JSON field is not empty and not null
-            # Return Q object that excludes empty dict and null values
-            return ~Q(**{f"{prefix}type_specific_data": {}}) & ~Q(**{f"{prefix}type_specific_data__isnull": True})
+            # Has data: at least one of the three models exists
+            return (
+                Q(**{f"{prefix}dark_fiber_data__isnull": False})
+                | Q(**{f"{prefix}optical_spectrum_data__isnull": False})
+                | Q(**{f"{prefix}ethernet_service_data__isnull": False})
+            )
         else:
-            # No type-specific data: JSON field is empty or null
-            return Q(**{f"{prefix}type_specific_data": {}}) | Q(**{f"{prefix}type_specific_data__isnull": True})
+            # No data: none of the three models exist
+            return (
+                Q(**{f"{prefix}dark_fiber_data__isnull": True})
+                & Q(**{f"{prefix}optical_spectrum_data__isnull": True})
+                & Q(**{f"{prefix}ethernet_service_data__isnull": True})
+            )
 
 
 @strawberry_django.filter(ServicePath, lookups=True)

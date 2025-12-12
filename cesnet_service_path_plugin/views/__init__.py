@@ -45,6 +45,18 @@ from .service_path_segment_mapping import (
     ServicePathSegmentMappingListView,
     ServicePathSegmentMappingView,
 )
+from .dark_fiber_data import (
+    DarkFiberSegmentDataEditView,
+    DarkFiberSegmentDataDeleteView,
+)
+from .optical_spectrum_data import (
+    OpticalSpectrumSegmentDataEditView,
+    OpticalSpectrumSegmentDataDeleteView,
+)
+from .ethernet_service_data import (
+    EthernetServiceSegmentDataEditView,
+    EthernetServiceSegmentDataDeleteView,
+)
 
 __all__ = [
     "SegmentBulkDeleteView",
@@ -84,4 +96,10 @@ __all__ = [
     "segment_map_view",
     "segment_path_clear",
     "segments_map_api",
+    "DarkFiberSegmentDataEditView",
+    "DarkFiberSegmentDataDeleteView",
+    "OpticalSpectrumSegmentDataEditView",
+    "OpticalSpectrumSegmentDataDeleteView",
+    "EthernetServiceSegmentDataEditView",
+    "EthernetServiceSegmentDataDeleteView",
 ]
