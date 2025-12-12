@@ -14,9 +14,6 @@ from cesnet_service_path_plugin.models import (
     ContractInfo,
     ServicePath,
     ServicePathSegmentMapping,
-    DarkFiberSegmentData,
-    OpticalSpectrumSegmentData,
-    EthernetServiceSegmentData,
 )
 
 # Import the GraphQL filters
@@ -96,7 +93,7 @@ class ContractInfoType(NetBoxObjectType):
     @field
     def commitment_end_date(self, info) -> Optional[str]:
         """Calculate commitment end date based on start date and recurring periods"""
-        if hasattr(self, 'commitment_end_date') and self.commitment_end_date:
+        if hasattr(self, "commitment_end_date") and self.commitment_end_date:
             return self.commitment_end_date.isoformat()
         return None
 

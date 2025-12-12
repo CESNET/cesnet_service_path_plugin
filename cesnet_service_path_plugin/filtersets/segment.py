@@ -8,11 +8,7 @@ from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 
 from cesnet_service_path_plugin.models import Segment
-from cesnet_service_path_plugin.models import (
-    DarkFiberSegmentData,
-    OpticalSpectrumSegmentData,
-    EthernetServiceSegmentData,
-)
+
 from cesnet_service_path_plugin.models.custom_choices import (
     StatusChoices,
     OwnershipTypeChoices,
