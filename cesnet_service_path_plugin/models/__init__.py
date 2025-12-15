@@ -22,10 +22,8 @@ from .custom_choices import (
     SingleModeFiberSubtypeChoices,
     MultimodeFiberSubtypeChoices,
     FiberJacketTypeChoices,
-    ConnectorTypeChoices,
     ModulationFormatChoices,
     EncapsulationTypeChoices,
-    InterfaceTypeChoices,
 )
 
 __all__ = [
@@ -51,7 +49,6 @@ __all__ = [
     "SingleModeFiberSubtypeChoices",
     "MultimodeFiberSubtypeChoices",
     "FiberJacketTypeChoices",
-    "ConnectorTypeChoices",
     "ModulationFormatChoices",
     "EncapsulationTypeChoices",
     "InterfaceTypeChoices",

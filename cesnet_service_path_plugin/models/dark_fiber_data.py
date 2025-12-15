@@ -4,12 +4,12 @@ from django.urls import reverse
 from netbox.models import NetBoxModel
 
 from .custom_choices import (
-    ConnectorTypeChoices,
     FiberJacketTypeChoices,
     FiberModeChoices,
     MultimodeFiberSubtypeChoices,
     SingleModeFiberSubtypeChoices,
 )
+from dcim.choices import PortTypeChoices
 
 
 class DarkFiberSegmentData(NetBoxModel):
@@ -100,14 +100,14 @@ class DarkFiberSegmentData(NetBoxModel):
     connector_type_side_a = models.CharField(
         max_length=30,
         blank=True,
-        choices=ConnectorTypeChoices,
+        choices=PortTypeChoices,
         help_text="Optical connector type and polish (Side A)",
     )
 
     connector_type_side_b = models.CharField(
         max_length=30,
         blank=True,
-        choices=ConnectorTypeChoices,
+        choices=PortTypeChoices,
         help_text="Optical connector type and polish (Side B)",
     )
 

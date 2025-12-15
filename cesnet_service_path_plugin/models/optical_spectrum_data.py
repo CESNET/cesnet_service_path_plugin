@@ -52,7 +52,7 @@ class OpticalSpectrumSegmentData(NetBoxModel):
         decimal_places=3,
         null=True,
         blank=True,
-        validators=[MinValueValidator(-1000), MaxValueValidator(1000)],
+        validators=[MinValueValidator(-100000), MaxValueValidator(100000)],
         help_text="Chromatic dispersion at the operating wavelength (ps/nm)",
     )
 

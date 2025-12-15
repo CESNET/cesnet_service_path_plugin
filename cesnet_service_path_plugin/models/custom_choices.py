@@ -224,42 +224,11 @@ class FiberJacketTypeChoices(ChoiceSet):
         (OUTDOOR, "Outdoor", "green"),
         (INDOOR_OUTDOOR, "Indoor/Outdoor", "cyan"),
         (ARMORED, "Armored", "red"),
-        (LOOSE_TUBE, "Loose Tube", "orange"),
-        (TIGHT_BUFFER, "Tight Buffer", "purple"),
+        (LOOSE_TUBE, "Loose tube", "orange"),
+        (TIGHT_BUFFER, "Tight buffer", "purple"),
         (MICRODUCT, "Microduct", "yellow"),
         (AERIAL, "Aerial", "teal"),
-        (DIRECT_BURIAL, "Direct Burial", "brown"),
-    ]
-
-
-class ConnectorTypeChoices(ChoiceSet):
-    """
-    Optical connector types with polish (APC/UPC).
-    Can be overridden in plugin configuration.
-    """
-
-    key = "cesnet_service_path_plugin.choices.connector_type"
-
-    LC_APC = "lc_apc"
-    LC_UPC = "lc_upc"
-    SC_APC = "sc_apc"
-    SC_UPC = "sc_upc"
-    FC_APC = "fc_apc"
-    FC_UPC = "fc_upc"
-    ST_UPC = "st_upc"
-    E2000_APC = "e2000_apc"
-    MTP_MPO = "mtp_mpo"
-
-    CHOICES = [
-        (LC_APC, "LC/APC", "blue"),
-        (LC_UPC, "LC/UPC", "cyan"),
-        (SC_APC, "SC/APC", "green"),
-        (SC_UPC, "SC/UPC", "teal"),
-        (FC_APC, "FC/APC", "purple"),
-        (FC_UPC, "FC/UPC", "violet"),
-        (ST_UPC, "ST/UPC", "orange"),
-        (E2000_APC, "E2000/APC", "yellow"),
-        (MTP_MPO, "MTP/MPO", "red"),
+        (DIRECT_BURIAL, "Direct burial", "brown"),
     ]
 
 
@@ -314,37 +283,4 @@ class EncapsulationTypeChoices(ChoiceSet):
         (MPLS, "MPLS", "orange"),
         (MEF_E_LINE, "MEF E-Line", "cyan"),
         (MEF_E_LAN, "MEF E-LAN", "yellow"),
-    ]
-
-
-class InterfaceTypeChoices(ChoiceSet):
-    """
-    Physical interface form factors for Ethernet.
-    Can be overridden in plugin configuration.
-    """
-
-    key = "cesnet_service_path_plugin.choices.interface_type"
-
-    RJ45 = "rj45"
-    SFP = "sfp"
-    SFP_PLUS = "sfp_plus"
-    QSFP_PLUS = "qsfp_plus"
-    QSFP28 = "qsfp28"
-    QSFP56 = "qsfp56"
-    OSFP = "osfp"
-    CFP = "cfp"
-    CFP2 = "cfp2"
-    CFP4 = "cfp4"
-
-    CHOICES = [
-        (RJ45, "RJ45", "gray"),
-        (SFP, "SFP", "blue"),
-        (SFP_PLUS, "SFP+", "green"),
-        (QSFP_PLUS, "QSFP+", "orange"),
-        (QSFP28, "QSFP28", "purple"),
-        (QSFP56, "QSFP56", "red"),
-        (OSFP, "OSFP", "cyan"),
-        (CFP, "CFP", "yellow"),
-        (CFP2, "CFP2", "teal"),
-        (CFP4, "CFP4", "violet"),
     ]

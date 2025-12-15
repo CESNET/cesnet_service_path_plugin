@@ -2,8 +2,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
 from netbox.models import NetBoxModel
+from dcim.choices import InterfaceTypeChoices
 
-from .custom_choices import EncapsulationTypeChoices, InterfaceTypeChoices
+from .custom_choices import EncapsulationTypeChoices
 
 
 class EthernetServiceSegmentData(NetBoxModel):

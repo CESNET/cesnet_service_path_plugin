@@ -10,6 +10,7 @@ from netbox.forms import (
     NetBoxModelFilterSetForm,
     NetBoxModelForm,
 )
+from dcim.choices import InterfaceTypeChoices, PortTypeChoices
 from utilities.forms import add_blank_choice
 from utilities.forms.fields import (
     CommentField,
@@ -25,10 +26,8 @@ from cesnet_service_path_plugin.models.custom_choices import (
     StatusChoices,
     OwnershipTypeChoices,
     SingleModeFiberSubtypeChoices,
-    ConnectorTypeChoices,
     ModulationFormatChoices,
     EncapsulationTypeChoices,
-    InterfaceTypeChoices,
 )
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 from cesnet_service_path_plugin.utils import (
@@ -391,7 +390,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
 
     connector_type = forms.MultipleChoiceField(
         required=False,
-        choices=ConnectorTypeChoices,
+        choices=PortTypeChoices,
         label=_("Connector Type"),
     )
 

@@ -6,6 +6,7 @@ from dcim.models import Location, Site
 from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
+from dcim.choices import InterfaceTypeChoices
 
 from cesnet_service_path_plugin.models import Segment
 
@@ -13,11 +14,10 @@ from cesnet_service_path_plugin.models.custom_choices import (
     StatusChoices,
     OwnershipTypeChoices,
     SingleModeFiberSubtypeChoices,
-    ConnectorTypeChoices,
     ModulationFormatChoices,
     EncapsulationTypeChoices,
-    InterfaceTypeChoices,
 )
+from dcim.choices import PortTypeChoices
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 
 logger = logging.getLogger(__name__)
@@ -146,7 +146,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     number_of_fibers = django_filters.CharFilter(method="_filter_smart_numeric", label="Number of Fibers")
 
     connector_type = django_filters.MultipleChoiceFilter(
-        choices=ConnectorTypeChoices,
+        choices=PortTypeChoices,
         method="_filter_type_specific_choice",
         label="Connector Type",
     )
