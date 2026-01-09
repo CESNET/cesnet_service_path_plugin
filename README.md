@@ -47,7 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version |
 |----------------|----------------|
-|     4.4        |      5.5.x     |
+|     4.5        |      5.5.x     |
 |     4.4        |      5.4.x     |
 |     4.4        |      5.3.x     |
 |     4.4        |      5.2.x     |
