@@ -71,12 +71,25 @@ class SegmentBaseSerializer(NetBoxModelSerializer):
         Returns structured data from DarkFiberSegmentData, OpticalSpectrumSegmentData,
         or EthernetServiceSegmentData depending on the segment's type.
         """
-        if obj.segment_type == 'dark_fiber' and hasattr(obj, 'dark_fiber_data'):
-            return DarkFiberSegmentDataSerializer(obj.dark_fiber_data, context=self.context).data
-        elif obj.segment_type == 'optical_spectrum' and hasattr(obj, 'optical_spectrum_data'):
-            return OpticalSpectrumSegmentDataSerializer(obj.optical_spectrum_data, context=self.context).data
-        elif obj.segment_type == 'ethernet_service' and hasattr(obj, 'ethernet_service_data'):
-            return EthernetServiceSegmentDataSerializer(obj.ethernet_service_data, context=self.context).data
+        try:
+            if obj.segment_type == 'dark_fiber':
+                try:
+                    return DarkFiberSegmentDataSerializer(obj.dark_fiber_data, context=self.context).data
+                except obj.dark_fiber_data.RelatedObjectDoesNotExist:
+                    return None
+            elif obj.segment_type == 'optical_spectrum':
+                try:
+                    return OpticalSpectrumSegmentDataSerializer(obj.optical_spectrum_data, context=self.context).data
+                except obj.optical_spectrum_data.RelatedObjectDoesNotExist:
+                    return None
+            elif obj.segment_type == 'ethernet_service':
+                try:
+                    return EthernetServiceSegmentDataSerializer(obj.ethernet_service_data, context=self.context).data
+                except obj.ethernet_service_data.RelatedObjectDoesNotExist:
+                    return None
+        except Exception:
+            # Catch any other unexpected errors
+            return None
 
         return None
 

@@ -83,7 +83,7 @@ def test_create_ethernet_service_data(base_segment):
             "vlan_id": 100,
             "vlan_tags": "100,200,300",
             "encapsulation_type": "dot1q",  # Lowercase
-            "interface_type": "sfp_plus",  # Lowercase with underscore
+            "interface_type": "10gbase-x-sfpp",  # 10GE SFP+
             "mtu_size": 9000,
         },
     )
@@ -101,7 +101,7 @@ def test_create_ethernet_service_data(base_segment):
     assert data["vlan_id"] == 100
     assert data["vlan_tags"] == "100,200,300"
     assert data["encapsulation_type"] == "dot1q"
-    assert data["interface_type"] == "sfp_plus"
+    assert data["interface_type"] == "10gbase-x-sfpp"
     assert data["mtu_size"] == 9000
 
     # Verify timestamps
@@ -126,7 +126,7 @@ def test_retrieve_ethernet_service_data(base_segment):
     assert data["segment"]["id"] == base_segment
     assert data["port_speed"] == 10000
     assert data["vlan_id"] == 100
-    assert data["interface_type"] == "sfp_plus"
+    assert data["interface_type"] == "10gbase-x-sfpp"
 
 
 def test_segment_includes_technical_data(base_segment):
@@ -147,7 +147,7 @@ def test_segment_includes_technical_data(base_segment):
     assert data["type_specific_data"]["segment"]["id"] == base_segment
     assert data["type_specific_data"]["port_speed"] == 10000
     assert data["type_specific_data"]["vlan_id"] == 100
-    assert data["type_specific_data"]["interface_type"] == "sfp_plus"
+    assert data["type_specific_data"]["interface_type"] == "10gbase-x-sfpp"
 
 
 def test_update_ethernet_service_data(base_segment):
@@ -159,7 +159,7 @@ def test_update_ethernet_service_data(base_segment):
         headers=HEADERS,
         json={
             "port_speed": 100000,  # Upgrade to 100G
-            "interface_type": "qsfp28",  # Lowercase
+            "interface_type": "100gbase-x-qsfp28",  # 100GE QSFP28
             "mtu_size": 9216,  # Jumbo frames
         },
     )
@@ -170,7 +170,7 @@ def test_update_ethernet_service_data(base_segment):
 
     data = response.json()
     assert data["port_speed"] == 100000
-    assert data["interface_type"] == "qsfp28"
+    assert data["interface_type"] == "100gbase-x-qsfp28"
     assert data["mtu_size"] == 9216
 
     # Verify segment API reflects the update

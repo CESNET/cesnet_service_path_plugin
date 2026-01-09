@@ -81,8 +81,8 @@ def test_two_step_creation_dark_fiber():
                 "total_loss": 8.5,
                 "total_length": 125.5,
                 "number_of_fibers": 48,
-                "connector_type_side_a": "lc_apc",
-                "connector_type_side_b": "sc_apc",
+                "connector_type_side_a": "lc-apc",
+                "connector_type_side_b": "sc-apc",
             },
         )
 
@@ -301,7 +301,7 @@ def test_changing_segment_type():
                 "segment_id": segment_id,
                 "port_speed": 10000,
                 "vlan_id": 100,
-                "interface_type": "sfp_plus",
+                "interface_type": "10gbase-x-sfpp",
             },
         )
 

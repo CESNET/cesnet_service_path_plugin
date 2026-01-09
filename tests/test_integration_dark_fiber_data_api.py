@@ -86,8 +86,8 @@ def test_create_dark_fiber_data(base_segment):
             "total_loss": 8.5,
             "total_length": 125.5,
             "number_of_fibers": 48,
-            "connector_type_side_a": "lc_apc",  # Lowercase with underscore
-            "connector_type_side_b": "sc_apc",  # Lowercase with underscore
+            "connector_type_side_a": "lc-apc",  # Lowercase with hyphen
+            "connector_type_side_b": "sc-apc",  # Lowercase with hyphen
         },
     )
 
@@ -108,8 +108,8 @@ def test_create_dark_fiber_data(base_segment):
     assert float(data["total_loss"]) == 8.5
     assert float(data["total_length"]) == 125.5
     assert data["number_of_fibers"] == 48
-    assert data["connector_type_side_a"] == "lc_apc"
-    assert data["connector_type_side_b"] == "sc_apc"
+    assert data["connector_type_side_a"] == "lc-apc"
+    assert data["connector_type_side_b"] == "sc-apc"
 
     # Verify timestamps are present
     assert "created" in data
