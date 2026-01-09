@@ -7,7 +7,7 @@ from django.db.models import Q
 from strawberry.types import Info
 
 
-from netbox.graphql.filter_mixins import NetBoxModelFilterMixin
+from netbox.graphql.filters import NetBoxModelFilter
 from strawberry_django import FilterLookup
 
 if TYPE_CHECKING:
@@ -31,8 +31,8 @@ __all__ = (
 )
 
 
-@strawberry_django.filter(ContractInfo, lookups=True)
-class ContractInfoFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(ContractInfo, lookups=True)
+class ContractInfoFilter(NetBoxModelFilter):
     """GraphQL filter for ContractInfo model"""
 
     # Basic fields
@@ -74,8 +74,8 @@ class ContractInfoFilter(NetBoxModelFilterMixin):
             return Q(**{f"{prefix}previous_version__isnull": True})
 
 
-@strawberry_django.filter(Segment, lookups=True)
-class SegmentFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(Segment, lookups=True)
+class SegmentFilter(NetBoxModelFilter):
     """GraphQL filter for Segment model"""
 
     # Basic fields
@@ -180,8 +180,8 @@ class SegmentFilter(NetBoxModelFilterMixin):
             )
 
 
-@strawberry_django.filter(ServicePath, lookups=True)
-class ServicePathFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(ServicePath, lookups=True)
+class ServicePathFilter(NetBoxModelFilter):
     """GraphQL filter for ServicePath model"""
 
     name: FilterLookup[str] | None = strawberry_django.filter_field()
@@ -193,8 +193,8 @@ class ServicePathFilter(NetBoxModelFilterMixin):
     segments: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
 
 
-@strawberry_django.filter(SegmentCircuitMapping, lookups=True)
-class SegmentCircuitMappingFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(SegmentCircuitMapping, lookups=True)
+class SegmentCircuitMappingFilter(NetBoxModelFilter):
     """GraphQL filter for SegmentCircuitMapping model"""
 
     segment: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
@@ -204,8 +204,8 @@ class SegmentCircuitMappingFilter(NetBoxModelFilterMixin):
     )
 
 
-@strawberry_django.filter(ServicePathSegmentMapping, lookups=True)
-class ServicePathSegmentMappingFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(ServicePathSegmentMapping, lookups=True)
+class ServicePathSegmentMappingFilter(NetBoxModelFilter):
     """GraphQL filter for ServicePathSegmentMapping model"""
 
     service_path: Annotated["ServicePathFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
