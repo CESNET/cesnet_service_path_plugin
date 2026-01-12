@@ -7,7 +7,7 @@
 - **Type**: NetBox Plugin (Django application)
 - **Language**: Python 3.10+
 - **Framework**: Django with NetBox Plugin Framework
-- **Current Version**: 5.5.0
+- **Current Version**: 6.0.0
 - **License**: Apache-2.0
 
 ## Core Purpose

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.5.0] - 2025-01-12
+## [6.0.0] - 2025-01-12
 
 ### BREAKING CHANGE
 
@@ -58,8 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **API field name remains the same**: `type_specific_data`
 - Field name is unchanged from previous versions
 - However, the underlying implementation is completely different:
-  - **Before 5.5.0**: Direct JSONField column in database
-  - **After 5.5.0**: Computed field reading from relational models
+  - **Before 6.0.0**: Direct JSONField column in database
+  - **After 6.0.0**: Computed field reading from relational models
 - **No API client changes required** - the field name is identical
 - Data structure is also similar, making the transition seamless
 

@@ -47,7 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version | Notes |
 |----------------|----------------|-------|
-|     4.5.0+     |      5.5.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
+|     4.5.0+     |      6.0.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
 |     4.4.x      |      5.4.x     | Last version compatible with NetBox 4.4.x |
 |     4.4.x      |      5.3.x     | |
 |     4.4.x      |      5.2.x     | |
@@ -74,7 +74,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - Automatic status tracking based on dates
 - **Geographic path visualization with actual route data**
 - **Interactive topology visualization** showing segment connections and circuit terminations
-- **Segment types with relational data models** (dark fiber, optical spectrum, ethernet service) - type-specific technical parameters stored in dedicated models (improved in 5.5.0)
+- **Segment types with relational data models** (dark fiber, optical spectrum, ethernet service) - type-specific technical parameters stored in dedicated models (improved in 6.6.0)
 - **Contract information tracking with versioning support** (new in 5.4.0)
 - **Many-to-many contract relationships** - segments can have multiple contracts
 - **Commitment end date tracking** with color-coded status indicators
@@ -195,8 +195,8 @@ Before installing the plugin, ensure you have:
 
 1. **PostgreSQL with PostGIS extension** (version 3.0 or higher recommended)
 2. **System libraries**: GDAL, GEOS, and PROJ runtime binaries
-3. **NetBox 4.5.0 or higher** (for plugin version 5.5.x)
-   - **Important**: Plugin version 5.5.x is NOT compatible with NetBox 4.4.x due to filter system changes
+3. **NetBox 4.5.0 or higher** (for plugin version 6.0.x)
+   - **Important**: Plugin version 6.0.x is NOT compatible with NetBox 4.4.x due to filter system changes
    - If you're running NetBox 4.4.x, use plugin version 5.4.x or earlier
 
 #### Installing System Dependencies
@@ -665,7 +665,7 @@ The plugin provides comprehensive REST API and GraphQL support:
 #### Example of segment with path file PATCH and POST
 See [detailed example in docs](./docs/API_path.md).
 
-#### Type-Specific Technical Data in API (Architecture improved in 5.5.0)
+#### Type-Specific Technical Data in API (Architecture improved in 6.6.0)
 
 Segment API responses include type-specific technical parameters via the `type_specific_data` computed field:
 
@@ -687,7 +687,7 @@ Segment API responses include type-specific technical parameters via the `type_s
 }
 ```
 
-**What changed in 5.5.0**: `type_specific_data` is now a computed field that returns structured data from relational models (DarkFiberSegmentData, OpticalSpectrumSegmentData, or EthernetServiceSegmentData) instead of a JSON blob. The field name remains the same for API compatibility, but the underlying architecture is now fully relational with proper database constraints and validation.
+**What changed in 6.6.0**: `type_specific_data` is now a computed field that returns structured data from relational models (DarkFiberSegmentData, OpticalSpectrumSegmentData, or EthernetServiceSegmentData) instead of a JSON blob. The field name remains the same for API compatibility, but the underlying architecture is now fully relational with proper database constraints and validation.
 
 **Type-Specific Data Endpoints**:
 - `/api/plugins/cesnet-service-path-plugin/dark-fiber-segment-data/` - Dark fiber specifications
