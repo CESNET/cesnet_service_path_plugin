@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.5.0] - 2025-12-12
+## [5.5.0] - 2025-01-12
+
+### BREAKING CHANGE
+
+- **NetBox 4.5.0 Required**: This version is ONLY compatible with NetBox 4.5.0 and later
+  - Filter system updated to use NetBox 4.5.0's new filter architecture
+  - NOT backward compatible with NetBox 4.4.x
+  - Users on NetBox 4.4.x must use plugin version 5.4.x or earlier
 
 ### Removed (Phase 3 - Type-Specific Data Cleanup)
 

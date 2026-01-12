@@ -324,7 +324,7 @@ query SegmentCircuitMappings {
 query CircuitsForSegment($segmentId: ID!) {
   segment_circuit_mapping_list(
     filters: {
-      segment: { id: $segmentId }
+      segment: { id: { exact: $segmentId } }
     }
   ) {
     id
@@ -350,7 +350,7 @@ Variable must be set
 query SegmentsForCircuit($circuitId: ID!) {
   segment_circuit_mapping_list(
     filters: {
-      circuit: { id: $circuitId }
+      circuit: { id: { exact: $circuitId } }
     }
   ) {
     id

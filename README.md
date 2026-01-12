@@ -5,7 +5,7 @@ A NetBox plugin for managing service paths and segments in network infrastructur
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![PyPI version](https://img.shields.io/pypi/v/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
 [![Python versions](https://img.shields.io/pypi/pyversions/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
-[![NetBox compatibility](https://img.shields.io/badge/NetBox-4.4-blue.svg)](https://github.com/netbox-community/netbox)
+[![NetBox compatibility](https://img.shields.io/badge/NetBox-4.5-blue.svg)](https://github.com/netbox-community/netbox)
 
 ## 📑 Table of Contents
 
@@ -45,16 +45,16 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 ## Compatibility Matrix
 
-| NetBox Version | Plugin Version |
-|----------------|----------------|
-|     4.5        |      5.5.x     |
-|     4.4        |      5.4.x     |
-|     4.4        |      5.3.x     |
-|     4.4        |      5.2.x     |
-|     4.4        |      5.1.x     |
-|     4.3        |      5.0.x     |
-|     4.2        |      4.0.x     |
-|     3.7        |      0.1.0     |
+| NetBox Version | Plugin Version | Notes |
+|----------------|----------------|-------|
+|     4.5.0+     |      5.5.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
+|     4.4.x      |      5.4.x     | Last version compatible with NetBox 4.4.x |
+|     4.4.x      |      5.3.x     | |
+|     4.4.x      |      5.2.x     | |
+|     4.4.x      |      5.1.x     | |
+|     4.3.x      |      5.0.x     | |
+|     4.2.x      |      4.0.x     | |
+|     3.7.x      |      0.1.0     | |
 
 ## Features
 
@@ -195,7 +195,9 @@ Before installing the plugin, ensure you have:
 
 1. **PostgreSQL with PostGIS extension** (version 3.0 or higher recommended)
 2. **System libraries**: GDAL, GEOS, and PROJ runtime binaries
-3. **NetBox 4.4 or higher**
+3. **NetBox 4.5.0 or higher** (for plugin version 5.5.x)
+   - **Important**: Plugin version 5.5.x is NOT compatible with NetBox 4.4.x due to filter system changes
+   - If you're running NetBox 4.4.x, use plugin version 5.4.x or earlier
 
 #### Installing System Dependencies
 
@@ -269,7 +271,7 @@ The official NetBox Docker images do not include the required geographic librari
 Create a `Dockerfile` extending the official NetBox image:
 
 ```dockerfile
-FROM netboxcommunity/netbox:v4.4
+FROM netboxcommunity/netbox:v4.5
 
 # copy plugin requirements
 COPY ./plugin_requirements.txt /opt/netbox/
