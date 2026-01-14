@@ -662,8 +662,11 @@ The plugin provides comprehensive REST API and GraphQL support:
 - `/api/plugins/cesnet-service-path-plugin/segments/{id}/geojson-api/` - Geographic data
 - `/api/plugins/cesnet-service-path-plugin/contract-info/` - Contract information management (new in 5.4.0)
 
-#### Example of segment with path file PATCH and POST
-See [detailed example in docs](./docs/API_path.md).
+#### Segment API Examples
+See [detailed examples in docs](./docs/API_path.md) for:
+- **GET with `pathdata` parameter**: Retrieve segment with full GeoJSON path geometry
+- **POST with path file upload**: Create segment with KML/KMZ/GeoJSON path data
+- **PATCH with path file**: Update segment path data
 
 #### Type-Specific Technical Data in API (Architecture improved in 6.6.0)
 
