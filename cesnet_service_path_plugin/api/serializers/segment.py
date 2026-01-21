@@ -13,6 +13,15 @@ from rest_framework import serializers
 from cesnet_service_path_plugin.api.serializers.contract_info import (
     ContractInfoSerializer,
 )
+from cesnet_service_path_plugin.api.serializers.dark_fiber_data_serializer import (
+    DarkFiberSegmentDataSerializer,
+)
+from cesnet_service_path_plugin.api.serializers.optical_spectrum_data_serializer import (
+    OpticalSpectrumSegmentDataSerializer,
+)
+from cesnet_service_path_plugin.api.serializers.ethernet_service_data_serializer import (
+    EthernetServiceSegmentDataSerializer,
+)
 from cesnet_service_path_plugin.models.segment import Segment
 from cesnet_service_path_plugin.utils import (
     determine_file_format_from_extension,
@@ -23,8 +32,19 @@ from cesnet_service_path_plugin.utils import (
 logger = logging.getLogger(__name__)
 
 
-class SegmentSerializer(NetBoxModelSerializer):
-    """Default serializer Segment - now with file upload support"""
+class SegmentBaseSerializer(NetBoxModelSerializer):
+    """
+    Base serializer for Segment with common fields and type-specific data logic.
+
+    This base class provides:
+    - Common nested serializers (provider, sites, locations, circuits)
+    - Computed field: type_specific_data
+    - Method to retrieve type-specific technical data from relational models
+
+    Subclasses:
+    - SegmentSerializer: Lightweight serializer for list views
+    - SegmentDetailSerializer: Full serializer with geometry data for detail views
+    """
 
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
     provider = ProviderSerializer(required=True, nested=True)
@@ -33,6 +53,67 @@ class SegmentSerializer(NetBoxModelSerializer):
     site_b = SiteSerializer(required=True, nested=True)
     location_b = LocationSerializer(required=False, nested=True)
     circuits = CircuitSerializer(required=False, many=True, nested=True)
+
+    # Computed field: type_specific_data (returns data from relational models based on segment_type)
+    type_specific_data = serializers.SerializerMethodField(read_only=True)
+
+    contract_info = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Segment
+        # Fields will be defined in subclasses
+        fields = []
+
+    def get_type_specific_data(self, obj):
+        """
+        Return type-specific technical data from relational models based on segment_type.
+
+        Returns structured data from DarkFiberSegmentData, OpticalSpectrumSegmentData,
+        or EthernetServiceSegmentData depending on the segment's type.
+        """
+        try:
+            if obj.segment_type == 'dark_fiber':
+                try:
+                    return DarkFiberSegmentDataSerializer(obj.dark_fiber_data, context=self.context).data
+                except obj.dark_fiber_data.RelatedObjectDoesNotExist:
+                    return None
+            elif obj.segment_type == 'optical_spectrum':
+                try:
+                    return OpticalSpectrumSegmentDataSerializer(obj.optical_spectrum_data, context=self.context).data
+                except obj.optical_spectrum_data.RelatedObjectDoesNotExist:
+                    return None
+            elif obj.segment_type == 'ethernet_service':
+                try:
+                    return EthernetServiceSegmentDataSerializer(obj.ethernet_service_data, context=self.context).data
+                except obj.ethernet_service_data.RelatedObjectDoesNotExist:
+                    return None
+        except Exception:
+            # Catch any other unexpected errors
+            return None
+
+        return None
+
+    def get_contract_info(self, obj):
+        """
+        Only include contract info if the user has permission to view it
+        """
+        request = self.context.get("request")
+        if not request:
+            return None
+
+        # Check if user has permission to view contract info
+        if not request.user.has_perm("cesnet_service_path_plugin.view_contractinfo"):
+            return None
+
+        # Fetch and serialize contract info if user has permission
+        contract_info = getattr(obj, "contract_info", None)
+        if contract_info:
+            return ContractInfoSerializer(contract_info, context=self.context).data
+        return None
+
+
+class SegmentSerializer(SegmentBaseSerializer):
+    """Default serializer for Segment - lightweight for list views, with file upload support"""
 
     # Add file upload field
     path_file = serializers.FileField(
@@ -43,8 +124,6 @@ class SegmentSerializer(NetBoxModelSerializer):
 
     # Only include lightweight path info
     has_path_data = serializers.SerializerMethodField(read_only=True)
-
-    contract_info = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Segment
@@ -90,24 +169,6 @@ class SegmentSerializer(NetBoxModelSerializer):
 
     def get_has_path_data(self, obj):
         return obj.has_path_data()
-
-    def get_contract_info(self, obj):
-        """
-        Only include contract info if the user has permission to view it
-        """
-        request = self.context.get("request")
-        if not request:
-            return None
-
-        # Check if user has permission to view contract info
-        if not request.user.has_perm("cesnet_service_path_plugin.view_contractinfo"):
-            return None
-
-        # Fetch and serialize contract info if user has permission
-        contract_info = getattr(obj, "contract_info", None)
-        if contract_info:
-            return ContractInfoSerializer(contract_info, context=self.context).data
-        return None
 
     def update(self, instance, validated_data):
         """Handle file upload during update"""
@@ -172,17 +233,8 @@ class SegmentSerializer(NetBoxModelSerializer):
         return instance
 
 
-class SegmentDetailSerializer(NetBoxModelSerializer):
+class SegmentDetailSerializer(SegmentBaseSerializer):
     """Full serializer with all geometry data for detail views"""
-
-    # This is your existing SegmentSerializer - just rename it
-    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
-    provider = ProviderSerializer(required=True, nested=True)
-    site_a = SiteSerializer(required=True, nested=True)
-    location_a = LocationSerializer(required=False, nested=True)
-    site_b = SiteSerializer(required=True, nested=True)
-    location_b = LocationSerializer(required=False, nested=True)
-    circuits = CircuitSerializer(required=False, many=True, nested=True)
 
     # All the heavy geometry fields
     path_geometry_geojson = serializers.SerializerMethodField(read_only=True)
@@ -219,6 +271,7 @@ class SegmentDetailSerializer(NetBoxModelSerializer):
             "path_source_format",
             "path_notes",
             "has_path_data",
+            "contract_info",
             "tags",
         )
         brief_fields = (

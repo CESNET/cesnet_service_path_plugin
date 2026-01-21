@@ -14,6 +14,9 @@ from .service_path_segment_mapping import (
     ServicePathSegmentMappingFilterForm,
     ServicePathSegmentMappingForm,
 )
+from .dark_fiber_data import DarkFiberSegmentDataForm
+from .optical_spectrum_data import OpticalSpectrumSegmentDataForm
+from .ethernet_service_data import EthernetServiceSegmentDataForm
 
 __all__ = [
     "SegmentBulkEditForm",
@@ -29,4 +32,7 @@ __all__ = [
     "ServicePathSegmentMappingBulkEditForm",
     "ServicePathSegmentMappingFilterForm",
     "ServicePathSegmentMappingForm",
+    "DarkFiberSegmentDataForm",
+    "OpticalSpectrumSegmentDataForm",
+    "EthernetServiceSegmentDataForm",
 ]

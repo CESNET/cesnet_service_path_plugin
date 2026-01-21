@@ -6,9 +6,18 @@ from dcim.models import Location, Site
 from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
+from dcim.choices import InterfaceTypeChoices
 
 from cesnet_service_path_plugin.models import Segment
-from cesnet_service_path_plugin.models.custom_choices import StatusChoices, OwnershipTypeChoices
+
+from cesnet_service_path_plugin.models.custom_choices import (
+    StatusChoices,
+    OwnershipTypeChoices,
+    SingleModeFiberSubtypeChoices,
+    ModulationFormatChoices,
+    EncapsulationTypeChoices,
+)
+from dcim.choices import PortTypeChoices
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 
 logger = logging.getLogger(__name__)
@@ -105,14 +114,14 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Has Path Data",
     )
 
-    # Type specific data filter
     has_type_specific_data = django_filters.ChoiceFilter(
         choices=[
+            ("", "Any"),
             (True, "Yes"),
             (False, "No"),
         ],
         method="_has_type_specific_data",
-        label="Has Type Specific Data",
+        label="Has Type-Specific Data",
     )
 
     # =============================================================================
@@ -121,16 +130,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
     # Dark Fiber specific filters
     fiber_type = django_filters.MultipleChoiceFilter(
-        choices=[
-            ("G.652D", "G.652D"),
-            ("G.655", "G.655"),
-            ("G.657A1", "G.657A1"),
-            ("G.657A2", "G.657A2"),
-            ("G.652B", "G.652B"),
-            ("G.652C", "G.652C"),
-            ("G.653", "G.653"),
-            ("G.654E", "G.654E"),
-        ],
+        choices=SingleModeFiberSubtypeChoices,
         method="_filter_type_specific_choice",
         label="Fiber Type",
     )
@@ -146,17 +146,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     number_of_fibers = django_filters.CharFilter(method="_filter_smart_numeric", label="Number of Fibers")
 
     connector_type = django_filters.MultipleChoiceFilter(
-        choices=[
-            ("LC/APC", "LC/APC"),
-            ("LC/UPC", "LC/UPC"),
-            ("SC/APC", "SC/APC"),
-            ("SC/UPC", "SC/UPC"),
-            ("FC/APC", "FC/APC"),
-            ("FC/UPC", "FC/UPC"),
-            ("ST/UPC", "ST/UPC"),
-            ("E2000/APC", "E2000/APC"),
-            ("MTP/MPO", "MTP/MPO"),
-        ],
+        choices=PortTypeChoices,
         method="_filter_type_specific_choice",
         label="Connector Type",
     )
@@ -169,15 +159,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     itu_grid_position = django_filters.CharFilter(method="_filter_smart_numeric", label="ITU Grid Position")
 
     modulation_format = django_filters.MultipleChoiceFilter(
-        choices=[
-            ("NRZ", "NRZ"),
-            ("PAM4", "PAM4"),
-            ("QPSK", "QPSK"),
-            ("16QAM", "16QAM"),
-            ("64QAM", "64QAM"),
-            ("DP-QPSK", "DP-QPSK"),
-            ("DP-16QAM", "DP-16QAM"),
-        ],
+        choices=ModulationFormatChoices,
         method="_filter_type_specific_choice",
         label="Modulation Format",
     )
@@ -190,32 +172,13 @@ class SegmentFilterSet(NetBoxModelFilterSet):
     mtu_size = django_filters.CharFilter(method="_filter_smart_numeric", label="MTU Size (bytes)")
 
     encapsulation_type = django_filters.MultipleChoiceFilter(
-        choices=[
-            ("Untagged", "Untagged"),
-            ("IEEE 802.1Q", "IEEE 802.1Q"),
-            ("IEEE 802.1ad (QinQ)", "IEEE 802.1ad (QinQ)"),
-            ("IEEE 802.1ah (PBB)", "IEEE 802.1ah (PBB)"),
-            ("MPLS", "MPLS"),
-            ("MEF E-Line", "MEF E-Line"),
-            ("MEF E-LAN", "MEF E-LAN"),
-        ],
+        choices=EncapsulationTypeChoices,
         method="_filter_type_specific_choice",
         label="Encapsulation Type",
     )
 
     interface_type = django_filters.MultipleChoiceFilter(
-        choices=[
-            ("RJ45", "RJ45"),
-            ("SFP", "SFP"),
-            ("SFP+", "SFP+"),
-            ("QSFP+", "QSFP+"),
-            ("QSFP28", "QSFP28"),
-            ("QSFP56", "QSFP56"),
-            ("OSFP", "OSFP"),
-            ("CFP", "CFP"),
-            ("CFP2", "CFP2"),
-            ("CFP4", "CFP4"),
-        ],
+        choices=InterfaceTypeChoices,
         method="_filter_type_specific_choice",
         label="Interface Type",
     )
@@ -236,7 +199,6 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "site_b",
             "location_b",
             "has_path_data",
-            "has_type_specific_data",
         ]
 
     def _at_any_site(self, queryset, name, value):
@@ -305,18 +267,35 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             return queryset.filter(path_geometry__isnull=True)
 
     def _has_type_specific_data(self, queryset, name, value):
-        """Filter segments by whether they have type-specific data"""
-        if value == "" or value is None:
-            return queryset  # No filtering
+        """
+        Filter segments based on whether they have type-specific data or not.
+        Checks if the segment has any of the type-specific models:
+        - DarkFiberSegmentData (dark_fiber_data)
+        - OpticalSpectrumData (optical_spectrum_data)
+        - EthernetServiceData (ethernet_service_data)
+        """
+        if value in (None, "", []):
+            # Nothing selected, show all segments
+            return queryset
 
         has_data = value in [True, "True", "true", "1"]
 
         if has_data:
-            # Has data: exclude null and empty dict
-            return queryset.exclude(Q(type_specific_data__isnull=True) | Q(type_specific_data={}))
+            # Only "Yes" selected, show segments with type-specific data
+            # Check if segment has any of the three type-specific data models
+            return queryset.filter(
+                Q(dark_fiber_data__isnull=False)
+                | Q(optical_spectrum_data__isnull=False)
+                | Q(ethernet_service_data__isnull=False)
+            )
         else:
-            # No data: include null or empty dict
-            return queryset.filter(Q(type_specific_data__isnull=True) | Q(type_specific_data={}))
+            # Only "No" selected, show segments without type-specific data
+            # Must not have any of the three type-specific data models
+            return queryset.filter(
+                Q(dark_fiber_data__isnull=True)
+                & Q(optical_spectrum_data__isnull=True)
+                & Q(ethernet_service_data__isnull=True)
+            )
 
     def _parse_smart_numeric_value(self, value, field_type="float"):
         """
@@ -369,10 +348,46 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         ]
         return "float" if field_name in float_fields else "int"
 
+    def _get_field_model_mapping(self, field_name):
+        """
+        Map field names to their corresponding model relationship path
+        Returns tuple of (model_prefix, field_name) or None if not found
+        """
+        # Dark fiber fields
+        dark_fiber_fields = {
+            "fiber_attenuation_max": "dark_fiber_data__fiber_attenuation_max",
+            "total_loss": "dark_fiber_data__total_loss",
+            "total_length": "dark_fiber_data__total_length",
+            "number_of_fibers": "dark_fiber_data__number_of_fibers",
+        }
+
+        # Optical spectrum fields
+        optical_spectrum_fields = {
+            "wavelength": "optical_spectrum_data__wavelength",
+            "spectral_slot_width": "optical_spectrum_data__spectral_slot_width",
+            "itu_grid_position": "optical_spectrum_data__itu_grid_position",
+        }
+
+        # Ethernet service fields
+        ethernet_service_fields = {
+            "port_speed": "ethernet_service_data__port_speed",
+            "vlan_id": "ethernet_service_data__vlan_id",
+            "mtu_size": "ethernet_service_data__mtu_size",
+        }
+
+        if field_name in dark_fiber_fields:
+            return dark_fiber_fields[field_name]
+        elif field_name in optical_spectrum_fields:
+            return optical_spectrum_fields[field_name]
+        elif field_name in ethernet_service_fields:
+            return ethernet_service_fields[field_name]
+
+        return None
+
     def _filter_smart_numeric(self, queryset, name, value):
         """
         Smart numeric filter that handles exact, range, and comparison operations
-        Uses raw SQL to handle numeric comparisons in JSON fields properly
+        Uses Django ORM to query type-specific models
         """
         if not value:
             return queryset
@@ -394,83 +409,52 @@ class SegmentFilterSet(NetBoxModelFilterSet):
 
         logger.debug(f"🔍 Parsed value for {name}: {parsed_value}")
 
+        # Get the model field path
+        model_field = self._get_field_model_mapping(name)
+        if not model_field:
+            logger.warning(f"🔍 No model mapping found for field {name}")
+            return queryset
+
         operation = parsed_value.get("operation")
 
         try:
-            # Base condition: field must exist and not be null
-            conditions = Q(type_specific_data__has_key=name)
+            conditions = Q()
 
             if operation == "exact":
                 field_value = parsed_value.get("value")
-                # Use raw SQL to cast JSON value to numeric for exact comparison
-                conditions &= Q(
-                    pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal = %s"],
-                        params=[name, field_value],
-                    ).values("pk")
-                )
-                logger.debug(f"🔍 Exact match using SQL CAST: {name} = {field_value}")
+                conditions = Q(**{model_field: field_value})
+                logger.debug(f"🔍 Exact match: {model_field} = {field_value}")
 
             elif operation == "range":
                 min_val = parsed_value.get("min")
                 max_val = parsed_value.get("max")
 
-                where_clauses = []
-                params = []
-
                 if min_val is not None:
-                    where_clauses.append("(type_specific_data->>%s)::decimal >= %s")
-                    params.extend([name, min_val])
-
+                    conditions &= Q(**{f"{model_field}__gte": min_val})
                 if max_val is not None:
-                    where_clauses.append("(type_specific_data->>%s)::decimal <= %s")
-                    params.extend([name, max_val])
+                    conditions &= Q(**{f"{model_field}__lte": max_val})
 
-                if where_clauses:
-                    conditions &= Q(
-                        pk__in=queryset.extra(where=[" AND ".join(where_clauses)], params=params).values("pk")
-                    )
-                logger.debug(f"🔍 Range using SQL CAST: {min_val} <= {name} <= {max_val}")
+                logger.debug(f"🔍 Range: {min_val} <= {model_field} <= {max_val}")
 
             elif operation == "gt":
                 field_value = parsed_value.get("value")
-                conditions &= Q(
-                    pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal > %s"],
-                        params=[name, field_value],
-                    ).values("pk")
-                )
-                logger.debug(f"🔍 Greater than using SQL CAST: {name} > {field_value}")
+                conditions = Q(**{f"{model_field}__gt": field_value})
+                logger.debug(f"🔍 Greater than: {model_field} > {field_value}")
 
             elif operation == "gte":
                 field_value = parsed_value.get("value")
-                conditions &= Q(
-                    pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal >= %s"],
-                        params=[name, field_value],
-                    ).values("pk")
-                )
-                logger.debug(f"🔍 Greater than or equal using SQL CAST: {name} >= {field_value}")
+                conditions = Q(**{f"{model_field}__gte": field_value})
+                logger.debug(f"🔍 Greater than or equal: {model_field} >= {field_value}")
 
             elif operation == "lt":
                 field_value = parsed_value.get("value")
-                conditions &= Q(
-                    pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal < %s"],
-                        params=[name, field_value],
-                    ).values("pk")
-                )
-                logger.debug(f"🔍 Less than using SQL CAST: {name} < {field_value}")
+                conditions = Q(**{f"{model_field}__lt": field_value})
+                logger.debug(f"🔍 Less than: {model_field} < {field_value}")
 
             elif operation == "lte":
                 field_value = parsed_value.get("value")
-                conditions &= Q(
-                    pk__in=queryset.extra(
-                        where=["(type_specific_data->>%s)::decimal <= %s"],
-                        params=[name, field_value],
-                    ).values("pk")
-                )
-                logger.debug(f"🔍 Less than or equal using SQL CAST: {name} <= {field_value}")
+                conditions = Q(**{f"{model_field}__lte": field_value})
+                logger.debug(f"🔍 Less than or equal: {model_field} <= {field_value}")
 
             else:
                 logger.warning(f"🔍 Unknown operation '{operation}' for {name}")
@@ -492,6 +476,36 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             logger.error(f"🔍 Traceback: {traceback.format_exc()}")
             return queryset
 
+    def _get_choice_field_model_mapping(self, field_name):
+        """
+        Map choice field names to their corresponding model relationship path
+        """
+        # Dark fiber choice fields
+        dark_fiber_fields = {
+            "fiber_type": "dark_fiber_data__single_mode_subtype",
+            "connector_type": ["dark_fiber_data__connector_type_side_a", "dark_fiber_data__connector_type_side_b"],
+        }
+
+        # Optical spectrum choice fields
+        optical_spectrum_fields = {
+            "modulation_format": "optical_spectrum_data__modulation_format",
+        }
+
+        # Ethernet service choice fields
+        ethernet_service_fields = {
+            "encapsulation_type": "ethernet_service_data__encapsulation_type",
+            "interface_type": "ethernet_service_data__interface_type",
+        }
+
+        if field_name in dark_fiber_fields:
+            return dark_fiber_fields[field_name]
+        elif field_name in optical_spectrum_fields:
+            return optical_spectrum_fields[field_name]
+        elif field_name in ethernet_service_fields:
+            return ethernet_service_fields[field_name]
+
+        return None
+
     def _filter_type_specific_choice(self, queryset, name, value):
         """
         Filter by type-specific choice fields
@@ -504,14 +518,22 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         if not value:
             return queryset
 
-        # Create OR conditions for each selected value
-        q_conditions = Q()
-        for val in value:
-            # Use JSON field lookup to check if the field exists and has the specified value
-            json_lookup = f"type_specific_data__{name}"
-            q_conditions |= Q(**{json_lookup: val})
+        # Get the model field path(s)
+        model_fields = self._get_choice_field_model_mapping(name)
+        if not model_fields:
+            logger.warning(f"🔍 No model mapping found for choice field {name}")
+            return queryset
 
-        return queryset.filter(q_conditions)
+        # Handle both single field and multiple field cases (e.g., connector_type on both sides)
+        if isinstance(model_fields, list):
+            # Multiple fields - create OR conditions for each field
+            q_conditions = Q()
+            for model_field in model_fields:
+                q_conditions |= Q(**{f"{model_field}__in": value})
+            return queryset.filter(q_conditions)
+        else:
+            # Single field
+            return queryset.filter(**{f"{model_fields}__in": value})
 
     def search(self, queryset, name, value):
         site_a = Q(site_a__name__icontains=value)

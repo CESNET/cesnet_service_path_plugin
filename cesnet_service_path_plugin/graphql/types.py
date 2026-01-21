@@ -93,7 +93,7 @@ class ContractInfoType(NetBoxObjectType):
     @field
     def commitment_end_date(self, info) -> Optional[str]:
         """Calculate commitment end date based on start date and recurring periods"""
-        if hasattr(self, 'commitment_end_date') and self.commitment_end_date:
+        if hasattr(self, "commitment_end_date") and self.commitment_end_date:
             return self.commitment_end_date.isoformat()
         return None
 
@@ -110,7 +110,6 @@ class SegmentType(NetBoxObjectType):
 
     # Segment type fields
     segment_type: auto
-    type_specific_data: auto
 
     provider: Annotated["ProviderType", lazy("circuits.graphql.types")] | None
     provider_segment_id: auto
@@ -158,11 +157,35 @@ class SegmentType(NetBoxObjectType):
         return False
 
     @field
+    def type_specific_data(self) -> Optional[strawberry.scalars.JSON]:
+        """Type-specific technical data from relational models (DarkFiberSegmentData, OpticalSpectrumSegmentData, or EthernetServiceSegmentData)"""
+        # Import serializers to get the data in the same format as REST API
+        from cesnet_service_path_plugin.api.serializers.dark_fiber_data_serializer import (
+            DarkFiberSegmentDataSerializer,
+        )
+        from cesnet_service_path_plugin.api.serializers.optical_spectrum_data_serializer import (
+            OpticalSpectrumSegmentDataSerializer,
+        )
+        from cesnet_service_path_plugin.api.serializers.ethernet_service_data_serializer import (
+            EthernetServiceSegmentDataSerializer,
+        )
+
+        if self.segment_type == "dark_fiber" and hasattr(self, "dark_fiber_data"):
+            return DarkFiberSegmentDataSerializer(self.dark_fiber_data).data
+        elif self.segment_type == "optical_spectrum" and hasattr(self, "optical_spectrum_data"):
+            return OpticalSpectrumSegmentDataSerializer(self.optical_spectrum_data).data
+        elif self.segment_type == "ethernet_service" and hasattr(self, "ethernet_service_data"):
+            return EthernetServiceSegmentDataSerializer(self.ethernet_service_data).data
+        return None
+
+    @field
     def has_type_specific_data(self) -> bool:
         """Whether this segment has type-specific data"""
-        if hasattr(self, "has_type_specific_data"):
-            return self.has_type_specific_data()
-        return bool(self.type_specific_data)
+        return (
+            hasattr(self, "dark_fiber_data")
+            or hasattr(self, "optical_spectrum_data")
+            or hasattr(self, "ethernet_service_data")
+        )
 
     @field
     def has_path_data(self) -> bool:

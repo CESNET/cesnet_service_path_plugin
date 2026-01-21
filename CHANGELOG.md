@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2025-01-12
+
+### BREAKING CHANGE
+
+- **NetBox 4.5.0 Required**: This version is ONLY compatible with NetBox 4.5.0 and later
+  - Filter system updated to use NetBox 4.5.0's new filter architecture
+  - NOT backward compatible with NetBox 4.4.x
+  - Users on NetBox 4.4.x must use plugin version 5.4.x or earlier
+
+### Removed (Phase 3 - Type-Specific Data Cleanup)
+
+- **Database**: Removed `type_specific_data` JSONField column from Segment table (migration 0035)
+- **Models**: Removed legacy JSON validation functions from `segment_types.py`:
+  - `SEGMENT_TYPE_SCHEMAS` dictionary (174 lines of JSON schema definitions)
+  - `validate_segment_type_data()` - Runtime JSON validation
+  - `get_segment_type_schema()` - Schema retrieval
+  - `get_all_segment_types()` - Segment type listing
+- **Segment Model**: Removed JSONField-related helper methods:
+  - `validate_type_specific_data()` - JSON validation method
+  - `get_type_specific_display()` - JSON formatting for templates
+  - `has_type_specific_data()` - JSON data check (model method; GraphQL method remains)
+- **API**: `type_specific_data` field is now a computed field (no longer a JSONField)
+  - Returns structured data from relational models (DarkFiberSegmentData, OpticalSpectrumSegmentData, EthernetServiceSegmentData)
+  - Same field name as before, but underlying implementation is completely different
+  - Data comes from OneToOne related models instead of JSON blob
+- **Filters**: Removed `has_type_specific_data` filter from segment filtersets
+- **Forms**: Removed `has_type_specific_data` form field from segment filter forms
+- **Total code reduction**: ~405 lines of legacy code removed
+
+### Changed
+
+- **API**: `type_specific_data` field completely reimplemented as computed field
+  - Now returns data from relational models instead of JSON blob
+  - Field name intentionally kept the same for API familiarity
+  - GraphQL field also renamed from `type_specific_technicals` to `type_specific_data`
+- **Architecture**: Fully migrated to relational database schema for type-specific data
+  - All type-specific data stored in dedicated models (Phase 2)
+  - JSONField completely removed from database (Phase 3)
+  - Clean, normalized schema with proper database constraints
+
+### Technical Details
+
+- **Migration 0035**: One-way migration removes `type_specific_data` column
+- **Data Safety**: All existing data preserved in relational models (migrated in Phase 2)
+- **Performance**: Improved query performance with indexed relational fields
+- **Validation**: Database-level constraints replace runtime JSON validation
+- **Maintainability**: Django model fields replace 272 lines of JSON schema code
+
+### Non-Breaking Change Note
+
+**API field name remains the same**: `type_specific_data`
+- Field name is unchanged from previous versions
+- However, the underlying implementation is completely different:
+  - **Before 6.0.0**: Direct JSONField column in database
+  - **After 6.0.0**: Computed field reading from relational models
+- **No API client changes required** - the field name is identical
+- Data structure is also similar, making the transition seamless
+
+### Documentation
+
+- Added `PHASE_3_PLAN.md` - Detailed implementation plan
+- Added `PHASE_3_COMPLETE.md` - Completion summary with metrics
+- Added `RUN_MIGRATION_0035.md` - Migration instructions
+- Added `PHASE_3_QUICK_VERIFICATION.md` - Post-migration verification
+
 ## [5.4.0] - 2025-12-08
 
 ### Added

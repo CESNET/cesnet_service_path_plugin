@@ -1,5 +1,26 @@
 # API Usage Examples
 
+## Retrieving Segment with Path Data (GET)
+
+By default, the segment detail endpoint returns basic segment information without the full path geometry data. To include detailed path data (GeoJSON geometry), use the `pathdata` query parameter:
+
+```bash
+# Get segment without path data (default)
+curl -H "Authorization: Token YOUR_API_TOKEN" \
+  "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segments/10/"
+
+# Get segment WITH full path data (GeoJSON geometry included)
+curl -H "Authorization: Token YOUR_API_TOKEN" \
+  "http://localhost:8000/api/plugins/cesnet_service_path_plugin/segments/10/?pathdata=true"
+```
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `pathdata` | boolean | `false` | When set to `true`, returns the full path geometry data in GeoJSON format |
+
+**Note:** The `pathdata` parameter only affects the detail endpoint (single segment retrieval). List endpoints always return segments without full path geometry to optimize performance.
+
 ## Creating a New Segment with Path Data (POST)
 
 Create a new segment with all required fields and upload path geometry from a file:

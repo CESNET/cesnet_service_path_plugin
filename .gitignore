@@ -5,6 +5,9 @@
 .AppleDouble
 .LSOverride
 
+# Claude Code
+.claude
+
 # Icon must end with two \r
 Icon
 

@@ -386,42 +386,272 @@
     {% endif %}
     
     <!-- Technical Specifications Card - Full Width -->
-    {% if object.has_type_specific_data %}
-        <div class="row mb-3">
-            <div class="col-12">
-                <div class="card">
-                    <h5 class="card-header">
-                        <i class="mdi mdi-cog" aria-hidden="true"></i>
-                        Technical Specifications
-                        <span class="badge text-bg-{{ object.get_segment_type_color }} ms-2">
-                            {{ object.get_segment_type_display }}
-                        </span>
-                    </h5>
-                    <div class="card-body">
-                        {% with type_data=object.get_type_specific_display %}
-                            {% if type_data %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <h5 class="card-header">
+                    <i class="mdi mdi-cog" aria-hidden="true"></i>
+                    Technical Specifications
+                    <span class="badge text-bg-{{ object.get_segment_type_color }} ms-2">
+                        {{ object.get_segment_type_display }}
+                    </span>
+                </h5>
+                <div class="card-body">
+                    {% if object.segment_type == 'dark_fiber' %}
+                        {% if object.dark_fiber_data %}
+                            {% with data=object.dark_fiber_data %}
                                 <div class="row">
-                                    {% for label, value in type_data.items %}
+                                    {% if data.fiber_mode %}
                                         <div class="col-md-6 col-lg-4 mb-3">
                                             <div class="d-flex flex-column">
-                                                <small class="mb-1">{{ label }}</small>
-                                                <strong>{{ value }}</strong>
+                                                <small class="mb-1">Fiber Mode</small>
+                                                <strong>{{ data.get_fiber_mode_display }}</strong>
                                             </div>
                                         </div>
-                                    {% endfor %}
+                                    {% endif %}
+                                    {% if data.single_mode_subtype %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Single-mode Subtype</small>
+                                                <strong>{{ data.get_single_mode_subtype_display }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.multimode_subtype %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Multimode Subtype</small>
+                                                <strong>{{ data.get_multimode_subtype_display }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.jacket_type %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Jacket Type</small>
+                                                <strong>{{ data.get_jacket_type_display }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.fiber_attenuation_max %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Fiber Attenuation (dB/km)</small>
+                                                <strong>{{ data.fiber_attenuation_max }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.total_loss %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Total Loss (dB)</small>
+                                                <strong>{{ data.total_loss }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.total_length %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Total Length (km)</small>
+                                                <strong>{{ data.total_length }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.number_of_fibers %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Number of Fibers</small>
+                                                <strong>{{ data.number_of_fibers }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.connector_type_side_a %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Connector Side A</small>
+                                                <strong>{{ data.get_connector_type_side_a_display }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.connector_type_side_b %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Connector Side B</small>
+                                                <strong>{{ data.get_connector_type_side_b_display }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                 </div>
-                            {% else %}
-                                <div class="text-muted">
-                                    <i class="mdi mdi-information-outline" aria-hidden="true"></i>
-                                    No technical specifications configured for this segment.
+                                <div class="mt-3">
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:darkfibersegmentdata_edit' pk=data.pk %}" class="btn btn-sm btn-primary">
+                                        <i class="mdi mdi-pencil"></i> Edit
+                                    </a>
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:darkfibersegmentdata_delete' pk=data.pk %}" class="btn btn-sm btn-danger">
+                                        <i class="mdi mdi-delete"></i> Delete
+                                    </a>
                                 </div>
-                            {% endif %}
-                        {% endwith %}
-                    </div>
+                            {% endwith %}
+                        {% else %}
+                            <div class="text-muted">
+                                <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+                                No dark fiber technical specifications configured.
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:darkfibersegmentdata_add' %}?segment={{ object.pk }}" class="btn btn-sm btn-success ms-2">
+                                    <i class="mdi mdi-plus-thick"></i> Add Dark Fiber Data
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% elif object.segment_type == 'optical_spectrum' %}
+                        {% if object.optical_spectrum_data %}
+                            {% with data=object.optical_spectrum_data %}
+                                <div class="row">
+                                    {% if data.wavelength %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Wavelength (nm)</small>
+                                                <strong>{{ data.wavelength }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.spectral_slot_width %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Spectral Slot Width (GHz)</small>
+                                                <strong>{{ data.spectral_slot_width }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.itu_grid_position %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">ITU Grid Position</small>
+                                                <strong>{{ data.itu_grid_position }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.chromatic_dispersion %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Chromatic Dispersion (ps/nm)</small>
+                                                <strong>{{ data.chromatic_dispersion }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.pmd_tolerance %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">PMD Tolerance (ps)</small>
+                                                <strong>{{ data.pmd_tolerance }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.modulation_format %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Modulation Format</small>
+                                                <strong>{{ data.get_modulation_format_display }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:opticalspectrumsegmentdata_edit' pk=data.pk %}" class="btn btn-sm btn-primary">
+                                        <i class="mdi mdi-pencil"></i> Edit
+                                    </a>
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:opticalspectrumsegmentdata_delete' pk=data.pk %}" class="btn btn-sm btn-danger">
+                                        <i class="mdi mdi-delete"></i> Delete
+                                    </a>
+                                </div>
+                            {% endwith %}
+                        {% else %}
+                            <div class="text-muted">
+                                <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+                                No optical spectrum technical specifications configured.
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:opticalspectrumsegmentdata_add' %}?segment={{ object.pk }}" class="btn btn-sm btn-success ms-2">
+                                    <i class="mdi mdi-plus-thick"></i> Add Optical Spectrum Data
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% elif object.segment_type == 'ethernet_service' %}
+                        {% if object.ethernet_service_data %}
+                            {% with data=object.ethernet_service_data %}
+                                <div class="row">
+                                    {% if data.port_speed %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Port Speed (Mbps)</small>
+                                                <strong>{{ data.port_speed }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.vlan_id %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">VLAN ID</small>
+                                                <strong>{{ data.vlan_id }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.vlan_tags %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">VLAN Tags</small>
+                                                <strong>{{ data.vlan_tags }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.encapsulation_type %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Encapsulation Type</small>
+                                                <strong>{{ data.get_encapsulation_type_display }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.interface_type %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">Interface Type</small>
+                                                <strong>{{ data.get_interface_type_display }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.mtu_size %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="d-flex flex-column">
+                                                <small class="mb-1">MTU Size (bytes)</small>
+                                                <strong>{{ data.mtu_size }}</strong>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:ethernetservicesegmentdata_edit' pk=data.pk %}" class="btn btn-sm btn-primary">
+                                        <i class="mdi mdi-pencil"></i> Edit
+                                    </a>
+                                    <a href="{% url 'plugins:cesnet_service_path_plugin:ethernetservicesegmentdata_delete' pk=data.pk %}" class="btn btn-sm btn-danger">
+                                        <i class="mdi mdi-delete"></i> Delete
+                                    </a>
+                                </div>
+                            {% endwith %}
+                        {% else %}
+                            <div class="text-muted">
+                                <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+                                No ethernet service technical specifications configured.
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:ethernetservicesegmentdata_add' %}?segment={{ object.pk }}" class="btn btn-sm btn-success ms-2">
+                                    <i class="mdi mdi-plus-thick"></i> Add Ethernet Service Data
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-muted">
+                            <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+                            No technical specifications available for this segment type.
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
-    {% endif %}
+    </div>
 
     <!-- Service Path or Segment Topology Visualization Card -->
     {% include './inc/topology_visualization.html' %}

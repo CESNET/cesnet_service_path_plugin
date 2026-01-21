@@ -7,7 +7,7 @@ from django.db.models import Q
 from strawberry.types import Info
 
 
-from netbox.graphql.filter_mixins import NetBoxModelFilterMixin
+from netbox.graphql.filters import NetBoxModelFilter
 from strawberry_django import FilterLookup
 
 if TYPE_CHECKING:
@@ -31,8 +31,8 @@ __all__ = (
 )
 
 
-@strawberry_django.filter(ContractInfo, lookups=True)
-class ContractInfoFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(ContractInfo, lookups=True)
+class ContractInfoFilter(NetBoxModelFilter):
     """GraphQL filter for ContractInfo model"""
 
     # Basic fields
@@ -74,8 +74,8 @@ class ContractInfoFilter(NetBoxModelFilterMixin):
             return Q(**{f"{prefix}previous_version__isnull": True})
 
 
-@strawberry_django.filter(Segment, lookups=True)
-class SegmentFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(Segment, lookups=True)
+class SegmentFilter(NetBoxModelFilter):
     """GraphQL filter for Segment model"""
 
     # Basic fields
@@ -165,16 +165,23 @@ class SegmentFilter(NetBoxModelFilterMixin):
     def has_type_specific_data(self, value: bool, prefix: str) -> Q:
         """Filter segments based on whether they have type-specific data"""
         if value:
-            # Has type-specific data: JSON field is not empty and not null
-            # Return Q object that excludes empty dict and null values
-            return ~Q(**{f"{prefix}type_specific_data": {}}) & ~Q(**{f"{prefix}type_specific_data__isnull": True})
+            # Has data: at least one of the three models exists
+            return (
+                Q(**{f"{prefix}dark_fiber_data__isnull": False})
+                | Q(**{f"{prefix}optical_spectrum_data__isnull": False})
+                | Q(**{f"{prefix}ethernet_service_data__isnull": False})
+            )
         else:
-            # No type-specific data: JSON field is empty or null
-            return Q(**{f"{prefix}type_specific_data": {}}) | Q(**{f"{prefix}type_specific_data__isnull": True})
+            # No data: none of the three models exist
+            return (
+                Q(**{f"{prefix}dark_fiber_data__isnull": True})
+                & Q(**{f"{prefix}optical_spectrum_data__isnull": True})
+                & Q(**{f"{prefix}ethernet_service_data__isnull": True})
+            )
 
 
-@strawberry_django.filter(ServicePath, lookups=True)
-class ServicePathFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(ServicePath, lookups=True)
+class ServicePathFilter(NetBoxModelFilter):
     """GraphQL filter for ServicePath model"""
 
     name: FilterLookup[str] | None = strawberry_django.filter_field()
@@ -186,8 +193,8 @@ class ServicePathFilter(NetBoxModelFilterMixin):
     segments: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
 
 
-@strawberry_django.filter(SegmentCircuitMapping, lookups=True)
-class SegmentCircuitMappingFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(SegmentCircuitMapping, lookups=True)
+class SegmentCircuitMappingFilter(NetBoxModelFilter):
     """GraphQL filter for SegmentCircuitMapping model"""
 
     segment: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
@@ -197,8 +204,8 @@ class SegmentCircuitMappingFilter(NetBoxModelFilterMixin):
     )
 
 
-@strawberry_django.filter(ServicePathSegmentMapping, lookups=True)
-class ServicePathSegmentMappingFilter(NetBoxModelFilterMixin):
+@strawberry_django.filter_type(ServicePathSegmentMapping, lookups=True)
+class ServicePathSegmentMappingFilter(NetBoxModelFilter):
     """GraphQL filter for ServicePathSegmentMapping model"""
 
     service_path: Annotated["ServicePathFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
