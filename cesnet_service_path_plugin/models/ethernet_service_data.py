@@ -19,7 +19,6 @@ class EthernetServiceSegmentData(NetBoxModel):
         "Segment",
         on_delete=models.CASCADE,
         related_name="ethernet_service_data",
-        primary_key=True,
         help_text="Associated segment (1:1 relationship)",
     )
 
