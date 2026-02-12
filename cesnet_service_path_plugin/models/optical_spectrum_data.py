@@ -18,7 +18,6 @@ class OpticalSpectrumSegmentData(NetBoxModel):
         "Segment",
         on_delete=models.CASCADE,
         related_name="optical_spectrum_data",
-        primary_key=True,
         help_text="Associated segment (1:1 relationship)",
     )
 
