@@ -24,7 +24,6 @@ class DarkFiberSegmentData(NetBoxModel):
         "Segment",
         on_delete=models.CASCADE,
         related_name="dark_fiber_data",
-        primary_key=True,
         help_text="Associated segment (1:1 relationship)",
     )
 
