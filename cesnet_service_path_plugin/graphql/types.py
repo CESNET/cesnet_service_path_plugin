@@ -5,6 +5,7 @@ from circuits.graphql.types import CircuitType, ProviderType
 from dcim.graphql.types import LocationType, SiteType
 from netbox.graphql.types import NetBoxObjectType
 from strawberry import auto, field, lazy
+from strawberry.types import Info
 from strawberry_django import type as strawberry_django_type
 from decimal import Decimal
 
@@ -70,28 +71,28 @@ class ContractInfoType(NetBoxObjectType):
     superseded_by: Optional[Annotated["ContractInfoType", lazy(".types")]]
 
     @field
-    def version(self, info) -> int:
+    def version(self, info: Info) -> int:
         """Calculate version number by counting predecessors"""
         return self.version
 
     @field
-    def is_active(self, info) -> bool:
+    def is_active(self, info: Info) -> bool:
         """Check if this is the active (not superseded) version"""
         return self.is_active
 
     @field
-    def total_recurring_cost(self, info) -> Optional[Decimal]:
+    def total_recurring_cost(self, info: Info) -> Optional[Decimal]:
         """Calculate total recurring cost - only if user has permission"""
         # Permission check happens at the query level, so if we're here, user has access
         return self.total_recurring_cost
 
     @field
-    def total_contract_value(self, info) -> Optional[Decimal]:
+    def total_contract_value(self, info: Info) -> Optional[Decimal]:
         """Total contract value including non-recurring charge - only if user has permission"""
         return self.total_contract_value
 
     @field
-    def commitment_end_date(self, info) -> Optional[str]:
+    def commitment_end_date(self, info: Info) -> Optional[str]:
         """Calculate commitment end date based on start date and recurring periods"""
         if hasattr(self, "commitment_end_date") and self.commitment_end_date:
             return self.commitment_end_date.isoformat()
@@ -128,7 +129,7 @@ class SegmentType(NetBoxObjectType):
     circuits: List[Annotated["CircuitType", lazy("circuits.graphql.types")]]
 
     @field
-    def contracts(self, info) -> List[Annotated["ContractInfoType", lazy(".types")]]:
+    def contracts(self, info: Info) -> List[Annotated["ContractInfoType", lazy(".types")]]:
         """
         Return contracts only if user has permission to view them.
         This mimics the REST API behavior for M:N relationships.
