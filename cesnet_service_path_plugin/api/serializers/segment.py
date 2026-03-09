@@ -72,17 +72,17 @@ class SegmentBaseSerializer(NetBoxModelSerializer):
         or EthernetServiceSegmentData depending on the segment's type.
         """
         try:
-            if obj.segment_type == 'dark_fiber':
+            if obj.segment_type == "dark_fiber":
                 try:
                     return DarkFiberSegmentDataSerializer(obj.dark_fiber_data, context=self.context).data
                 except obj.dark_fiber_data.RelatedObjectDoesNotExist:
                     return None
-            elif obj.segment_type == 'optical_spectrum':
+            elif obj.segment_type == "optical_spectrum":
                 try:
                     return OpticalSpectrumSegmentDataSerializer(obj.optical_spectrum_data, context=self.context).data
                 except obj.optical_spectrum_data.RelatedObjectDoesNotExist:
                     return None
-            elif obj.segment_type == 'ethernet_service':
+            elif obj.segment_type == "ethernet_service":
                 try:
                     return EthernetServiceSegmentDataSerializer(obj.ethernet_service_data, context=self.context).data
                 except obj.ethernet_service_data.RelatedObjectDoesNotExist:

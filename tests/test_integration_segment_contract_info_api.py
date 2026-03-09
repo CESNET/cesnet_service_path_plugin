@@ -245,7 +245,9 @@ def test_contract_version_numbers(versioned_contract_chain):
     v3_id = versioned_contract_chain["v3_id"]
 
     # Check v1
-    response = requests.get(f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v1_id}/", headers=HEADERS)
+    response = requests.get(
+        f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v1_id}/", headers=HEADERS
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["version"] == 1
@@ -254,10 +256,14 @@ def test_contract_version_numbers(versioned_contract_chain):
     print(f"V1 is_active: {data['is_active']}, superseded_by: {data['superseded_by']}")
     assert data["is_active"] is False, f"V1 should be inactive (superseded), but is_active={data['is_active']}"
     assert data["previous_version"] is None
-    assert data["superseded_by"] == v2_id, f"V1 should be superseded by v2 ({v2_id}), but superseded_by={data['superseded_by']}"
+    assert data["superseded_by"] == v2_id, (
+        f"V1 should be superseded by v2 ({v2_id}), but superseded_by={data['superseded_by']}"
+    )
 
     # Check v2
-    response = requests.get(f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v2_id}/", headers=HEADERS)
+    response = requests.get(
+        f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v2_id}/", headers=HEADERS
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["version"] == 2
@@ -267,7 +273,9 @@ def test_contract_version_numbers(versioned_contract_chain):
     assert data["superseded_by"] == v3_id
 
     # Check v3
-    response = requests.get(f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v3_id}/", headers=HEADERS)
+    response = requests.get(
+        f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v3_id}/", headers=HEADERS
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["version"] == 3
@@ -283,7 +291,9 @@ def test_contract_notes(versioned_contract_chain):
 
     v3_id = versioned_contract_chain["v3_id"]
 
-    response = requests.get(f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v3_id}/", headers=HEADERS)
+    response = requests.get(
+        f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v3_id}/", headers=HEADERS
+    )
     assert response.status_code == 200
     data = response.json()
 
@@ -299,7 +309,9 @@ def test_computed_financial_fields(versioned_contract_chain):
 
     v3_id = versioned_contract_chain["v3_id"]
 
-    response = requests.get(f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v3_id}/", headers=HEADERS)
+    response = requests.get(
+        f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/contract-info/{v3_id}/", headers=HEADERS
+    )
     assert response.status_code == 200
     data = response.json()
 
@@ -340,7 +352,7 @@ def test_contract_currency_immutability(versioned_contract_chain):
     print("\n=== Testing Currency Immutability ===")
 
     v3_id = versioned_contract_chain["v3_id"]
-    today = date.today()
+    today = date.today()  # noqa: F841
 
     # Attempt to change currency (should fail validation)
     response = requests.patch(

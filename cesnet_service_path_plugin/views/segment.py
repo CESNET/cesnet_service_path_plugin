@@ -83,7 +83,7 @@ def generate_circuit_creation_url(segment):
 
 @register_model_view(Segment)
 class SegmentView(generic.ObjectView):
-    queryset = Segment.objects.prefetch_related('contracts')
+    queryset = Segment.objects.prefetch_related("contracts")
 
     def get_extra_context(self, request, instance):
         circuits = instance.circuits.all()
@@ -108,7 +108,7 @@ class SegmentView(generic.ObjectView):
 
         if has_contract_view_perm:
             # Fetch all contracts related to this segment
-            all_contracts = instance.contracts.all().order_by('contract_number', '-id')
+            all_contracts = instance.contracts.all().order_by("contract_number", "-id")
 
             logger.debug(f"=== Contract Info Debug for Segment {instance.pk} ({instance.name}) ===")
             logger.debug(f"Total contracts found: {all_contracts.count()}")
@@ -140,11 +140,11 @@ class SegmentView(generic.ObjectView):
                     version_history = first_version.get_version_history()
 
                     contract_chains_dict[first_version.pk] = {
-                        'first': first_version,
-                        'latest': latest,
-                        'version_count': latest.version,
-                        'is_active': latest.is_active,
-                        'version_history': version_history,
+                        "first": first_version,
+                        "latest": latest,
+                        "version_count": latest.version,
+                        "is_active": latest.is_active,
+                        "version_history": version_history,
                     }
 
                     logger.debug(f"  Contract Chain for '{first_version.contract_number}':")
@@ -160,16 +160,20 @@ class SegmentView(generic.ObjectView):
             logger.debug("=== End Contract Info Debug ===")
 
             # Check if a specific contract version is requested via URL parameter
-            contract_version_id = request.GET.get('contract_version')
+            contract_version_id = request.GET.get("contract_version")
             if contract_version_id:
                 try:
                     # Try to get the requested contract version
                     requested_contract = all_contracts.get(pk=int(contract_version_id))
                     contract_info = requested_contract
                     selected_contract_id = requested_contract.pk
-                    logger.debug(f"Displaying requested contract version: {requested_contract.pk} (v{requested_contract.version})")
+                    logger.debug(
+                        f"Displaying requested contract version: {requested_contract.pk} (v{requested_contract.version})"
+                    )
                 except (ValueError, all_contracts.model.DoesNotExist):
-                    logger.warning(f"Requested contract version {contract_version_id} not found or not related to this segment")
+                    logger.warning(
+                        f"Requested contract version {contract_version_id} not found or not related to this segment"
+                    )
                     # Fall back to default behavior
                     if active_contracts.exists():
                         contract_info = active_contracts.first()

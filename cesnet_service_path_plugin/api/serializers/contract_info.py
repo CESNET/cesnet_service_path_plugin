@@ -28,11 +28,11 @@ class ContractInfoSerializer(NetBoxModelSerializer):
         queryset=ContractInfo.objects.all(),
         required=False,
         allow_null=True,
-        help_text="Link to previous version for amendments/renewals"
+        help_text="Link to previous version for amendments/renewals",
     )
     contract_type = serializers.CharField(
         required=False,
-        help_text="Type of contract (auto-set to 'amendment' if previous_version exists, can be set to 'renewal')"
+        help_text="Type of contract (auto-set to 'amendment' if previous_version exists, can be set to 'renewal')",
     )
     # Read-only versioning fields
     superseded_by = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -122,11 +122,13 @@ class ContractInfoSerializer(NetBoxModelSerializer):
                     "plugins-api:cesnet_service_path_plugin-api:segment-detail", kwargs={"pk": segment.id}
                 )
 
-            segments_list.append({
-                "id": segment.id,
-                "url": segment_url,
-                "display": str(segment),
-                "name": segment.name,
-            })
+            segments_list.append(
+                {
+                    "id": segment.id,
+                    "url": segment_url,
+                    "display": str(segment),
+                    "name": segment.name,
+                }
+            )
 
         return segments_list

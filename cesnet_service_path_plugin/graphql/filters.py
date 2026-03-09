@@ -8,7 +8,7 @@ from strawberry.types import Info
 
 
 from netbox.graphql.filters import NetBoxModelFilter
-from strawberry_django import FilterLookup
+from strawberry_django import FilterLookup, StrFilterLookup
 
 if TYPE_CHECKING:
     from circuits.graphql.filters import CircuitFilter, ProviderFilter
@@ -36,19 +36,19 @@ class ContractInfoFilter(NetBoxModelFilter):
     """GraphQL filter for ContractInfo model"""
 
     # Basic fields
-    contract_number: FilterLookup[str] | None = strawberry_django.filter_field()
-    contract_type: FilterLookup[str] | None = strawberry_django.filter_field()
+    contract_number: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    contract_type: StrFilterLookup[str] | None = strawberry_django.filter_field()
 
     # Financial fields
-    charge_currency: FilterLookup[str] | None = strawberry_django.filter_field()
-    recurring_charge_period: FilterLookup[str] | None = strawberry_django.filter_field()
+    charge_currency: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    recurring_charge_period: StrFilterLookup[str] | None = strawberry_django.filter_field()
 
     # Date fields
-    start_date: FilterLookup[str] | None = strawberry_django.filter_field()
-    end_date: FilterLookup[str] | None = strawberry_django.filter_field()
+    start_date: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    end_date: StrFilterLookup[str] | None = strawberry_django.filter_field()
 
     # Notes
-    notes: FilterLookup[str] | None = strawberry_django.filter_field()
+    notes: StrFilterLookup[str] | None = strawberry_django.filter_field()
 
     # Related segments
     segments: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
@@ -79,22 +79,22 @@ class SegmentFilter(NetBoxModelFilter):
     """GraphQL filter for Segment model"""
 
     # Basic fields
-    name: FilterLookup[str] | None = strawberry_django.filter_field()
-    network_label: FilterLookup[str] | None = strawberry_django.filter_field()
-    install_date: FilterLookup[str] | None = strawberry_django.filter_field()  # Date fields as string
-    termination_date: FilterLookup[str] | None = strawberry_django.filter_field()
-    status: FilterLookup[str] | None = strawberry_django.filter_field()
-    ownership_type: FilterLookup[str] | None = strawberry_django.filter_field()
-    provider_segment_id: FilterLookup[str] | None = strawberry_django.filter_field()
-    comments: FilterLookup[str] | None = strawberry_django.filter_field()
+    name: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    network_label: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    install_date: StrFilterLookup[str] | None = strawberry_django.filter_field()  # Date fields as string
+    termination_date: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    status: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    ownership_type: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    provider_segment_id: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    comments: StrFilterLookup[str] | None = strawberry_django.filter_field()
 
     # Segment type field
-    segment_type: FilterLookup[str] | None = strawberry_django.filter_field()
+    segment_type: StrFilterLookup[str] | None = strawberry_django.filter_field()
 
     # Path geometry fields
     path_length_km: FilterLookup[float] | None = strawberry_django.filter_field()
-    path_source_format: FilterLookup[str] | None = strawberry_django.filter_field()
-    path_notes: FilterLookup[str] | None = strawberry_django.filter_field()
+    path_source_format: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    path_notes: StrFilterLookup[str] | None = strawberry_django.filter_field()
 
     # Related fields - using lazy imports to avoid circular dependencies
     provider: Annotated["ProviderFilter", strawberry.lazy("circuits.graphql.filters")] | None = (
@@ -184,10 +184,10 @@ class SegmentFilter(NetBoxModelFilter):
 class ServicePathFilter(NetBoxModelFilter):
     """GraphQL filter for ServicePath model"""
 
-    name: FilterLookup[str] | None = strawberry_django.filter_field()
-    status: FilterLookup[str] | None = strawberry_django.filter_field()
-    kind: FilterLookup[str] | None = strawberry_django.filter_field()
-    comments: FilterLookup[str] | None = strawberry_django.filter_field()
+    name: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    status: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    kind: StrFilterLookup[str] | None = strawberry_django.filter_field()
+    comments: StrFilterLookup[str] | None = strawberry_django.filter_field()
 
     # Related segments
     segments: Annotated["SegmentFilter", strawberry.lazy(".filters")] | None = strawberry_django.filter_field()
