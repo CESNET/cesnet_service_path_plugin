@@ -84,6 +84,4 @@ class ContractInfoFilterSet(NetBoxModelFilterSet):
         contract_number = Q(contract_number__icontains=value)
         notes = Q(notes__icontains=value)
 
-        return queryset.filter(
-            contract_number | notes
-        )
+        return queryset.filter(contract_number | notes)

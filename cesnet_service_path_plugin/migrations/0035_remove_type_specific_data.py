@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0034_add_type_specific_models'),
+        ("cesnet_service_path_plugin", "0034_add_type_specific_models"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='segment',
-            name='type_specific_data',
+            model_name="segment",
+            name="type_specific_data",
         ),
     ]

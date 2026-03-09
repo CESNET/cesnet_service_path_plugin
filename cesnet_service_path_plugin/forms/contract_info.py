@@ -44,7 +44,6 @@ class ContractInfoForm(NetBoxModelForm):
         required=False, min_value=0, help_text="Number of recurring charge periods (0 for no recurring charges)"
     )
 
-
     notes = forms.CharField(
         required=False, widget=forms.Textarea(attrs={"rows": 3}), help_text="Notes specific to this version"
     )
@@ -89,9 +88,9 @@ class ContractInfoForm(NetBoxModelForm):
             # For amendments, make currency field disabled in the UI
             # Note: disabled fields don't submit values, but we handle this in clean_charge_currency()
             self.fields["charge_currency"].disabled = True
-            self.fields["charge_currency"].help_text = (
-                "Currency cannot be changed in amendments (inherited from original contract)"
-            )
+            self.fields[
+                "charge_currency"
+            ].help_text = "Currency cannot be changed in amendments (inherited from original contract)"
 
     def clean_charge_currency(self):
         """

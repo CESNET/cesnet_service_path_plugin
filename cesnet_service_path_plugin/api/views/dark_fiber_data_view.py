@@ -13,5 +13,5 @@ class DarkFiberSegmentDataViewSet(NetBoxModelViewSet):
     Provides CRUD operations for dark fiber segment technical specifications.
     """
 
-    queryset = DarkFiberSegmentData.objects.select_related('segment').all()
+    queryset = DarkFiberSegmentData.objects.select_related("segment").all()
     serializer_class = DarkFiberSegmentDataSerializer

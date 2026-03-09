@@ -5,15 +5,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0035_remove_type_specific_data'),
+        ("cesnet_service_path_plugin", "0035_remove_type_specific_data"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='opticalspectrumsegmentdata',
-            name='chromatic_dispersion',
-            field=models.DecimalField(blank=True, decimal_places=3, max_digits=8, null=True, validators=[django.core.validators.MinValueValidator(-100000), django.core.validators.MaxValueValidator(100000)]),
+            model_name="opticalspectrumsegmentdata",
+            name="chromatic_dispersion",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=3,
+                max_digits=8,
+                null=True,
+                validators=[
+                    django.core.validators.MinValueValidator(-100000),
+                    django.core.validators.MaxValueValidator(100000),
+                ],
+            ),
         ),
     ]

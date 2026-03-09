@@ -13,5 +13,5 @@ class EthernetServiceSegmentDataViewSet(NetBoxModelViewSet):
     Provides CRUD operations for ethernet service segment technical specifications.
     """
 
-    queryset = EthernetServiceSegmentData.objects.select_related('segment').all()
+    queryset = EthernetServiceSegmentData.objects.select_related("segment").all()
     serializer_class = EthernetServiceSegmentDataSerializer

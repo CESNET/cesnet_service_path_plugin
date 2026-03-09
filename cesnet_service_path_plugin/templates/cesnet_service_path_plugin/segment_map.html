@@ -1,67 +1,72 @@
 {% extends 'generic/object.html' %}
 {% load static %}
 {% load helpers %}
-
 {% block title %}{{ object.name }} - Map View{% endblock %}
-
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="mdi mdi-map" aria-hidden="true"></i>
-                    Map: {{ object.name }}
-                </h5>
-                <div class="card-actions">
-                    <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="mdi mdi-arrow-left" aria-hidden="true"></i> Back to Segment
-                    </a>
-                    <a href="{% url 'plugins:cesnet_service_path_plugin:segment_geojson_download' pk=object.pk %}" 
-                       class="btn btn-outline-primary btn-sm">
-                        <i class="mdi mdi-download" aria-hidden="true"></i> Download GeoJSON
-                    </a>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="mdi mdi-map" aria-hidden="true"></i>
+                        Map: {{ object.name }}
+                    </h5>
+                    <div class="card-actions">
+                        <a href="{{ object.get_absolute_url }}"
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="mdi mdi-arrow-left" aria-hidden="true"></i> Back to Segment
+                        </a>
+                        <a href="{% url 'plugins:cesnet_service_path_plugin:segment_geojson_download' pk=object.pk %}"
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="mdi mdi-download" aria-hidden="true"></i> Download GeoJSON
+                        </a>
+                    </div>
                 </div>
-            </div>
-            <div class="card-body">
-                {% if not object.has_path_data and not has_fallback_line %}
-                    <div class="alert alert-warning" role="alert">
-                        <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
-                        This segment does not have path data and sites don't have coordinates.
-                    </div>
-                {% else %}
-                    <!-- Segment info -->
-                    <div class="alert alert-info mb-3">
-                        <strong>{{ object.provider }}</strong> | 
-                        <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span> | 
-                        <span class="badge text-bg-{{ object.get_ownership_type_color }}">{{ object.get_ownership_type_display }}</span> | 
-                        {% if object.path_length_km %}{{ object.path_length_km }} km{% else %}Length unknown{% endif %} | 
-                        {{ object.site_a }} ↔ {{ object.site_b }}
-                        {% if has_fallback_line %}
-                            <br><small class="text-muted">
-                                <i class="mdi mdi-information"></i> 
-                                No path data available - showing straight line between sites
-                            </small>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Map controls -->
-                    <div class="mb-3">
-                        <button id="fitBounds" class="btn btn-sm btn-outline-primary">
-                            <i class="mdi mdi-fit-to-page-outline"></i> Fit to Path
-                        </button>
-                        <!-- Use the new layer dropdown -->
-                        {% include './inc/map_layer_dropdown.html' %}
-                    </div>
-                    
-                    <!-- Map container -->
-                    <div id="map" style="height: 600px; width: 100%; border: 1px solid #ddd; border-radius: 4px;"></div>
-                    
-                    <!-- Load Leaflet -->
-                    {% include './inc/leaflet_includes.html' %}
-
-                    <!-- Template data as JSON -->
-                    <script type="application/json" id="segment-data">
+                <div class="card-body">
+                    {% if not object.has_path_data and not has_fallback_line %}
+                        <div class="alert alert-warning" role="alert">
+                            <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
+                            This segment does not have path data and sites don't have coordinates.
+                        </div>
+                    {% else %}
+                        <!-- Segment info -->
+                        <div class="alert alert-info mb-3">
+                            <strong>{{ object.provider }}</strong> |
+                            <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span> |
+                            <span class="badge text-bg-{{ object.get_ownership_type_color }}">{{ object.get_ownership_type_display }}</span> |
+                            {% if object.path_length_km %}
+                                {{ object.path_length_km }} km
+                            {% else %}
+                                Length unknown
+                            {% endif %}
+                            |
+                            {{ object.site_a }} ↔ {{ object.site_b }}
+                            {% if has_fallback_line %}
+                                <br>
+                                <small class="text-muted">
+                                    <i class="mdi mdi-information"></i>
+                                    No path data available - showing straight line between sites
+                                </small>
+                            {% endif %}
+                        </div>
+                        <!-- Map controls -->
+                        <div class="mb-3">
+                            <button id="fitBounds" class="btn btn-sm btn-outline-primary">
+                                <i class="mdi mdi-fit-to-page-outline"></i> Fit to Path
+                            </button>
+                            <!-- Use the new layer dropdown -->
+                            {% include './inc/map_layer_dropdown.html' %}
+                        </div>
+                        <!-- Map container -->
+                        <div id="map"
+                             style="height: 600px;
+                                    width: 100%;
+                                    border: 1px solid #ddd;
+                                    border-radius: 4px"></div>
+                        <!-- Load Leaflet -->
+                        {% include './inc/leaflet_includes.html' %}
+                        <!-- Template data as JSON -->
+                        <script type="application/json" id="segment-data">
                     {
                         "siteAData": {{ site_a_data_json|safe }},
                         "siteBData": {{ site_b_data_json|safe }},
@@ -80,12 +85,10 @@
                         },
                         "apiUrl": "{% url 'plugins:cesnet_service_path_plugin:segment_geojson_api' pk=object.pk %}"
                     }
-                    </script>
-
-                    <!-- Include common layer configuration -->
-                    {% include './inc/map_layers_config.html' %}
-
-                    <script>
+                        </script>
+                        <!-- Include common layer configuration -->
+                        {% include './inc/map_layers_config.html' %}
+                        <script>
                     // Parse template data
                     const templateData = JSON.parse(document.getElementById('segment-data').textContent);
                     const siteAData = templateData.siteAData;
@@ -247,10 +250,10 @@
                     
                     // Initialize layer switching functionality
                     initializeLayerSwitching(map);
-                    </script>
-                {% endif %}
+                        </script>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-</div>
 {% endblock %}

@@ -18,42 +18,40 @@ class OpticalSpectrumSegmentDataSerializer(NetBoxModelSerializer):
     # Write-only segment ID for POST/PUT/PATCH operations
     segment_id = serializers.PrimaryKeyRelatedField(
         queryset=Segment.objects.all(),
-        source='segment',
+        source="segment",
         write_only=True,
         required=True,
-        help_text="ID of the segment this technical data belongs to"
+        help_text="ID of the segment this technical data belongs to",
     )
 
     class Meta:
         model = OpticalSpectrumSegmentData
         fields = [
-            'segment',
-            'segment_id',
-            'wavelength',
-            'spectral_slot_width',
-            'itu_grid_position',
-            'chromatic_dispersion',
-            'pmd_tolerance',
-            'modulation_format',
-            'created',
-            'last_updated',
+            "segment",
+            "segment_id",
+            "wavelength",
+            "spectral_slot_width",
+            "itu_grid_position",
+            "chromatic_dispersion",
+            "pmd_tolerance",
+            "modulation_format",
+            "created",
+            "last_updated",
         ]
 
     def get_segment(self, obj):
         """Return basic segment info for GET operations"""
-        request = self.context.get('request')
+        request = self.context.get("request")
         if not request:
             return {
-                'id': obj.segment.id,
-                'name': obj.segment.name,
+                "id": obj.segment.id,
+                "name": obj.segment.name,
             }
 
         return {
-            'id': obj.segment.id,
-            'name': obj.segment.name,
-            'url': request.build_absolute_uri(
-                f'/api/plugins/cesnet-service-path-plugin/segments/{obj.segment.id}/'
-            )
+            "id": obj.segment.id,
+            "name": obj.segment.name,
+            "url": request.build_absolute_uri(f"/api/plugins/cesnet-service-path-plugin/segments/{obj.segment.id}/"),
         }
 
     def validate(self, data):
@@ -64,15 +62,15 @@ class OpticalSpectrumSegmentDataSerializer(NetBoxModelSerializer):
         """
         from django.core.exceptions import ValidationError as DjangoValidationError
 
-        segment = data.get('segment')
+        segment = data.get("segment")
 
         # Check if this is an update (instance exists) or create (new instance)
         if not self.instance and segment:
             # Creating new instance - check if segment already has data
-            if hasattr(segment, 'optical_spectrum_data'):
-                raise serializers.ValidationError({
-                    'segment': f'Segment "{segment.name}" already has optical spectrum technical data.'
-                })
+            if hasattr(segment, "optical_spectrum_data"):
+                raise serializers.ValidationError(
+                    {"segment": f'Segment "{segment.name}" already has optical spectrum technical data.'}
+                )
 
         # Trigger model-level validation by creating a temporary instance
         # This ensures model's clean() method is called
@@ -89,6 +87,6 @@ class OpticalSpectrumSegmentDataSerializer(NetBoxModelSerializer):
             instance.clean()
         except DjangoValidationError as e:
             # Convert Django ValidationError to DRF ValidationError
-            raise serializers.ValidationError(e.message_dict if hasattr(e, 'message_dict') else str(e))
+            raise serializers.ValidationError(e.message_dict if hasattr(e, "message_dict") else str(e))
 
         return data
