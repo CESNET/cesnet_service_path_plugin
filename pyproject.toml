@@ -38,13 +38,19 @@ Issues = "https://github.com/CESNET/cesnet_service_path_plugin/issues"
 
 [project.optional-dependencies]
 dev = [
-    "black",
-    "autopep8",
+    "ruff",
+    "djlint",
     "pip",
     "check-manifest",
     "pytest",
     "python-dotenv",
 ]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
 
 [tool.setuptools.packages.find]
 # This replaces find_packages()
