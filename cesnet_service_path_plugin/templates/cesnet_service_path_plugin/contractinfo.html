@@ -3,9 +3,7 @@
 {% load plugins %}
 {% load custom_filters %}
 {% load render_table from django_tables2 %}
-
 {% block content %}
-
     <div class="row mb-3">
         <div class="col col-md-6">
             <!-- Contract Info Card -->
@@ -20,9 +18,7 @@
                         <tr>
                             <th scope="row">Contract Type</th>
                             <td>
-                                <span class="badge text-bg-{{ object.get_contract_type_color }}">
-                                    {{ object.get_contract_type_display }}
-                                </span>
+                                <span class="badge text-bg-{{ object.get_contract_type_color }}">{{ object.get_contract_type_display }}</span>
                             </td>
                         </tr>
                         <tr>
@@ -39,7 +35,6 @@
                     </table>
                 </div>
             </div>
-
             <!-- Financial Information Card -->
             <div class="card mt-3">
                 <h5 class="card-header">Financial Information</h5>
@@ -48,9 +43,7 @@
                         <tr>
                             <th scope="row">Currency</th>
                             <td>
-                                <span class="badge text-bg-{{ object.get_currency_color }}">
-                                    {{ object.get_charge_currency_display }}
-                                </span>
+                                <span class="badge text-bg-{{ object.get_currency_color }}">{{ object.get_charge_currency_display }}</span>
                             </td>
                         </tr>
                         <tr>
@@ -71,28 +64,33 @@
                         </tr>
                         <tr>
                             <th scope="row">Total Recurring Cost</th>
-                            <td class="text-end"><strong>{{ object.charge_currency }} {{ object.total_recurring_cost|floatformat:2|spacecomma }}</strong></td>
+                            <td class="text-end">
+                                <strong>{{ object.charge_currency }} {{ object.total_recurring_cost|floatformat:2|spacecomma }}</strong>
+                            </td>
                         </tr>
                         {% if object.non_recurring_charge %}
-                        <tr>
-                            <th scope="row">Non-Recurring Charge</th>
-                            <td class="text-end">{{ object.charge_currency }} {{ object.non_recurring_charge|floatformat:2|spacecomma }}</td>
-                        </tr>
+                            <tr>
+                                <th scope="row">Non-Recurring Charge</th>
+                                <td class="text-end">{{ object.charge_currency }} {{ object.non_recurring_charge|floatformat:2|spacecomma }}</td>
+                            </tr>
                         {% endif %}
                         {% if object.total_cumulative_non_recurring %}
-                        <tr>
-                            <th scope="row">Cumulative Non-Recurring</th>
-                            <td class="text-end"><em>{{ object.charge_currency }} {{ object.total_cumulative_non_recurring|floatformat:2|spacecomma }}</em></td>
-                        </tr>
+                            <tr>
+                                <th scope="row">Cumulative Non-Recurring</th>
+                                <td class="text-end">
+                                    <em>{{ object.charge_currency }} {{ object.total_cumulative_non_recurring|floatformat:2|spacecomma }}</em>
+                                </td>
+                            </tr>
                         {% endif %}
                         <tr class="table-active">
                             <th scope="row">Total Contract Value</th>
-                            <td class="text-end"><strong>{{ object.charge_currency }} {{ object.total_contract_value|floatformat:2|spacecomma }}</strong></td>
+                            <td class="text-end">
+                                <strong>{{ object.charge_currency }} {{ object.total_contract_value|floatformat:2|spacecomma }}</strong>
+                            </td>
                         </tr>
                     </table>
                 </div>
             </div>
-
             <!-- Date Information Card -->
             <div class="card mt-3">
                 <h5 class="card-header">Contract Dates</h5>
@@ -107,142 +105,130 @@
                             <td>
                                 {% if object.end_date %}
                                     <span class="badge text-bg-{{ object.get_end_date_color }}"
-                                          title="{{ object.get_end_date_tooltip }}">
-                                        {{ object.end_date }}
-                                    </span>
+                                          title="{{ object.get_end_date_tooltip }}">{{ object.end_date }}</span>
                                 {% else %}
                                     {{ ''|placeholder }}
                                 {% endif %}
                             </td>
                         </tr>
                         {% if object.commitment_end_date %}
-                        <tr>
-                            <th scope="row">Commitment End Date</th>
-                            <td>
-                                <span class="badge text-bg-{{ object.get_commitment_end_date_color }}"
-                                      title="{{ object.get_commitment_end_date_tooltip }}">
-                                    {{ object.commitment_end_date }}
-                                </span>
-                            </td>
-                        </tr>
+                            <tr>
+                                <th scope="row">Commitment End Date</th>
+                                <td>
+                                    <span class="badge text-bg-{{ object.get_commitment_end_date_color }}"
+                                          title="{{ object.get_commitment_end_date_tooltip }}">
+                                        {{ object.commitment_end_date }}
+                                    </span>
+                                </td>
+                            </tr>
                         {% endif %}
                     </table>
                 </div>
             </div>
             {% plugin_left_page object %}
         </div>
-
         <div class="col col-md-6">
             <!-- Custom fields, tags, comments -->
             {% include 'inc/panels/custom_fields.html' %}
             {% include 'inc/panels/tags.html' %}
             {% include 'inc/panels/comments.html' %}
-
             <!-- Version History Card -->
             {% if version_history %}
-            <div class="card">
-                <h5 class="card-header">Version History</h5>
-                <div class="card-body">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Version</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for version in version_history %}
-                            <tr {% if version.pk == object.pk %}class="table-active"{% endif %}>
-                                <td>
-                                    <span class="badge text-bg-info">v{{ version.version }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge text-bg-{{ version.get_contract_type_color }}">
-                                        {{ version.get_contract_type_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if version.is_active %}
-                                        <span class="badge text-bg-success">Active</span>
-                                    {% else %}
-                                        <span class="badge text-bg-secondary">Superseded</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if version.pk != object.pk %}
-                                        <a href="{{ version.get_absolute_url }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="mdi mdi-eye"></i> View
-                                        </a>
-                                    {% else %}
-                                        <span class="text-muted">Current</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="card">
+                    <h5 class="card-header">Version History</h5>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Version</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for version in version_history %}
+                                    <tr {% if version.pk == object.pk %}class="table-active"{% endif %}>
+                                        <td>
+                                            <span class="badge text-bg-info">v{{ version.version }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge text-bg-{{ version.get_contract_type_color }}">{{ version.get_contract_type_display }}</span>
+                                        </td>
+                                        <td>
+                                            {% if version.is_active %}
+                                                <span class="badge text-bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge text-bg-secondary">Superseded</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if version.pk != object.pk %}
+                                                <a href="{{ version.get_absolute_url }}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="mdi mdi-eye"></i> View
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">Current</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
             {% endif %}
-
             <!-- Related Segments Card -->
             {% if segments %}
-            <div class="card mt-3">
-                <h5 class="card-header">Related Segments</h5>
-                <div class="card-body">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Segment Type</th>
-                                <th>Provider</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for segment in segments %}
-                            <tr>
-                                <td>
-                                    <a href="{{ segment.get_absolute_url }}">{{ segment.name }}</a>
-                                </td>
-                                <td>
-                                    <span class="badge text-bg-{{ segment.get_segment_type_color }}">
-                                        {{ segment.get_segment_type_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if segment.provider %}
-                                        <a href="{{ segment.provider.get_absolute_url }}">{{ segment.provider }}</a>
-                                    {% else %}
-                                        {{ ''|placeholder }}
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge text-bg-{{ segment.get_status_color }}">
-                                        {{ segment.get_status_display }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="card mt-3">
+                    <h5 class="card-header">Related Segments</h5>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Segment Type</th>
+                                    <th>Provider</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for segment in segments %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ segment.get_absolute_url }}">{{ segment.name }}</a>
+                                        </td>
+                                        <td>
+                                            <span class="badge text-bg-{{ segment.get_segment_type_color }}">{{ segment.get_segment_type_display }}</span>
+                                        </td>
+                                        <td>
+                                            {% if segment.provider %}
+                                                <a href="{{ segment.provider.get_absolute_url }}">{{ segment.provider }}</a>
+                                            {% else %}
+                                                {{ ''|placeholder }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge text-bg-{{ segment.get_status_color }}">{{ segment.get_status_display }}</span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
             {% endif %}
-
             <!-- Notes Card -->
             {% if object.notes %}
-            <div class="card mt-3">
-                <h5 class="card-header">Notes</h5>
-                <div class="card-body">
-                    <pre class="text-muted">{{ object.notes }}</pre>
+                <div class="card mt-3">
+                    <h5 class="card-header">Notes</h5>
+                    <div class="card-body">
+                        <pre class="text-muted">{{ object.notes }}</pre>
+                    </div>
                 </div>
-            </div>
             {% endif %}
             {% plugin_right_page object %}
         </div>
     </div>
-
 {% endblock content %}

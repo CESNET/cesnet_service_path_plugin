@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0031_alter_segmentfinancialinfo_charge_currency'),
+        ("cesnet_service_path_plugin", "0031_alter_segmentfinancialinfo_charge_currency"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='segment',
-            name='ownership_type',
-            field=models.CharField(default='leased', max_length=30),
+            model_name="segment",
+            name="ownership_type",
+            field=models.CharField(default="leased", max_length=30),
         ),
     ]

@@ -135,9 +135,7 @@ class DarkFiberSegmentData(NetBoxModel):
 
         # Validate that single-mode subtype is only set for single-mode fibers
         if self.single_mode_subtype and self.fiber_mode != FiberModeChoices.SINGLE_MODE:
-            errors["single_mode_subtype"] = (
-                "Single-mode subtype can only be set when fiber mode is Single-mode"
-            )
+            errors["single_mode_subtype"] = "Single-mode subtype can only be set when fiber mode is Single-mode"
 
         # Validate that multimode subtype is only set for multimode fibers
         if self.multimode_subtype and self.fiber_mode != FiberModeChoices.MULTIMODE:

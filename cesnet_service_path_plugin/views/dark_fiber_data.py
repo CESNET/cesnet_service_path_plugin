@@ -15,6 +15,7 @@ class DarkFiberSegmentDataEditView(generic.ObjectEditView):
     The segment is expected to be passed via URL parameter (segment_id) for add,
     or derived from the instance for edit operations.
     """
+
     queryset = DarkFiberSegmentData.objects.all()
     form = DarkFiberSegmentDataForm
 
@@ -24,7 +25,7 @@ class DarkFiberSegmentDataEditView(generic.ObjectEditView):
         """
         if not obj.segment_id:
             # Get segment_id from URL parameter for new objects
-            segment_id = request.GET.get('segment')
+            segment_id = request.GET.get("segment")
             if segment_id:
                 try:
                     obj.segment = Segment.objects.get(pk=segment_id)
@@ -55,6 +56,7 @@ class DarkFiberSegmentDataDeleteView(generic.ObjectDeleteView):
     """
     View for deleting dark fiber technical data.
     """
+
     queryset = DarkFiberSegmentData.objects.all()
 
     def get(self, request, *args, **kwargs):
@@ -86,7 +88,7 @@ class DarkFiberSegmentDataDeleteView(generic.ObjectDeleteView):
                 return return_url
 
         # Use the stored segment URL if available
-        if hasattr(self, '_segment_url') and self._segment_url:
+        if hasattr(self, "_segment_url") and self._segment_url:
             return self._segment_url
 
         # Fallback to default behavior

@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cesnet_service_path_plugin', '0030_alter_segment_location_a_alter_segment_location_b'),
+        ("cesnet_service_path_plugin", "0030_alter_segment_location_a_alter_segment_location_b"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='segmentfinancialinfo',
-            name='charge_currency',
+            model_name="segmentfinancialinfo",
+            name="charge_currency",
             field=models.CharField(max_length=3),
         ),
     ]

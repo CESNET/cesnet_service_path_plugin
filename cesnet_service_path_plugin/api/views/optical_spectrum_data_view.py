@@ -13,5 +13,5 @@ class OpticalSpectrumSegmentDataViewSet(NetBoxModelViewSet):
     Provides CRUD operations for optical spectrum segment technical specifications.
     """
 
-    queryset = OpticalSpectrumSegmentData.objects.select_related('segment').all()
+    queryset = OpticalSpectrumSegmentData.objects.select_related("segment").all()
     serializer_class = OpticalSpectrumSegmentDataSerializer
