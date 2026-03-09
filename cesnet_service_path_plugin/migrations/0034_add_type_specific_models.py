@@ -13,7 +13,6 @@ import django.db.models.deletion
 import netbox.models.deletion
 import taggit.managers
 import utilities.json
-from decimal import Decimal
 from django.db import migrations, models
 
 
@@ -46,7 +45,7 @@ def migrate_json_to_models_forward(apps, schema_editor):
                 json_data = segment.type_specific_data
 
                 # Handle fiber_type - was multichoice (list) in JSON
-                fiber_type_raw = json_data.get("fiber_type")
+                fiber_type_raw = json_data.get("fiber_type")  # noqa: F841
                 # Note: The new model doesn't have a direct fiber_type list field
                 # Instead we have fiber_mode and subtypes
                 # For now, we'll skip fiber_type as it's being replaced by the new structure
@@ -104,7 +103,7 @@ def migrate_json_to_models_forward(apps, schema_editor):
             print(f"  ⚠️  {error_msg}")
 
     # Print migration summary
-    print(f"\n✅ Migration completed:")
+    print("\n✅ Migration completed:")
     print(f"  - Dark Fiber segments: {stats['dark_fiber']}")
     print(f"  - Optical Spectrum segments: {stats['optical_spectrum']}")
     print(f"  - Ethernet Service segments: {stats['ethernet_service']}")
@@ -194,7 +193,7 @@ def migrate_json_to_models_reverse(apps, schema_editor):
     Reverse migration: Copy data from models back to JSON field.
     This allows rollback if needed.
     """
-    Segment = apps.get_model("cesnet_service_path_plugin", "Segment")
+    Segment = apps.get_model("cesnet_service_path_plugin", "Segment")  # noqa: F841
     DarkFiberSegmentData = apps.get_model("cesnet_service_path_plugin", "DarkFiberSegmentData")
     OpticalSpectrumSegmentData = apps.get_model("cesnet_service_path_plugin", "OpticalSpectrumSegmentData")
     EthernetServiceSegmentData = apps.get_model("cesnet_service_path_plugin", "EthernetServiceSegmentData")
@@ -203,9 +202,7 @@ def migrate_json_to_models_reverse(apps, schema_editor):
     for df_data in DarkFiberSegmentData.objects.all():
         segment = df_data.segment
         segment.type_specific_data = {
-            "fiber_attenuation_max": float(df_data.fiber_attenuation_max)
-            if df_data.fiber_attenuation_max
-            else None,
+            "fiber_attenuation_max": float(df_data.fiber_attenuation_max) if df_data.fiber_attenuation_max else None,
             "total_loss": float(df_data.total_loss) if df_data.total_loss else None,
             "total_length": float(df_data.total_length) if df_data.total_length else None,
             "number_of_fibers": df_data.number_of_fibers,
@@ -315,7 +312,6 @@ def _reverse_map_interface_type(new_value):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cesnet_service_path_plugin", "0033_contractinfo_contractsegmentmapping_and_more"),
         ("extras", "0133_make_cf_minmax_decimal"),

@@ -13,7 +13,6 @@ Run with:
     /home/albert/cesnet/netbox/venv/bin/python -m pytest tests/test_integration_segment_workflow.py -v
 """
 
-import pytest
 import requests
 import os
 from dotenv import load_dotenv
@@ -285,7 +284,7 @@ def test_changing_segment_type():
         # Verify dark fiber data is deleted (cascade or manual cleanup needed)
         # Note: This depends on whether changing segment_type triggers cascade delete
         # The segment should now have type_specific_data = None
-        updated_seg = requests.get(
+        updated_seg = requests.get(  # noqa: F841
             f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/segments/{segment_id}/",
             headers=HEADERS,
         )
@@ -463,7 +462,7 @@ def test_list_view_includes_type_specific_data():
         list_response = requests.get(
             f"{BASE_URL}/api/plugins/cesnet-service-path-plugin/segments/",
             headers=HEADERS,
-            params={"name": "List View Test Segment"}
+            params={"name": "List View Test Segment"},
         )
 
         assert list_response.status_code == 200

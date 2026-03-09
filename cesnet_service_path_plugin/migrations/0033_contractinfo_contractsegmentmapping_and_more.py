@@ -16,7 +16,7 @@ def migrate_financial_info_to_contract(apps, schema_editor):
     SegmentFinancialInfo = apps.get_model("cesnet_service_path_plugin", "SegmentFinancialInfo")
     ContractInfo = apps.get_model("cesnet_service_path_plugin", "ContractInfo")
     ContractSegmentMapping = apps.get_model("cesnet_service_path_plugin", "ContractSegmentMapping")
-    Segment = apps.get_model("cesnet_service_path_plugin", "Segment")
+    Segment = apps.get_model("cesnet_service_path_plugin", "Segment")  # noqa: F841
     TaggedItem = apps.get_model("extras", "TaggedItem")
     ContentType = apps.get_model("contenttypes", "ContentType")
 
@@ -36,7 +36,9 @@ def migrate_financial_info_to_contract(apps, schema_editor):
         end_date = segment.termination_date if segment.termination_date else None
 
         # Determine number_of_recurring_charges (convert commitment_period_months to number of charges)
-        number_of_recurring_charges = old_financial_info.commitment_period_months if old_financial_info.commitment_period_months else None
+        number_of_recurring_charges = (
+            old_financial_info.commitment_period_months if old_financial_info.commitment_period_months else None
+        )
 
         # Create new ContractInfo
         contract = ContractInfo.objects.create(
@@ -95,7 +97,9 @@ def reverse_migrate_contract_to_financial_info(apps, schema_editor):
             segment=segment,
             monthly_charge=contract.recurring_charge or Decimal("0"),
             charge_currency=contract.charge_currency,
-            non_recurring_charge=contract.non_recurring_charge if contract.non_recurring_charge and contract.non_recurring_charge > 0 else None,
+            non_recurring_charge=contract.non_recurring_charge
+            if contract.non_recurring_charge and contract.non_recurring_charge > 0
+            else None,
             commitment_period_months=commitment_period_months,
             notes=contract.notes,
             created=contract.created,
@@ -110,7 +114,6 @@ def reverse_migrate_contract_to_financial_info(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("cesnet_service_path_plugin", "0032_segment_ownership_type"),
         ("circuits", "0052_extend_circuit_abs_distance_upper_limit"),
@@ -129,18 +132,71 @@ class Migration(migrations.Migration):
                     "custom_field_data",
                     models.JSONField(blank=True, default=dict, encoder=utilities.json.CustomFieldJSONEncoder),
                 ),
-                ("contract_number", models.CharField(blank=True, help_text="Provider's contract reference number", max_length=100)),
-                ("contract_type", models.CharField(default="new", editable=False, help_text="Type of contract (set automatically)", max_length=20)),
-                ("charge_currency", models.CharField(blank=True, default="CZK", help_text="Currency for all charges (defaults to CZK if not specified, cannot be changed in amendments)", max_length=3)),
+                (
+                    "contract_number",
+                    models.CharField(blank=True, help_text="Provider's contract reference number", max_length=100),
+                ),
+                (
+                    "contract_type",
+                    models.CharField(
+                        default="new", editable=False, help_text="Type of contract (set automatically)", max_length=20
+                    ),
+                ),
+                (
+                    "charge_currency",
+                    models.CharField(
+                        blank=True,
+                        default="CZK",
+                        help_text="Currency for all charges (defaults to CZK if not specified, cannot be changed in amendments)",
+                        max_length=3,
+                    ),
+                ),
                 (
                     "non_recurring_charge",
-                    models.DecimalField(blank=True, decimal_places=2, default=Decimal("0"), help_text="One-time fees for this version (setup, installation, etc.)", max_digits=10, null=True),
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        default=Decimal("0"),
+                        help_text="One-time fees for this version (setup, installation, etc.)",
+                        max_digits=10,
+                        null=True,
+                    ),
                 ),
-                ("recurring_charge", models.DecimalField(blank=True, decimal_places=2, help_text="Recurring fee amount (optional for amendments)", max_digits=10, null=True)),
-                ("recurring_charge_period", models.CharField(blank=True, help_text="Frequency of recurring charges (optional for amendments)", max_length=20, null=True)),
-                ("number_of_recurring_charges", models.PositiveIntegerField(blank=True, help_text="Number of recurring charge periods in this contract (optional for amendments)", null=True)),
-                ("start_date", models.DateField(blank=True, help_text="When this contract version starts (optional)", null=True)),
-                ("end_date", models.DateField(blank=True, help_text="When this contract version ends (optional)", null=True)),
+                (
+                    "recurring_charge",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        help_text="Recurring fee amount (optional for amendments)",
+                        max_digits=10,
+                        null=True,
+                    ),
+                ),
+                (
+                    "recurring_charge_period",
+                    models.CharField(
+                        blank=True,
+                        help_text="Frequency of recurring charges (optional for amendments)",
+                        max_length=20,
+                        null=True,
+                    ),
+                ),
+                (
+                    "number_of_recurring_charges",
+                    models.PositiveIntegerField(
+                        blank=True,
+                        help_text="Number of recurring charge periods in this contract (optional for amendments)",
+                        null=True,
+                    ),
+                ),
+                (
+                    "start_date",
+                    models.DateField(blank=True, help_text="When this contract version starts (optional)", null=True),
+                ),
+                (
+                    "end_date",
+                    models.DateField(blank=True, help_text="When this contract version ends (optional)", null=True),
+                ),
                 ("notes", models.TextField(blank=True, help_text="Notes specific to this version")),
                 (
                     "previous_version",
@@ -179,7 +235,10 @@ class Migration(migrations.Migration):
             name="ContractSegmentMapping",
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
-                ("added_date", models.DateField(auto_now_add=True, help_text="When this segment was added to the contract")),
+                (
+                    "added_date",
+                    models.DateField(auto_now_add=True, help_text="When this segment was added to the contract"),
+                ),
                 ("notes", models.TextField(blank=True, help_text="Notes about this segment-contract relationship")),
                 (
                     "contract",
