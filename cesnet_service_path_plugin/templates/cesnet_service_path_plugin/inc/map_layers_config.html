@@ -5,7 +5,8 @@ const tileLayers = {
     osm: {
         layer: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
+            maxZoom: 19,
+            referrerPolicy: 'strict-origin-when-cross-origin'
         }),
         name: 'OpenStreetMap',
         icon: 'mdi-map'
@@ -13,7 +14,8 @@ const tileLayers = {
     osmHot: {
         layer: L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team',
-            maxZoom: 19
+            maxZoom: 19,
+            referrerPolicy: 'strict-origin-when-cross-origin'
         }),
         name: 'Humanitarian OSM',
         icon: 'mdi-map-marker'
@@ -22,7 +24,8 @@ const tileLayers = {
         layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap contributors © CARTO',
             subdomains: 'abcd',
-            maxZoom: 19
+            maxZoom: 19,
+            referrerPolicy: 'strict-origin-when-cross-origin'
         }),
         name: 'CartoDB Positron',
         icon: 'mdi-map-outline'
@@ -31,7 +34,8 @@ const tileLayers = {
         layer: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap contributors © CARTO',
             subdomains: 'abcd',
-            maxZoom: 19
+            maxZoom: 19,
+            referrerPolicy: 'strict-origin-when-cross-origin'
         }),
         name: 'CartoDB Dark Matter',
         icon: 'mdi-weather-night'
@@ -39,7 +43,8 @@ const tileLayers = {
     openTopo: {
         layer: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
             attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)',
-            maxZoom: 17
+            maxZoom: 17,
+            referrerPolicy: 'strict-origin-when-cross-origin'
         }),
         name: 'OpenTopoMap',
         icon: 'mdi-terrain'
@@ -47,7 +52,8 @@ const tileLayers = {
     cyclOSM: {
         layer: L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors. Tiles courtesy of CyclOSM',
-            maxZoom: 20
+            maxZoom: 20,
+            referrerPolicy: 'strict-origin-when-cross-origin'
         }),
         name: 'CyclOSM',
         icon: 'mdi-bike'
@@ -55,7 +61,8 @@ const tileLayers = {
     satellite: {
         layer: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-            maxZoom: 18
+            maxZoom: 18,
+            referrerPolicy: 'strict-origin-when-cross-origin'
         }),
         name: 'Satellite Imagery',
         icon: 'mdi-satellite-variant'
