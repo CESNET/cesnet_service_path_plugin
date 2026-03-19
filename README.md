@@ -47,7 +47,8 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version | Notes |
 |----------------|----------------|-------|
-|     4.5.0+     |      6.0.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
+|     4.5.4+     |      6.1.x     | Requires NetBox >= 4.5.4 (strawberry-graphql-django >= 0.79.0) |
+|   4.5.0–4.5.3  |      6.0.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
 |     4.4.x      |      5.4.x     | Last version compatible with NetBox 4.4.x |
 |     4.4.x      |      5.3.x     | |
 |     4.4.x      |      5.2.x     | |
@@ -195,8 +196,9 @@ Before installing the plugin, ensure you have:
 
 1. **PostgreSQL with PostGIS extension** (version 3.0 or higher recommended)
 2. **System libraries**: GDAL, GEOS, and PROJ runtime binaries
-3. **NetBox 4.5.0 or higher** (for plugin version 6.0.x)
-   - **Important**: Plugin version 6.0.x is NOT compatible with NetBox 4.4.x due to filter system changes
+3. **NetBox 4.5.4 or higher** (for plugin version 6.1.x)
+   - **Important**: Plugin version 6.1.x requires NetBox >= 4.5.4 (ships with strawberry-graphql-django >= 0.79.0)
+   - For NetBox 4.5.0–4.5.3, use plugin version 6.0.x
    - If you're running NetBox 4.4.x, use plugin version 5.4.x or earlier
 
 #### Installing System Dependencies

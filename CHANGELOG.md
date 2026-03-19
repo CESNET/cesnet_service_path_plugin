@@ -1,5 +1,22 @@
 # Changelog
 
+## [6.1.1] - 2026-03-19
+
+### Fixed
+
+- Added `referrerPolicy: 'strict-origin-when-cross-origin'` to all Leaflet tile layer configurations
+  (OpenStreetMap, Humanitarian OSM, CartoDB Positron, CartoDB Dark Matter, OpenTopoMap) to prevent
+  map tile loading issues in environments with strict referrer policies.
+
+### Compatibility
+
+| cesnet_service_path_plugin | NetBox |
+|---|---|
+| 6.1.x | 4.5.4+ |
+| 6.0.x | 4.5.0 – 4.5.3 |
+
+---
+
 ## [6.1.0] - 2026-03-09
 
 > ⚠️ Requires NetBox >= 4.5.4. NetBox 4.5.0–4.5.3 is not supported by this release — use v6.0.x for those versions.
