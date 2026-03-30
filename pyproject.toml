@@ -60,3 +60,6 @@ include = ["cesnet_service_path_plugin*"]
 # This replaces include_package_data=True
 "*" = ["*"]
 
+[tool.uv]
+exclude-newer = "7 days"
+
