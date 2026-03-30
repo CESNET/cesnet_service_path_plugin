@@ -98,14 +98,14 @@
                     <table class="table table-hover attr-table">
                         <tr>
                             <th scope="row">Start Date</th>
-                            <td>{{ object.start_date|placeholder }}</td>
+                            <td>{{ object.start_date|date:"Y-m-d"|placeholder }}</td>
                         </tr>
                         <tr>
                             <th scope="row">End Date</th>
                             <td>
                                 {% if object.end_date %}
                                     <span class="badge text-bg-{{ object.get_end_date_color }}"
-                                          title="{{ object.get_end_date_tooltip }}">{{ object.end_date }}</span>
+                                          title="{{ object.get_end_date_tooltip }}">{{ object.end_date|date:"Y-m-d" }}</span>
                                 {% else %}
                                     {{ ''|placeholder }}
                                 {% endif %}
@@ -117,7 +117,7 @@
                                 <td>
                                     <span class="badge text-bg-{{ object.get_commitment_end_date_color }}"
                                           title="{{ object.get_commitment_end_date_tooltip }}">
-                                        {{ object.commitment_end_date }}
+                                        {{ object.commitment_end_date|date:"Y-m-d" }}
                                     </span>
                                 </td>
                             </tr>
