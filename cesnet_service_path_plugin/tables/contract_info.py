@@ -89,7 +89,7 @@ class ContractInfoTable(NetBoxTable):
             {% if record.end_date %}
                 <span class="badge text-bg-{{ record.get_end_date_color }}"
                       title="{{ record.get_end_date_tooltip }}">
-                    {{ record.end_date }}
+                    {{ record.end_date|date:"Y-m-d" }}
                 </span>
             {% else %}
                 <span class="text-muted">—</span>
@@ -103,7 +103,7 @@ class ContractInfoTable(NetBoxTable):
             {% if record.commitment_end_date %}
                 <span class="badge text-bg-{{ record.get_commitment_end_date_color }}"
                       title="{{ record.get_commitment_end_date_tooltip }}">
-                    {{ record.commitment_end_date }}
+                    {{ record.commitment_end_date|date:"Y-m-d" }}
                 </span>
             {% else %}
                 <span class="text-muted">—</span>

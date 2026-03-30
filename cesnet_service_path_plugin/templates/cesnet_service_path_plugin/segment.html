@@ -42,11 +42,11 @@
                         </tr>
                         <tr>
                             <th scope="row">Install Date</th>
-                            <td>{{ object.install_date|placeholder }}</td>
+                            <td>{{ object.install_date|date:"Y-m-d"|placeholder }}</td>
                         </tr>
                         <tr>
                             <th scope="row">Termination Date</th>
-                            <td>{{ object.termination_date|placeholder }}</td>
+                            <td>{{ object.termination_date|date:"Y-m-d"|placeholder }}</td>
                         </tr>
                         <tr>
                             <th scope="row">Provider</th>
@@ -271,7 +271,7 @@
                                 </tr>
                                 <tr>
                                     <th scope="row">Start Date</th>
-                                    <td>{{ contract_info.start_date|placeholder }}</td>
+                                    <td>{{ contract_info.start_date|date:"Y-m-d"|placeholder }}</td>
                                 </tr>
                                 <tr>
                                     <th scope="row">End Date</th>
@@ -279,7 +279,7 @@
                                         {% if contract_info.end_date %}
                                             <span class="badge text-bg-{{ contract_info.get_end_date_color }}"
                                                   title="{{ contract_info.get_end_date_tooltip }}">
-                                                {{ contract_info.end_date }}
+                                                {{ contract_info.end_date|date:"Y-m-d" }}
                                             </span>
                                         {% else %}
                                             {{ ''|placeholder }}
@@ -292,7 +292,7 @@
                                         <td>
                                             <span class="badge text-bg-{{ contract_info.get_commitment_end_date_color }}"
                                                   title="{{ contract_info.get_commitment_end_date_tooltip }}">
-                                                {{ contract_info.commitment_end_date }}
+                                                {{ contract_info.commitment_end_date|date:"Y-m-d" }}
                                             </span>
                                         </td>
                                     </tr>
