@@ -7,6 +7,7 @@ from .segment import (
     SegmentListView,
     SegmentsMapView,
     SegmentView,
+    build_segments_map_data,
     segment_geojson_api,
     segment_geojson_download,
     segment_map_view,
@@ -44,6 +45,10 @@ from .service_path_segment_mapping import (
     ServicePathSegmentMappingEditView,
     ServicePathSegmentMappingListView,
     ServicePathSegmentMappingView,
+)
+from .site_region_map_tabs import (
+    SiteSegmentMapTabView,
+    RegionSegmentMapTabView,
 )
 from .dark_fiber_data import (
     DarkFiberSegmentDataEditView,
@@ -91,6 +96,9 @@ __all__ = [
     "ServicePathSegmentMappingListView",
     "ServicePathSegmentMappingView",
     "ServicePathView",
+    "build_segments_map_data",
+    "SiteSegmentMapTabView",
+    "RegionSegmentMapTabView",
     "segment_geojson_api",
     "segment_geojson_download",
     "segment_map_view",
