@@ -2,7 +2,7 @@ import logging
 
 import django_filters
 from circuits.models import Circuit, Provider
-from dcim.models import Location, Site
+from dcim.models import Location, Region, Site
 from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
@@ -85,6 +85,12 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         method="_at_any_location",
         label="At any Location",
         queryset=Location.objects.all(),
+    )
+
+    at_any_region = django_filters.ModelMultipleChoiceFilter(
+        method="_at_any_region",
+        label="At any Region",
+        queryset=Region.objects.all(),
     )
 
     circuits = django_filters.ModelMultipleChoiceFilter(
@@ -216,6 +222,18 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         location_a = Q(location_a__in=value)
         location_b = Q(location_b__in=value)
         return queryset.filter(location_a | location_b)
+
+    def _at_any_region(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        region_ids = set()
+        for region in value:
+            region_ids.update(
+                region.get_descendants(include_self=True).values_list("pk", flat=True)
+            )
+        sites = Site.objects.filter(region_id__in=region_ids)
+        return queryset.filter(Q(site_a__in=sites) | Q(site_b__in=sites))
 
     def _has_contract_info(self, queryset, name, value):
         """

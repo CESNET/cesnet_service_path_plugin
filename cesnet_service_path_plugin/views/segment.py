@@ -611,3 +611,74 @@ def segments_map_api(request):
     geojson = {"type": "FeatureCollection", "features": features}
 
     return JsonResponse(geojson)
+
+
+def build_segments_map_data(queryset, max_segments=500):
+    """
+    Build the segments data dict and map bounds needed by the map card template.
+    Returns (segments_data, map_bounds, map_warning).
+    """
+    count = queryset.count()
+    map_warning = None
+    if count > max_segments:
+        queryset = queryset[:max_segments]
+        map_warning = f"Showing first {max_segments} segments. Please use filters to narrow down results."
+
+    segments_data = []
+    map_bounds = {"minLat": None, "maxLat": None, "minLng": None, "maxLng": None}
+
+    for segment in queryset:
+        site_a_data = None
+        site_b_data = None
+
+        try:
+            site_a_data = {
+                "name": str(segment.site_a),
+                "lat": float(segment.site_a.latitude),
+                "lng": float(segment.site_a.longitude),
+            }
+        except (ValueError, TypeError, AttributeError):
+            pass
+
+        try:
+            site_b_data = {
+                "name": str(segment.site_b),
+                "lat": float(segment.site_b.latitude),
+                "lng": float(segment.site_b.longitude),
+            }
+        except (ValueError, TypeError, AttributeError):
+            pass
+
+        segment_data = {
+            "id": segment.pk,
+            "name": segment.name,
+            "provider": str(segment.provider) if segment.provider else None,
+            "status": segment.get_status_display(),
+            "status_color": segment.get_status_color(),
+            "segment_type": segment.get_segment_type_display(),
+            "segment_type_color": segment.get_segment_type_color(),
+            "ownership_type": segment.get_ownership_type_display(),
+            "ownership_type_color": segment.get_ownership_type_color(),
+            "path_length_km": float(segment.path_length_km) if segment.path_length_km else None,
+            "site_a": site_a_data,
+            "site_b": site_b_data,
+            "has_path_data": segment.has_path_data(),
+            "url": segment.get_absolute_url(),
+            "map_url": f"/plugins/cesnet-service-path-plugin/segments/{segment.pk}/map/",
+        }
+
+        for site_data in [site_a_data, site_b_data]:
+            if site_data:
+                lat, lng = site_data["lat"], site_data["lng"]
+                if map_bounds["minLat"] is None or lat < map_bounds["minLat"]:
+                    map_bounds["minLat"] = lat
+                if map_bounds["maxLat"] is None or lat > map_bounds["maxLat"]:
+                    map_bounds["maxLat"] = lat
+                if map_bounds["minLng"] is None or lng < map_bounds["minLng"]:
+                    map_bounds["minLng"] = lng
+                if map_bounds["maxLng"] is None or lng > map_bounds["maxLng"]:
+                    map_bounds["maxLng"] = lng
+
+        segments_data.append(segment_data)
+
+    return segments_data, map_bounds, map_warning
