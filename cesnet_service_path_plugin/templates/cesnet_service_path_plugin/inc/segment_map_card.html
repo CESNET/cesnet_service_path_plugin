@@ -41,6 +41,26 @@
                     </button>
                     <ul class="dropdown-menu" id="{{ map_element_id }}-legendDropdown"></ul>
                 </div>
+                <!-- Path Data Filter -->
+                <div class="btn-group" role="group">
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                            data-bs-toggle="dropdown">
+                        <i class="mdi mdi-vector-polyline" aria-hidden="true"></i>
+                        <span id="{{ map_element_id }}-currentPathFilter">{% trans "All Segments" %}</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-map="{{ map_element_id }}" data-path-filter="all">
+                            <i class="mdi mdi-filter-off-outline"></i> {% trans "All Segments" %}
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" data-map="{{ map_element_id }}" data-path-filter="with">
+                            <i class="mdi mdi-vector-polyline"></i> {% trans "With Path Data" %}
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" data-map="{{ map_element_id }}" data-path-filter="without">
+                            <i class="mdi mdi-vector-polyline-remove"></i> {% trans "Without Path Data" %}
+                        </a></li>
+                    </ul>
+                </div>
                 <!-- Fit All -->
                 <button id="{{ map_element_id }}-fit-bounds" class="btn btn-outline-primary btn-sm">
                     <i class="mdi mdi-fit-to-page-outline" aria-hidden="true"></i> {% trans "Fit All" %}
@@ -79,6 +99,7 @@
     "fitBoundsId":          "{{ map_element_id|escapejs }}-fit-bounds",
     "legendId":             "{{ map_element_id|escapejs }}-legendDropdown",
     "currentSchemeId":      "{{ map_element_id|escapejs }}-currentColorScheme",
+    "currentPathFilterId":  "{{ map_element_id|escapejs }}-currentPathFilter",
     "infoId":               "{{ map_element_id|escapejs }}-segmentInfo",
     "infoContentId":        "{{ map_element_id|escapejs }}-segmentInfoContent",
     "segmentsData":         {{ segments_data_json|safe }},
