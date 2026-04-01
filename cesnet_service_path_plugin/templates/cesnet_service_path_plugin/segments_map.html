@@ -112,6 +112,31 @@
                                             <!-- Legend content will be populated by JavaScript -->
                                         </ul>
                                     </div>
+                                    <!-- Path Data Filter -->
+                                    <div class="btn-group ms-2" role="group">
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                                data-bs-toggle="dropdown">
+                                            <i class="mdi mdi-vector-polyline" aria-hidden="true"></i> <span id="currentPathFilter">All Segments</span>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="#" data-path-filter="all" data-map="map">
+                                                    <i class="mdi mdi-filter-off-outline"></i> All Segments
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="#" data-path-filter="with" data-map="map">
+                                                    <i class="mdi mdi-vector-polyline"></i> With Path Data
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="#" data-path-filter="without" data-map="map">
+                                                    <i class="mdi mdi-vector-polyline-remove"></i> Without Path Data
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
                                     <!-- Map Controls -->
                                     <button type="button" id="fitBounds" class="btn btn-outline-primary btn-sm">
                                         <i class="mdi mdi-fit-to-page-outline" aria-hidden="true"></i> Fit All
@@ -175,6 +200,7 @@
                         colorSchemePrefix:    'map',
                         legendId:             'legendDropdown',
                         currentSchemeId:      'currentColorScheme',
+                        currentPathFilterId:  'currentPathFilter',
                         infoId:               'segmentInfo',
                         infoContentId:        'segmentInfoContent',
                         segmentsData:         _mapData.segments,

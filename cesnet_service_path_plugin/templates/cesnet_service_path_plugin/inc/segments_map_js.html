@@ -37,6 +37,7 @@
     // -------------------------------------------------------------------------
     const providerColors = {};
     let currentColorScheme = 'status';
+    let currentPathFilter = 'all';  // 'all' | 'with' | 'without'
     const pathLayers = L.layerGroup().addTo(map);
     const siteLayers = L.layerGroup().addTo(map);
     const segmentLayers = new Map();  // segmentId (string) -> layer
@@ -220,6 +221,22 @@
     }
 
     // -------------------------------------------------------------------------
+    // Path filter switching
+    // -------------------------------------------------------------------------
+    const pathFilterLabels = {
+        all:     '{% trans "All Segments" %}',
+        with:    '{% trans "With Path" %}',
+        without: '{% trans "Without Path" %}'
+    };
+
+    function switchPathFilter(filter) {
+        currentPathFilter = filter;
+        const el = document.getElementById(cfg.currentPathFilterId);
+        if (el) el.textContent = pathFilterLabels[filter] || filter;
+        loadSegments();
+    }
+
+    // -------------------------------------------------------------------------
     // Load segments
     // -------------------------------------------------------------------------
     function loadSegments() {
@@ -227,7 +244,11 @@
         siteLayers.clearLayers();
         segmentLayers.clear();
 
-        segmentsData.forEach(segment => {
+        const visibleSegments = currentPathFilter === 'all'
+            ? segmentsData
+            : segmentsData.filter(s => currentPathFilter === 'with' ? s.has_path_data : !s.has_path_data);
+
+        visibleSegments.forEach(segment => {
             const color = getSegmentColor(segment);
 
             if (segment.site_a) {
@@ -257,12 +278,14 @@
             ? apiUrl + new URL(window.location.href).search
             : apiUrl;
 
+        const visibleIds = new Set(visibleSegments.map(s => s.id));
+
         fetch(fetchUrl)
             .then(r => r.json())
             .then(data => {
                 if (data.features) {
                     data.features.forEach(feature => {
-                        if (feature.properties.type === 'path') {
+                        if (feature.properties.type === 'path' && visibleIds.has(feature.properties.id)) {
                             const seg   = segmentsData.find(s => s.id === feature.properties.id);
                             const color = seg ? getSegmentColor(seg) : '#dc3545';
                             const layer = L.geoJSON(feature, {style: {color, weight:4, opacity:0.8}});
@@ -300,6 +323,12 @@
             el.addEventListener('click', function(e) {
                 e.preventDefault();
                 switchColorScheme(this.getAttribute('data-scheme'));
+            });
+        });
+        document.querySelectorAll('[data-path-filter][data-map="' + cfg.mapId + '"]').forEach(el => {
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                switchPathFilter(this.getAttribute('data-path-filter'));
             });
         });
     });
