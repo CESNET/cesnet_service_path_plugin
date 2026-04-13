@@ -33,10 +33,6 @@ _menu_items = (
         link_text="Network Map",
     ),
     PluginMenuItem(
-        link="plugins:cesnet_service_path_plugin:segments_map",
-        link_text="Segments Map",
-    ),
-    PluginMenuItem(
         link="plugins:cesnet_service_path_plugin:servicepath_list",
         link_text="Service Paths",
         buttons=(

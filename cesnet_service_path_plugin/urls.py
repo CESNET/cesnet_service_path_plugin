@@ -3,7 +3,6 @@ from utilities.urls import get_model_urls
 
 from cesnet_service_path_plugin.views import (
     ObjectMapView,
-    SegmentsMapView,
     segment_geojson_api,
     segment_geojson_download,
     segment_map_view,
@@ -19,8 +18,7 @@ urlpatterns = (
     path("segments/<int:pk>/clear-path/", segment_path_clear, name="segment_path_clear"),
     # Combined network map
     path("map/", ObjectMapView.as_view(), name="object_map"),
-    # Segments map views
-    path("segments/map/", SegmentsMapView.as_view(), name="segments_map"),
+    # GeoJSON API for the Network Map
     path("segments/map/api/", segments_map_api, name="segments_map_api"),
     # All class-based views (CRUD, bulk, custom classes) are registered via @register_model_view
     # and will be automatically included by get_model_urls

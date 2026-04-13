@@ -15,3 +15,4 @@ class OpticalSpectrumSegmentDataViewSet(NetBoxModelViewSet):
 
     queryset = OpticalSpectrumSegmentData.objects.select_related("segment").all()
     serializer_class = OpticalSpectrumSegmentDataSerializer
+    lookup_field = "segment_id"

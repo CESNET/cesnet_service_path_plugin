@@ -5,7 +5,7 @@
 {% block extra_controls %}
     {{ block.super }}
     <div class="btn-group" role="group">
-        <a href="{% url 'plugins:cesnet_service_path_plugin:segments_map' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+        <a href="{% url 'plugins:cesnet_service_path_plugin:object_map' %}"
            class="btn btn-outline-primary">
             <i class="mdi mdi-map" aria-hidden="true"></i> Map View
         </a>
