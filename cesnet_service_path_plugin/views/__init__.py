@@ -5,9 +5,7 @@ from .segment import (
     SegmentDeleteView,
     SegmentEditView,
     SegmentListView,
-    SegmentsMapView,
     SegmentView,
-    build_segments_map_data,
     segment_geojson_api,
     segment_geojson_download,
     segment_map_view,
@@ -46,6 +44,7 @@ from .service_path_segment_mapping import (
     ServicePathSegmentMappingListView,
     ServicePathSegmentMappingView,
 )
+from .map import ObjectMapView
 from .site_region_map_tabs import (
     SiteSegmentMapTabView,
     RegionSegmentMapTabView,
@@ -80,7 +79,6 @@ __all__ = [
     "ContractInfoEditView",
     "ContractInfoView",
     "SegmentListView",
-    "SegmentsMapView",
     "SegmentView",
     "ServicePathBulkDeleteView",
     "ServicePathBulkEditView",
@@ -96,7 +94,6 @@ __all__ = [
     "ServicePathSegmentMappingListView",
     "ServicePathSegmentMappingView",
     "ServicePathView",
-    "build_segments_map_data",
     "SiteSegmentMapTabView",
     "RegionSegmentMapTabView",
     "segment_geojson_api",
@@ -110,4 +107,5 @@ __all__ = [
     "OpticalSpectrumSegmentDataDeleteView",
     "EthernetServiceSegmentDataEditView",
     "EthernetServiceSegmentDataDeleteView",
+    "ObjectMapView",
 ]

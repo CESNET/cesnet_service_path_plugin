@@ -15,3 +15,4 @@ class EthernetServiceSegmentDataViewSet(NetBoxModelViewSet):
 
     queryset = EthernetServiceSegmentData.objects.select_related("segment").all()
     serializer_class = EthernetServiceSegmentDataSerializer
+    lookup_field = "segment_id"

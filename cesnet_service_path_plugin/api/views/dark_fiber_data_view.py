@@ -15,3 +15,4 @@ class DarkFiberSegmentDataViewSet(NetBoxModelViewSet):
 
     queryset = DarkFiberSegmentData.objects.select_related("segment").all()
     serializer_class = DarkFiberSegmentDataSerializer
+    lookup_field = "segment_id"
