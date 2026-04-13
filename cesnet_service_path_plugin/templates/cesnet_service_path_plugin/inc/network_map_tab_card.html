@@ -1,0 +1,127 @@
+{% load static %}
+{% include 'cesnet_service_path_plugin/inc/leaflet_includes.html' %}
+{% include 'cesnet_service_path_plugin/inc/map_layers_styles.html' %}
+
+<div class="col col-md-12">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="card-title mb-0">
+                <i class="mdi mdi-map" aria-hidden="true"></i> {{ map_card_title }}
+            </h5>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+
+                {# Segment colour scheme #}
+                <div class="btn-group" role="group">
+                    <button type="button"
+                            class="btn btn-outline-info btn-sm dropdown-toggle"
+                            data-bs-toggle="dropdown">
+                        <i class="mdi mdi-palette" aria-hidden="true"></i>
+                        Segments: <span id="tab-segmentSchemeName">Status</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-segment-scheme="status">
+                            <i class="mdi mdi-circle-medium" style="color:#198754"></i> By Status
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" data-segment-scheme="provider">
+                            <i class="mdi mdi-circle-medium" style="color:#e74c3c"></i> By Provider
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" data-segment-scheme="segment_type">
+                            <i class="mdi mdi-circle-medium" style="color:#9c27b0"></i> By Segment Type
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" data-segment-scheme="ownership_type">
+                            <i class="mdi mdi-circle-medium" style="color:#0d6efd"></i> By Ownership Type
+                        </a></li>
+                    </ul>
+                </div>
+
+                {# Sites colour scheme #}
+                <div class="btn-group" role="group">
+                    <button type="button"
+                            class="btn btn-outline-info btn-sm dropdown-toggle"
+                            data-bs-toggle="dropdown">
+                        <i class="mdi mdi-palette" aria-hidden="true"></i>
+                        Sites: <span id="tab-siteSchemeName">Status</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-site-scheme="status">
+                            <i class="mdi mdi-circle-medium" style="color:#198754"></i> By Status
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" data-site-scheme="tenant">
+                            <i class="mdi mdi-circle-medium" style="color:#0d6efd"></i> By Tenant
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" data-site-scheme="region">
+                            <i class="mdi mdi-circle-medium" style="color:#fd7e14"></i> By Region
+                        </a></li>
+                    </ul>
+                </div>
+
+                {# Legend #}
+                <div class="btn-group" role="group">
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                            data-bs-toggle="dropdown">
+                        <i class="mdi mdi-map-legend" aria-hidden="true"></i> Legend
+                    </button>
+                    <ul class="dropdown-menu" id="tab-legendDropdown" style="min-width:220px;">
+                        {# Populated by JS #}
+                    </ul>
+                </div>
+
+                {# Visibility toggles #}
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-success" id="tab-toggleSegments" title="Hide segments">
+                        <i class="mdi mdi-vector-polyline"></i> Segments
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" id="tab-toggleCircuits" title="Show circuits">
+                        <i class="mdi mdi-transit-connection-variant"></i> Circuits
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" id="tab-toggleSites" title="Hide sites">
+                        <i class="mdi mdi-map-marker"></i> Sites
+                    </button>
+                </div>
+
+                {# Fit all #}
+                <button type="button" id="tab-fitBounds" class="btn btn-outline-primary btn-sm">
+                    <i class="mdi mdi-fit-to-page-outline" aria-hidden="true"></i> Fit All
+                </button>
+
+                {% include 'cesnet_service_path_plugin/inc/map_layer_dropdown.html' %}
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div id="tab-map"
+                 style="height:600px; width:100%; border-radius:0 0 4px 4px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'cesnet_service_path_plugin/inc/map_layers_config.html' %}
+
+{# Prefilter blob — initial filter applied by object_map_tab.js on startup #}
+<script type="application/json" id="tab-map-prefilter">{{ prefilter_json|safe }}</script>
+
+{# Data blob — read by object_map_tab.js #}
+<script type="application/json" id="tab-map-data">
+{
+    "sites":           {{ sites_data_json|safe }},
+    "segments":        {{ segments_data_json|safe }},
+    "circuits":        {{ circuits_data_json|safe }},
+    "regionAncestors": {{ region_ancestors_json|safe }},
+    "mapBounds":       {{ map_bounds_json|safe }},
+    "mapCenter":       {{ map_center_json|safe }},
+    "apiUrl":          "{{ segments_api_url|escapejs }}"
+}
+</script>
+
+<script>
+(function () {
+    var _mapData = JSON.parse(document.getElementById('tab-map-data').textContent);
+    var map = L.map('tab-map').setView([_mapData.mapCenter.lat, _mapData.mapCenter.lng], _mapData.mapCenter.zoom);
+    initializeMapLayers(map);
+    // Store the map instance on the element so object_map_tab.js can retrieve it
+    document.getElementById('tab-map')._leaflet_map = map;
+})();
+</script>
+<script src="{% static 'cesnet_service_path_plugin/js/object_map_tab.js' %}"></script>

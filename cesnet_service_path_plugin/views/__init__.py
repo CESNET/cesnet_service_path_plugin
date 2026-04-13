@@ -46,6 +46,7 @@ from .service_path_segment_mapping import (
     ServicePathSegmentMappingListView,
     ServicePathSegmentMappingView,
 )
+from .map import ObjectMapView
 from .site_region_map_tabs import (
     SiteSegmentMapTabView,
     RegionSegmentMapTabView,
@@ -110,4 +111,5 @@ __all__ = [
     "OpticalSpectrumSegmentDataDeleteView",
     "EthernetServiceSegmentDataEditView",
     "EthernetServiceSegmentDataDeleteView",
+    "ObjectMapView",
 ]

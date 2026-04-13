@@ -1,0 +1,316 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Network Map{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h1 class="page-title mb-0">
+        <i class="mdi mdi-map" aria-hidden="true"></i> Network Map
+    </h1>
+</div>
+
+{# ── Toolbar ─────────────────────────────────────────────────────────────── #}
+<div class="card mb-2">
+    <div class="card-body py-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+
+            {# Object counts — updated by JS after client-side filtering #}
+            <span class="text-muted small me-2" id="objectCounts">
+                <i class="mdi mdi-map-marker"></i>
+                <span id="countSites">{{ total_sites }}</span>{% if sites_truncated %}+{% endif %}/{{ total_sites }} sites
+                &nbsp;·&nbsp;
+                <i class="mdi mdi-vector-polyline"></i>
+                <span id="countSegments">{{ total_segments }}</span>{% if segments_truncated %}+{% endif %}/{{ total_segments }} segments
+                &nbsp;·&nbsp;
+                <i class="mdi mdi-transit-connection-variant"></i>
+                <span id="countCircuits">{{ total_circuits }}</span>{% if circuits_truncated %}+{% endif %}/{{ total_circuits }} circuits
+            </span>
+
+            {# Segment colour scheme #}
+            <div class="btn-group" role="group">
+                <button type="button"
+                        class="btn btn-outline-info btn-sm dropdown-toggle"
+                        data-bs-toggle="dropdown">
+                    <i class="mdi mdi-palette" aria-hidden="true"></i>
+                    Segments: <span id="segmentSchemeName">Status</span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-segment-scheme="status">
+                        <i class="mdi mdi-circle-medium" style="color:#198754"></i> By Status
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" data-segment-scheme="provider">
+                        <i class="mdi mdi-circle-medium" style="color:#e74c3c"></i> By Provider
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" data-segment-scheme="segment_type">
+                        <i class="mdi mdi-circle-medium" style="color:#9c27b0"></i> By Segment Type
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" data-segment-scheme="ownership_type">
+                        <i class="mdi mdi-circle-medium" style="color:#0d6efd"></i> By Ownership Type
+                    </a></li>
+                </ul>
+            </div>
+
+            {# Circuit colour scheme #}
+            <div class="btn-group" role="group">
+                <button type="button"
+                        class="btn btn-outline-info btn-sm dropdown-toggle"
+                        data-bs-toggle="dropdown">
+                    <i class="mdi mdi-palette" aria-hidden="true"></i>
+                    Circuits: <span id="circuitSchemeName">Status</span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-circuit-scheme="status">
+                        <i class="mdi mdi-circle-medium" style="color:#198754"></i> By Status
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" data-circuit-scheme="provider">
+                        <i class="mdi mdi-circle-medium" style="color:#e74c3c"></i> By Provider
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" data-circuit-scheme="type">
+                        <i class="mdi mdi-circle-medium" style="color:#9c27b0"></i> By Type
+                    </a></li>
+                </ul>
+            </div>
+
+            {# Site colour scheme #}
+            <div class="btn-group" role="group">
+                <button type="button"
+                        class="btn btn-outline-info btn-sm dropdown-toggle"
+                        data-bs-toggle="dropdown">
+                    <i class="mdi mdi-palette" aria-hidden="true"></i>
+                    Sites: <span id="siteSchemeName">Status</span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-site-scheme="status">
+                        <i class="mdi mdi-circle-medium" style="color:#198754"></i> By Status
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" data-site-scheme="tenant">
+                        <i class="mdi mdi-circle-medium" style="color:#0d6efd"></i> By Tenant
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" data-site-scheme="region">
+                        <i class="mdi mdi-circle-medium" style="color:#fd7e14"></i> By Region
+                    </a></li>
+                </ul>
+            </div>
+
+            {# Legend #}
+            <div class="btn-group" role="group">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                        data-bs-toggle="dropdown">
+                    <i class="mdi mdi-map-legend" aria-hidden="true"></i> Legend
+                </button>
+                <ul class="dropdown-menu" id="legendDropdown" style="min-width:220px;">
+                    {# Populated by JS #}
+                </ul>
+            </div>
+
+            {# Visibility toggles #}
+            <div class="btn-group" role="group">
+                <button type="button"
+                        class="btn btn-sm btn-success"
+                        id="toggleSegments"
+                        title="Hide segments">
+                    <i class="mdi mdi-vector-polyline"></i> Segments
+                </button>
+                <button type="button"
+                        class="btn btn-sm btn-warning"
+                        id="toggleCircuits"
+                        title="Hide circuits">
+                    <i class="mdi mdi-transit-connection-variant"></i> Circuits
+                </button>
+                <button type="button"
+                        class="btn btn-sm btn-primary"
+                        id="toggleSites"
+                        title="Hide sites">
+                    <i class="mdi mdi-map-marker"></i> Sites
+                </button>
+            </div>
+
+            {# Fit all #}
+            <button type="button" id="fitBounds" class="btn btn-outline-primary btn-sm">
+                <i class="mdi mdi-fit-to-page-outline" aria-hidden="true"></i> Fit All
+            </button>
+
+            {# Tile layer picker (reused include) #}
+            {% include './inc/map_layer_dropdown.html' %}
+
+            {# Filter panel toggle — badge shows active filter count #}
+            <button class="btn btn-outline-secondary btn-sm ms-auto"
+                    type="button"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#filterPanel"
+                    aria-controls="filterPanel"
+                    id="filterPanelToggle">
+                <i class="mdi mdi-filter-outline" aria-hidden="true"></i> Filters
+                <span id="filterCount" class="badge text-bg-primary ms-1" style="display:none;"></span>
+            </button>
+
+        </div>
+    </div>
+</div>
+
+{# ── Active filter chips ───────────────────────────────────────────────────── #}
+<div id="activeFilters" class="flex-wrap gap-1 mb-2" style="display:none;">
+    {# Populated by JS — one dismissible chip per active filter value #}
+</div>
+
+{# ── Map ──────────────────────────────────────────────────────────────────── #}
+{% if sites_truncated or segments_truncated or circuits_truncated %}
+<div class="alert alert-warning py-1 mb-2" role="alert">
+    <i class="mdi mdi-alert" aria-hidden="true"></i>
+    Results capped at 500 objects per type.
+</div>
+{% endif %}
+
+<div id="map" style="height:800px; width:100%; border:1px solid #ddd; border-radius:4px;"></div>
+
+{% include './inc/leaflet_includes.html' %}
+{% include './inc/map_layers_styles.html' %}
+
+{# Data blob — read by object_map.js #}
+<script type="application/json" id="map-data">
+{
+    "sites":           {{ sites_data_json|safe }},
+    "segments":        {{ segments_data_json|safe }},
+    "circuits":        {{ circuits_data_json|safe }},
+    "regionAncestors": {{ region_ancestors_json|safe }},
+    "mapBounds":       {{ map_bounds_json|safe }},
+    "mapCenter":       {{ map_center_json|safe }},
+    "apiUrl":          "{{ segments_api_url|escapejs }}"
+}
+</script>
+
+{% include './inc/map_layers_config.html' %}
+
+<script>
+var _mapData = JSON.parse(document.getElementById('map-data').textContent);
+var map = L.map('map').setView([_mapData.mapCenter.lat, _mapData.mapCenter.lng], _mapData.mapCenter.zoom);
+initializeMapLayers(map);
+</script>
+<script src="{% static 'cesnet_service_path_plugin/js/object_map.js' %}"></script>
+
+{# ── Filter offcanvas ─────────────────────────────────────────────────────── #}
+<div class="offcanvas offcanvas-end"
+     tabindex="-1"
+     id="filterPanel"
+     aria-labelledby="filterPanelLabel"
+     style="width:320px;">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="filterPanelLabel">
+            <i class="mdi mdi-filter-outline" aria-hidden="true"></i> Filters
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        {# No form submit — all filtering is done client-side in JS on change #}
+        <div id="filterForm">
+
+            {# ── Spatial (shared) ──────────────────────────── #}
+            <h6 class="text-muted text-uppercase small fw-bold mb-2">
+                <i class="mdi mdi-map-search-outline"></i> Location
+            </h6>
+            <div class="mb-2">
+                <label class="form-label form-label-sm mb-1">{{ filter_form.region_id.label }}</label>
+                {{ filter_form.region_id }}
+            </div>
+            <div class="mb-2">
+                <label class="form-label form-label-sm mb-1">{{ filter_form.site_group_id.label }}</label>
+                {{ filter_form.site_group_id }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label form-label-sm mb-1">{{ filter_form.at_any_site.label }}</label>
+                {{ filter_form.at_any_site }}
+            </div>
+
+            {# ── Sites ─────────────────────────────────────── #}
+            <div id="filterSectionSites">
+                <hr class="my-2">
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">
+                    <i class="mdi mdi-map-marker"></i> Sites
+                </h6>
+                <div class="mb-2">
+                    <div class="form-label form-label-sm mb-1">Status</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for value, label, color in site_status_choices %}
+                        <input type="checkbox" class="btn-check" name="site_status"
+                               id="site_status_{{ value }}" value="{{ value }}" autocomplete="off">
+                        <label class="btn btn-sm btn-outline-{{ color }}" for="site_status_{{ value }}">{{ label }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label form-label-sm mb-1">{{ filter_form.site_tenant_id.label }}</label>
+                    {{ filter_form.site_tenant_id }}
+                </div>
+            </div>
+
+            {# ── Segments ──────────────────────────────────── #}
+            <div id="filterSectionSegments">
+                <hr class="my-2">
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">
+                    <i class="mdi mdi-vector-polyline"></i> Segments
+                </h6>
+                <div class="mb-2">
+                    <div class="form-label form-label-sm mb-1">Status</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for value, label, color in segment_status_choices %}
+                        <input type="checkbox" class="btn-check" name="segment_status"
+                               id="segment_status_{{ value }}" value="{{ value }}" autocomplete="off">
+                        <label class="btn btn-sm btn-outline-{{ color }}" for="segment_status_{{ value }}">{{ label }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="form-label form-label-sm mb-1">Type</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for value, label, color in segment_type_choices %}
+                        <input type="checkbox" class="btn-check" name="segment_type"
+                               id="segment_type_{{ value }}" value="{{ value }}" autocomplete="off">
+                        <label class="btn btn-sm btn-outline-{{ color }}" for="segment_type_{{ value }}">{{ label }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label form-label-sm mb-1">{{ filter_form.segment_provider_id.label }}</label>
+                    {{ filter_form.segment_provider_id }}
+                </div>
+            </div>
+
+            {# ── Circuits ──────────────────────────────────── #}
+            <div id="filterSectionCircuits">
+                <hr class="my-2">
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">
+                    <i class="mdi mdi-transit-connection-variant"></i> Circuits
+                </h6>
+                <div class="mb-2">
+                    <div class="form-label form-label-sm mb-1">Status</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for value, label, color in circuit_status_choices %}
+                        <input type="checkbox" class="btn-check" name="circuit_status"
+                               id="circuit_status_{{ value }}" value="{{ value }}" autocomplete="off">
+                        <label class="btn btn-sm btn-outline-{{ color }}" for="circuit_status_{{ value }}">{{ label }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label form-label-sm mb-1">{{ filter_form.circuit_type_id.label }}</label>
+                    {{ filter_form.circuit_type_id }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label form-label-sm mb-1">{{ filter_form.circuit_provider_id.label }}</label>
+                    {{ filter_form.circuit_provider_id }}
+                </div>
+            </div>
+
+            <div class="d-grid">
+                <button type="button" id="clearFilters" class="btn btn-outline-secondary btn-sm">
+                    <i class="mdi mdi-filter-off-outline" aria-hidden="true"></i> Clear Filters
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -29,6 +29,10 @@ _menu_items = (
         ),
     ),
     PluginMenuItem(
+        link="plugins:cesnet_service_path_plugin:object_map",
+        link_text="Network Map",
+    ),
+    PluginMenuItem(
         link="plugins:cesnet_service_path_plugin:segments_map",
         link_text="Segments Map",
     ),

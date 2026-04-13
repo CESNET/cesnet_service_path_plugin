@@ -2,6 +2,7 @@ from django.urls import include, path
 from utilities.urls import get_model_urls
 
 from cesnet_service_path_plugin.views import (
+    ObjectMapView,
     SegmentsMapView,
     segment_geojson_api,
     segment_geojson_download,
@@ -16,6 +17,8 @@ urlpatterns = (
     # GeoJSON download endpoint
     path("segments/<int:pk>/geojson/", segment_geojson_download, name="segment_geojson_download"),
     path("segments/<int:pk>/clear-path/", segment_path_clear, name="segment_path_clear"),
+    # Combined network map
+    path("map/", ObjectMapView.as_view(), name="object_map"),
     # Segments map views
     path("segments/map/", SegmentsMapView.as_view(), name="segments_map"),
     path("segments/map/api/", segments_map_api, name="segments_map_api"),
