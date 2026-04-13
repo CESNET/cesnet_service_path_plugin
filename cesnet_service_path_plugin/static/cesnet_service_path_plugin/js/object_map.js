@@ -37,13 +37,14 @@
 
     // -------------------------------------------------------------------------
     // Color constants — Segments
+    // No greens. Status values span maximally separated hues.
     // -------------------------------------------------------------------------
     const segmentStatusColors = {
-        'Active':          '#198754',
-        'Planned':         '#ff8c00',
-        'Offline':         '#dc3545',
-        'Decommissioned':  '#6c757d',
-        'Surveyed':        '#3b82f6',
+        'Active':          '#1565c0',   // strong blue
+        'Planned':         '#e65100',   // deep orange
+        'Offline':         '#c62828',   // deep red
+        'Decommissioned':  '#455a64',   // dark blue-grey
+        'Surveyed':        '#6a1b9a',   // deep purple
     };
     const segmentStatusBadge = {
         'Active':          'success',
@@ -53,27 +54,29 @@
         'Surveyed':        'info',
     };
     const segmentTypeColors = {
-        'Dark Fiber':       '#9c27b0',
-        'Optical Spectrum': '#ff9800',
-        'Ethernet Service': '#4caf50',
+        'Dark Fiber':       '#6a1b9a',   // deep purple
+        'Optical Spectrum': '#e65100',   // deep orange
+        'Ethernet Service': '#1565c0',   // strong blue
     };
     const ownershipTypeColors = {
-        'Owned':   '#198754',
-        'Leased':  '#0d6efd',
-        'Shared':  '#fd7e14',
-        'Foreign': '#dc3545',
+        'Owned':   '#1565c0',   // strong blue
+        'Leased':  '#6a1b9a',   // deep purple
+        'Shared':  '#e65100',   // deep orange
+        'Foreign': '#c62828',   // deep red
     };
 
     // -------------------------------------------------------------------------
     // Color constants — Circuits
+    // Hue anchor: magenta/pink — instantly distinct from segments (blue/orange)
+    // and from OSM background. No greens anywhere.
     // -------------------------------------------------------------------------
     const circuitStatusColors = {
-        'Active':          '#198754',
-        'Planned':         '#ff8c00',
-        'Provisioning':    '#3b82f6',
-        'Offline':         '#dc3545',
-        'Deprovisioning':  '#fd7e14',
-        'Decommissioned':  '#6c757d',
+        'Active':          '#ad1457',   // deep pink / magenta
+        'Planned':         '#f9a825',   // amber
+        'Provisioning':    '#0277bd',   // cerulean blue
+        'Offline':         '#c62828',   // deep red
+        'Deprovisioning':  '#ef6c00',   // orange
+        'Decommissioned':  '#455a64',   // dark blue-grey
     };
     const circuitStatusBadge = {
         'Active':          'success',
@@ -84,21 +87,42 @@
         'Decommissioned':  'secondary',
     };
 
+    // Dynamic palette — provider / type / region colour-by schemes.
+    // Rules: no greens, no yellows, no light colours. Maximum hue separation
+    // between adjacent entries so the first ~6 picks are already very distinct.
     const colorPalette = [
-        '#d32f2f','#1976d2','#512da8','#f57c00','#7b1fa2','#c2185b','#303f9f',
-        '#00796b','#455a64','#ff1744','#00bcd4','#e64a19','#5d4037','#3f51b5',
-        '#9c27b0','#ff5722','#b71c1c','#0d47a1','#ad1457','#4a148c',
+        '#1565c0',   // 1  strong blue
+        '#c62828',   // 2  deep red
+        '#ad1457',   // 3  deep pink / magenta
+        '#e65100',   // 4  deep orange
+        '#4527a0',   // 5  deep purple
+        '#0277bd',   // 6  cerulean
+        '#880e4f',   // 7  dark magenta
+        '#d84315',   // 8  burnt orange
+        '#283593',   // 9  indigo
+        '#b71c1c',   // 10 crimson
+        '#4a148c',   // 11 violet
+        '#e64a19',   // 12 vermillion
+        '#0d47a1',   // 13 navy blue
+        '#f57f17',   // 14 dark amber
+        '#6a1b9a',   // 15 purple
+        '#bf360c',   // 16 deep burnt orange
+        '#1a237e',   // 17 deep indigo
+        '#c2185b',   // 18 pink
+        '#37474f',   // 19 slate (neutral separator)
+        '#4e342e',   // 20 dark brown
     ];
 
     // -------------------------------------------------------------------------
     // Color constants — Sites
+    // Sites are point markers — vivid, no greens.
     // -------------------------------------------------------------------------
     const siteStatusColors = {
-        'Active':          '#198754',
-        'Planned':         '#ff8c00',
-        'Staging':         '#3b82f6',
-        'Decommissioning': '#fd7e14',
-        'Retired':         '#6c757d',
+        'Active':          '#1565c0',   // strong blue
+        'Planned':         '#e65100',   // deep orange
+        'Staging':         '#6a1b9a',   // deep purple
+        'Decommissioning': '#ef6c00',   // orange
+        'Retired':         '#455a64',   // dark blue-grey
     };
     const siteStatusBadge = {
         'Active':          'success',
