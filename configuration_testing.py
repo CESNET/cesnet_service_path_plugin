@@ -18,39 +18,40 @@
 #  rolled back, so production data is never modified.             #
 ###################################################################
 
+import os
+
 ALLOWED_HOSTS = ["*"]
 
 DATABASE = {
     "ENGINE": "django.contrib.gis.db.backends.postgis",
-    "NAME": "netbox",
-    "USER": "netbox",
-    "PASSWORD": "J5brHrAXFLQSif0K",
-    "HOST": "postgres",
-    "PORT": "",
+    "NAME": os.environ.get("DB_NAME", "netbox"),
+    "USER": os.environ.get("DB_USER", "netbox"),
+    "PASSWORD": os.environ["DB_PASSWORD"],   # required — no default
+    "HOST": os.environ.get("DB_HOST", "postgres"),
+    "PORT": os.environ.get("DB_PORT", ""),
     "TEST": {
-        "NAME": "netbox",   # reuse existing DB — avoids migration mismatch
+        "NAME": os.environ.get("DB_NAME", "netbox"),   # reuse existing DB — avoids migration mismatch
     },
 }
 
 REDIS = {
     "tasks": {
-        "HOST": "redis",
-        "PORT": 6379,
-        "PASSWORD": "H733Kdjndks81",
-        "DATABASE": 0,
+        "HOST": os.environ.get("REDIS_HOST", "redis"),
+        "PORT": int(os.environ.get("REDIS_PORT", 6379)),
+        "PASSWORD": os.environ["REDIS_PASSWORD"],   # required — no default
+        "DATABASE": int(os.environ.get("REDIS_DATABASE", 0)),
         "SSL": False,
     },
     "caching": {
-        "HOST": "redis",
-        "PORT": 6379,
-        "PASSWORD": "H733Kdjndks81",
-        "DATABASE": 1,
+        "HOST": os.environ.get("REDIS_CACHE_HOST", os.environ.get("REDIS_HOST", "redis")),
+        "PORT": int(os.environ.get("REDIS_CACHE_PORT", os.environ.get("REDIS_PORT", 6379))),
+        "PASSWORD": os.environ.get("REDIS_CACHE_PASSWORD", os.environ["REDIS_PASSWORD"]),
+        "DATABASE": int(os.environ.get("REDIS_CACHE_DATABASE", 1)),
         "SSL": False,
     },
 }
 
-# Must be >=50 chars for NetBox
-SECRET_KEY = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#"
+SECRET_KEY = os.environ["SECRET_KEY"]   # required — no default
 
 # Must be >=50 chars per key
 API_TOKEN_PEPPERS = {1: "test-pepper-value-do-not-use-in-production-at-all-ever"}
