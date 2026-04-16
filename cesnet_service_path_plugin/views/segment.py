@@ -452,7 +452,7 @@ def segments_map_api(request):
                 }
                 features.append(feature)
             except Exception as e:
-                print(f"Error processing segment {segment.pk}: {e}")
+                logger.error("Error processing segment %s: %s", segment.pk, e)
         else:
             # Add fallback line if both sites have coordinates
             try:

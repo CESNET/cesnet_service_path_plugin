@@ -38,16 +38,16 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item" href="#" data-segment-scheme="status">
-                        <i class="mdi mdi-circle-medium" style="color:#198754"></i> By Status
+                        <i class="mdi mdi-circle-medium" style="color:#1565c0"></i> By Status
                     </a></li>
                     <li><a class="dropdown-item" href="#" data-segment-scheme="provider">
-                        <i class="mdi mdi-circle-medium" style="color:#e74c3c"></i> By Provider
+                        <i class="mdi mdi-circle-medium" style="color:#c62828"></i> By Provider
                     </a></li>
                     <li><a class="dropdown-item" href="#" data-segment-scheme="segment_type">
-                        <i class="mdi mdi-circle-medium" style="color:#9c27b0"></i> By Segment Type
+                        <i class="mdi mdi-circle-medium" style="color:#6a1b9a"></i> By Segment Type
                     </a></li>
                     <li><a class="dropdown-item" href="#" data-segment-scheme="ownership_type">
-                        <i class="mdi mdi-circle-medium" style="color:#0d6efd"></i> By Ownership Type
+                        <i class="mdi mdi-circle-medium" style="color:#e65100"></i> By Ownership Type
                     </a></li>
                 </ul>
             </div>
@@ -62,13 +62,13 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item" href="#" data-circuit-scheme="status">
-                        <i class="mdi mdi-circle-medium" style="color:#198754"></i> By Status
+                        <i class="mdi mdi-circle-medium" style="color:#ad1457"></i> By Status
                     </a></li>
                     <li><a class="dropdown-item" href="#" data-circuit-scheme="provider">
-                        <i class="mdi mdi-circle-medium" style="color:#e74c3c"></i> By Provider
+                        <i class="mdi mdi-circle-medium" style="color:#c62828"></i> By Provider
                     </a></li>
                     <li><a class="dropdown-item" href="#" data-circuit-scheme="type">
-                        <i class="mdi mdi-circle-medium" style="color:#9c27b0"></i> By Type
+                        <i class="mdi mdi-circle-medium" style="color:#6a1b9a"></i> By Type
                     </a></li>
                 </ul>
             </div>
@@ -83,13 +83,13 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item" href="#" data-site-scheme="status">
-                        <i class="mdi mdi-circle-medium" style="color:#198754"></i> By Status
+                        <i class="mdi mdi-circle-medium" style="color:#1565c0"></i> By Status
                     </a></li>
                     <li><a class="dropdown-item" href="#" data-site-scheme="tenant">
-                        <i class="mdi mdi-circle-medium" style="color:#0d6efd"></i> By Tenant
+                        <i class="mdi mdi-circle-medium" style="color:#6a1b9a"></i> By Tenant
                     </a></li>
                     <li><a class="dropdown-item" href="#" data-site-scheme="region">
-                        <i class="mdi mdi-circle-medium" style="color:#fd7e14"></i> By Region
+                        <i class="mdi mdi-circle-medium" style="color:#e65100"></i> By Region
                     </a></li>
                 </ul>
             </div>
@@ -115,9 +115,9 @@
                     <i class="mdi mdi-vector-polyline"></i> Segments
                 </button>
                 <button type="button"
-                        class="btn btn-sm btn-warning"
+                        class="btn btn-sm btn-outline-warning"
                         id="toggleCircuits"
-                        title="Hide circuits">
+                        title="Show circuits">
                     <i class="mdi mdi-transit-connection-variant"></i> Circuits
                 </button>
                 <button type="button"
@@ -133,19 +133,8 @@
                 <i class="mdi mdi-fit-to-page-outline" aria-hidden="true"></i> Fit All
             </button>
 
-            {# Tile layer picker (reused include) #}
+            {# Tile layer picker #}
             {% include './inc/map_layer_dropdown.html' %}
-
-            {# Filter panel toggle — badge shows active filter count #}
-            <button class="btn btn-outline-secondary btn-sm ms-auto"
-                    type="button"
-                    data-bs-toggle="offcanvas"
-                    data-bs-target="#filterPanel"
-                    aria-controls="filterPanel"
-                    id="filterPanelToggle">
-                <i class="mdi mdi-filter-outline" aria-hidden="true"></i> Filters
-                <span id="filterCount" class="badge text-bg-primary ms-1" style="display:none;"></span>
-            </button>
 
         </div>
     </div>
@@ -156,7 +145,6 @@
     {# Populated by JS — one dismissible chip per active filter value #}
 </div>
 
-{# ── Map ──────────────────────────────────────────────────────────────────── #}
 {% if sites_truncated or segments_truncated or circuits_truncated %}
 <div class="alert alert-warning py-1 mb-2" role="alert">
     <i class="mdi mdi-alert" aria-hidden="true"></i>
@@ -164,7 +152,131 @@
 </div>
 {% endif %}
 
-<div id="map" style="height:800px; width:100%; border:1px solid #ddd; border-radius:4px;"></div>
+{# ── Two-column layout: map + filter sidebar ─────────────────────────────── #}
+<div class="d-flex gap-2 align-items-start">
+
+    {# ── Map ──────────────────────────────────────────────────────────────── #}
+    <div style="flex:1; min-width:0;">
+        <div id="map" style="height:800px; width:100%; border:1px solid #ddd; border-radius:4px;"></div>
+    </div>
+
+    {# ── Right column: info card + filter sidebar ────────────────────────── #}
+    <div style="width:285px; flex-shrink:0; display:flex; flex-direction:column; gap:0.5rem;">
+
+    {# ── Info card — populated by JS on click ─────────────────────────────── #}
+    <div id="infoCard" class="card" style="display:none;">
+        <div class="card-header py-2 d-flex align-items-center justify-content-between">
+            <span class="fw-bold small" id="infoCardTitle">
+                <i class="mdi mdi-information-outline"></i> Details
+            </span>
+            <button type="button" class="btn-close btn-sm" id="infoCardClose" aria-label="Close"></button>
+        </div>
+        <div class="card-body p-2" id="infoCardBody" style="overflow-y:auto; max-height:360px; font-size:0.8rem;">
+        </div>
+    </div>
+
+    {# ── Filter sidebar ───────────────────────────────────────────────────── #}
+    <div id="filterSidebar">
+        <div class="card h-100">
+            <div class="card-header py-1 d-flex align-items-center justify-content-between">
+                <span class="fw-bold small">
+                    <i class="mdi mdi-filter-outline"></i> Filters
+                </span>
+                <span class="d-flex align-items-center gap-1">
+                    <span id="filterCount" class="badge text-bg-primary" style="display:none;"></span>
+                    <button type="button" id="clearFiltersHeader" class="btn btn-outline-secondary" style="display:none; font-size:0.7rem; padding:1px 6px; line-height:1.2;" title="Clear all filters">
+                        <i class="mdi mdi-filter-off-outline"></i> Clear
+                    </button>
+                </span>
+            </div>
+            <div class="card-body p-2" style="overflow-y:auto; max-height:780px; font-size:0.78rem;">
+
+                {# ── Spatial (shared) ──────────────────────────── #}
+                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
+                    <i class="mdi mdi-map-search-outline"></i> Location
+                </div>
+                <div class="mb-1">
+                    <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.region_id.label }}</label>
+                    {{ filter_form.region_id }}
+                </div>
+                <div class="mb-1">
+                    <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_group_id.label }}</label>
+                    {{ filter_form.site_group_id }}
+                </div>
+                <div class="mb-1">
+                    <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.at_any_site.label }}</label>
+                    {{ filter_form.at_any_site }}
+                </div>
+
+                {# ── Sites ─────────────────────────────────────── #}
+                <div id="filterSectionSites">
+                    <hr class="my-1">
+                    <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
+                        <i class="mdi mdi-map-marker"></i> Sites
+                    </div>
+                    <div class="mb-1">
+                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_status.label }}</label>
+                        {{ filter_form.site_status }}
+                    </div>
+                    <div class="mb-1">
+                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_tenant_id.label }}</label>
+                        {{ filter_form.site_tenant_id }}
+                    </div>
+                </div>
+
+                {# ── Segments ──────────────────────────────────── #}
+                <div id="filterSectionSegments">
+                    <hr class="my-1">
+                    <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
+                        <i class="mdi mdi-vector-polyline"></i> Segments
+                    </div>
+                    <div class="mb-1">
+                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_status.label }}</label>
+                        {{ filter_form.segment_status }}
+                    </div>
+                    <div class="mb-1">
+                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_type.label }}</label>
+                        {{ filter_form.segment_type }}
+                    </div>
+                    <div class="mb-1">
+                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_provider_id.label }}</label>
+                        {{ filter_form.segment_provider_id }}
+                    </div>
+                </div>
+
+                {# ── Circuits ──────────────────────────────────── #}
+                <div id="filterSectionCircuits">
+                    <hr class="my-1">
+                    <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
+                        <i class="mdi mdi-transit-connection-variant"></i> Circuits
+                    </div>
+                    <div class="mb-1">
+                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_status.label }}</label>
+                        {{ filter_form.circuit_status }}
+                    </div>
+                    <div class="mb-1">
+                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_type_id.label }}</label>
+                        {{ filter_form.circuit_type_id }}
+                    </div>
+                    <div class="mb-1">
+                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_provider_id.label }}</label>
+                        {{ filter_form.circuit_provider_id }}
+                    </div>
+                </div>
+
+                <div class="d-grid mt-1">
+                    <button type="button" id="clearFilters" class="btn btn-outline-secondary btn-sm">
+                        <i class="mdi mdi-filter-off-outline" aria-hidden="true"></i> Clear Filters
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    </div>{# end right column #}
+
+</div>{# end two-column layout #}
 
 {% include './inc/leaflet_includes.html' %}
 {% include './inc/map_layers_styles.html' %}
@@ -191,126 +303,4 @@ initializeMapLayers(map);
 </script>
 <script src="{% static 'cesnet_service_path_plugin/js/object_map.js' %}"></script>
 
-{# ── Filter offcanvas ─────────────────────────────────────────────────────── #}
-<div class="offcanvas offcanvas-end"
-     tabindex="-1"
-     id="filterPanel"
-     aria-labelledby="filterPanelLabel"
-     style="width:320px;">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="filterPanelLabel">
-            <i class="mdi mdi-filter-outline" aria-hidden="true"></i> Filters
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body">
-        {# No form submit — all filtering is done client-side in JS on change #}
-        <div id="filterForm">
-
-            {# ── Spatial (shared) ──────────────────────────── #}
-            <h6 class="text-muted text-uppercase small fw-bold mb-2">
-                <i class="mdi mdi-map-search-outline"></i> Location
-            </h6>
-            <div class="mb-2">
-                <label class="form-label form-label-sm mb-1">{{ filter_form.region_id.label }}</label>
-                {{ filter_form.region_id }}
-            </div>
-            <div class="mb-2">
-                <label class="form-label form-label-sm mb-1">{{ filter_form.site_group_id.label }}</label>
-                {{ filter_form.site_group_id }}
-            </div>
-            <div class="mb-3">
-                <label class="form-label form-label-sm mb-1">{{ filter_form.at_any_site.label }}</label>
-                {{ filter_form.at_any_site }}
-            </div>
-
-            {# ── Sites ─────────────────────────────────────── #}
-            <div id="filterSectionSites">
-                <hr class="my-2">
-                <h6 class="text-muted text-uppercase small fw-bold mb-2">
-                    <i class="mdi mdi-map-marker"></i> Sites
-                </h6>
-                <div class="mb-2">
-                    <div class="form-label form-label-sm mb-1">Status</div>
-                    <div class="d-flex flex-wrap gap-1">
-                        {% for value, label, color in site_status_choices %}
-                        <input type="checkbox" class="btn-check" name="site_status"
-                               id="site_status_{{ value }}" value="{{ value }}" autocomplete="off">
-                        <label class="btn btn-sm btn-outline-{{ color }}" for="site_status_{{ value }}">{{ label }}</label>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label form-label-sm mb-1">{{ filter_form.site_tenant_id.label }}</label>
-                    {{ filter_form.site_tenant_id }}
-                </div>
-            </div>
-
-            {# ── Segments ──────────────────────────────────── #}
-            <div id="filterSectionSegments">
-                <hr class="my-2">
-                <h6 class="text-muted text-uppercase small fw-bold mb-2">
-                    <i class="mdi mdi-vector-polyline"></i> Segments
-                </h6>
-                <div class="mb-2">
-                    <div class="form-label form-label-sm mb-1">Status</div>
-                    <div class="d-flex flex-wrap gap-1">
-                        {% for value, label, color in segment_status_choices %}
-                        <input type="checkbox" class="btn-check" name="segment_status"
-                               id="segment_status_{{ value }}" value="{{ value }}" autocomplete="off">
-                        <label class="btn btn-sm btn-outline-{{ color }}" for="segment_status_{{ value }}">{{ label }}</label>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="mb-2">
-                    <div class="form-label form-label-sm mb-1">Type</div>
-                    <div class="d-flex flex-wrap gap-1">
-                        {% for value, label, color in segment_type_choices %}
-                        <input type="checkbox" class="btn-check" name="segment_type"
-                               id="segment_type_{{ value }}" value="{{ value }}" autocomplete="off">
-                        <label class="btn btn-sm btn-outline-{{ color }}" for="segment_type_{{ value }}">{{ label }}</label>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label form-label-sm mb-1">{{ filter_form.segment_provider_id.label }}</label>
-                    {{ filter_form.segment_provider_id }}
-                </div>
-            </div>
-
-            {# ── Circuits ──────────────────────────────────── #}
-            <div id="filterSectionCircuits">
-                <hr class="my-2">
-                <h6 class="text-muted text-uppercase small fw-bold mb-2">
-                    <i class="mdi mdi-transit-connection-variant"></i> Circuits
-                </h6>
-                <div class="mb-2">
-                    <div class="form-label form-label-sm mb-1">Status</div>
-                    <div class="d-flex flex-wrap gap-1">
-                        {% for value, label, color in circuit_status_choices %}
-                        <input type="checkbox" class="btn-check" name="circuit_status"
-                               id="circuit_status_{{ value }}" value="{{ value }}" autocomplete="off">
-                        <label class="btn btn-sm btn-outline-{{ color }}" for="circuit_status_{{ value }}">{{ label }}</label>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="mb-2">
-                    <label class="form-label form-label-sm mb-1">{{ filter_form.circuit_type_id.label }}</label>
-                    {{ filter_form.circuit_type_id }}
-                </div>
-                <div class="mb-3">
-                    <label class="form-label form-label-sm mb-1">{{ filter_form.circuit_provider_id.label }}</label>
-                    {{ filter_form.circuit_provider_id }}
-                </div>
-            </div>
-
-            <div class="d-grid">
-                <button type="button" id="clearFilters" class="btn btn-outline-secondary btn-sm">
-                    <i class="mdi mdi-filter-off-outline" aria-hidden="true"></i> Clear Filters
-                </button>
-            </div>
-
-        </div>
-    </div>
-</div>
 {% endblock content %}
