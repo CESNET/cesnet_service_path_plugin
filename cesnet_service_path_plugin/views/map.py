@@ -1,47 +1,15 @@
 import json
 
-from circuits.choices import CircuitStatusChoices
 from circuits.models import Circuit
-from dcim.choices import SiteStatusChoices
 from dcim.models import Region, Site
 from django.shortcuts import render
 from django.views import View
 
 from cesnet_service_path_plugin.forms.map import MapFilterForm
 from cesnet_service_path_plugin.models import Segment
-from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 
 MAX_OBJECTS = 500
-
-# Bootstrap color variant for each status/type value — used by the pill-button filter UI.
-_SITE_STATUS_COLORS = {
-    "planned":         "warning",
-    "staging":         "info",
-    "active":          "success",
-    "decommissioning": "warning",
-    "retired":         "secondary",
-}
-_SEGMENT_STATUS_COLORS = {
-    "active":         "success",
-    "planned":        "warning",
-    "offline":        "danger",
-    "decommissioned": "secondary",
-    "surveyed":       "info",
-}
-_SEGMENT_TYPE_COLORS = {
-    "dark_fiber":       "secondary",
-    "optical_spectrum": "warning",
-    "ethernet_service": "success",
-}
-_CIRCUIT_STATUS_COLORS = {
-    "planned":         "warning",
-    "provisioning":    "info",
-    "active":          "success",
-    "offline":         "danger",
-    "deprovisioning":  "warning",
-    "decommissioned":  "secondary",
-}
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +102,9 @@ def _build_sites_data(site_qs):
             "tenant_id": site.tenant_id,
             "lat": lat,
             "lng": lng,
+            "facility": site.facility or None,
+            "physical_address": site.physical_address or None,
+            "tags": [{"name": t.name, "color": t.color} for t in site.tags.all()],
             "url": site.get_absolute_url(),
         })
     return sites_data
@@ -170,11 +141,52 @@ def _build_segments_data(segment_qs):
         except (ValueError, TypeError, AttributeError):
             pass
 
+        # Type-specific technical data (brief summary for info card)
+        type_data = None
+        try:
+            if segment.segment_type == SegmentTypeChoices.DARK_FIBER:
+                d = segment.dark_fiber_data
+                type_data = {k: v for k, v in {
+                    "Fiber mode": d.get_fiber_mode_display() or None,
+                    "Single-mode subtype": d.get_single_mode_subtype_display() or None,
+                    "Multimode subtype": d.get_multimode_subtype_display() or None,
+                    "Jacket type": d.get_jacket_type_display() or None,
+                    "Attenuation max": f"{d.fiber_attenuation_max} dB/km" if d.fiber_attenuation_max else None,
+                    "Total loss": f"{d.total_loss} dB" if d.total_loss else None,
+                    "Total length": f"{d.total_length} km" if d.total_length else None,
+                    "Fiber count": d.number_of_fibers,
+                    "Connector A": d.get_connector_type_side_a_display() or None,
+                    "Connector B": d.get_connector_type_side_b_display() or None,
+                }.items() if v is not None}
+            elif segment.segment_type == SegmentTypeChoices.OPTICAL_SPECTRUM:
+                d = segment.optical_spectrum_data
+                type_data = {k: v for k, v in {
+                    "Wavelength": f"{d.wavelength} nm" if d.wavelength else None,
+                    "Slot width": f"{d.spectral_slot_width} GHz" if d.spectral_slot_width else None,
+                    "ITU grid position": d.itu_grid_position,
+                    "Chromatic dispersion": f"{d.chromatic_dispersion} ps/nm" if d.chromatic_dispersion else None,
+                    "PMD tolerance": f"{d.pmd_tolerance} ps" if d.pmd_tolerance else None,
+                    "Modulation": d.get_modulation_format_display() or None,
+                }.items() if v is not None}
+            elif segment.segment_type == SegmentTypeChoices.ETHERNET_SERVICE:
+                d = segment.ethernet_service_data
+                type_data = {k: v for k, v in {
+                    "Port speed": f"{d.port_speed} Mbps" if d.port_speed else None,
+                    "VLAN ID": d.vlan_id,
+                    "VLAN tags": d.vlan_tags or None,
+                    "Encapsulation": d.get_encapsulation_type_display() or None,
+                    "Interface type": d.get_interface_type_display() or None,
+                    "MTU": f"{d.mtu_size} B" if d.mtu_size else None,
+                }.items() if v is not None}
+        except Exception:
+            pass
+
         segments_data.append({
             "id": segment.pk,
             "name": segment.name,
             "provider": str(segment.provider) if segment.provider else None,
             "provider_id": segment.provider.pk if segment.provider else None,
+            "provider_segment_id": segment.provider_segment_id or None,
             "status": segment.get_status_display(),
             "status_color": segment.get_status_color(),
             "segment_type": segment.get_segment_type_display(),
@@ -185,6 +197,8 @@ def _build_segments_data(segment_qs):
             "site_a": site_a_data,
             "site_b": site_b_data,
             "has_path_data": segment.has_path_data(),
+            "type_data": type_data,
+            "tags": [{"name": t.name, "color": t.color} for t in segment.tags.all()],
             "url": segment.get_absolute_url(),
             "map_url": f"/plugins/cesnet-service-path-plugin/segments/{segment.pk}/map/",
         })
@@ -226,17 +240,42 @@ def _build_circuits_data(circuit_qs):
         if not site_a_data or not site_b_data:
             continue
 
+        def _term_info(term):
+            if not term:
+                return None
+            info = {"site": str(term._site) if term._site else None}
+            if term._provider_network:
+                info["connection"] = str(term._provider_network)
+            elif term._site:
+                info["connection"] = str(term._site)
+            if term.xconnect_id:
+                info["xconnect_id"] = term.xconnect_id
+            if term.pp_info:
+                info["pp_info"] = term.pp_info
+            if term.port_speed:
+                info["port_speed"] = f"{term.port_speed} Kbps"
+            if term.description:
+                info["description"] = term.description
+            return info
+
         circuits_data.append({
-            "id":           circuit.pk,
-            "cid":          circuit.cid,
-            "provider":     str(circuit.provider) if circuit.provider else None,
-            "provider_id":  circuit.provider.pk if circuit.provider else None,
-            "status":       circuit.get_status_display(),
-            "type":         str(circuit.type) if circuit.type else None,
-            "type_id":      circuit.type.pk if circuit.type else None,
-            "site_a":       site_a_data,
-            "site_b":       site_b_data,
-            "url":          circuit.get_absolute_url(),
+            "id":               circuit.pk,
+            "cid":              circuit.cid,
+            "provider":         str(circuit.provider) if circuit.provider else None,
+            "provider_id":      circuit.provider.pk if circuit.provider else None,
+            "status":           circuit.get_status_display(),
+            "type":             str(circuit.type) if circuit.type else None,
+            "type_id":          circuit.type.pk if circuit.type else None,
+            "tenant":           str(circuit.tenant) if circuit.tenant else None,
+            "tenant_id":        circuit.tenant.pk if circuit.tenant else None,
+            "install_date":     str(circuit.install_date) if circuit.install_date else None,
+            "termination_date": str(circuit.termination_date) if circuit.termination_date else None,
+            "tags":             [{"name": t.name, "color": t.color} for t in circuit.tags.all()],
+            "term_a":           _term_info(circuit.termination_a),
+            "term_z":           _term_info(circuit.termination_z),
+            "site_a":           site_a_data,
+            "site_b":           site_b_data,
+            "url":              circuit.get_absolute_url(),
         })
     return circuits_data
 
@@ -321,22 +360,6 @@ class ObjectMapView(View):
 
         context = {
             "filter_form": filter_form,
-            "site_status_choices": [
-                (v, label, _SITE_STATUS_COLORS.get(v, "secondary"))
-                for v, label in SiteStatusChoices
-            ],
-            "segment_status_choices": [
-                (v, label, _SEGMENT_STATUS_COLORS.get(v, "secondary"))
-                for v, label in StatusChoices
-            ],
-            "segment_type_choices": [
-                (v, label, _SEGMENT_TYPE_COLORS.get(v, "secondary"))
-                for v, label in SegmentTypeChoices
-            ],
-            "circuit_status_choices": [
-                (v, label, _CIRCUIT_STATUS_COLORS.get(v, "secondary"))
-                for v, label in CircuitStatusChoices
-            ],
             "sites_data_json":         json.dumps(sites_data),
             "segments_data_json":      json.dumps(segments_data),
             "circuits_data_json":      json.dumps(circuits_data),

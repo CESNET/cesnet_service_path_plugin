@@ -385,31 +385,26 @@
             }
             return [];
         }
-        function checkboxValues(name) {
-            return Array.from(document.querySelectorAll(`[name="${name}"]:checked`))
-                .map(el => el.value);
-        }
-
         return {
             site: {
                 region_ids:  selectValues('region_id').map(Number),
                 group_ids:   selectValues('site_group_id').map(Number),
                 tenant_ids:  selectValues('site_tenant_id').map(Number),
-                statuses:    checkboxValues('site_status'),
+                statuses:    selectValues('site_status'),
             },
             segment: {
                 region_ids:   selectValues('region_id').map(Number),
                 at_any_sites: selectValues('at_any_site').map(Number),
                 provider_ids: selectValues('segment_provider_id').map(Number),
-                statuses:     checkboxValues('segment_status'),
-                types:        checkboxValues('segment_type'),
+                statuses:     selectValues('segment_status'),
+                types:        selectValues('segment_type'),
             },
             circuit: {
                 region_ids:   selectValues('region_id').map(Number),
                 at_any_sites: selectValues('at_any_site').map(Number),
                 provider_ids: selectValues('circuit_provider_id').map(Number),
                 type_ids:     selectValues('circuit_type_id').map(Number),
-                statuses:     checkboxValues('circuit_status'),
+                statuses:     selectValues('circuit_status'),
             },
         };
     }
@@ -521,21 +516,13 @@
         const chips = [];
 
         function selectedOptions(name) {
-            const el = document.querySelector(`#filterForm [name="${name}"]`);
+            const el = document.querySelector(`[name="${name}"]`);
             if (!el || el.tagName !== 'SELECT') return [];
             return Array.from(el.selectedOptions).map(o => ({ value: o.value, text: o.textContent.trim() }));
         }
 
-        function checkedInputs(name) {
-            return Array.from(document.querySelectorAll(`#filterForm [name="${name}"]:checked`))
-                .map(inp => {
-                    const lbl = document.querySelector(`label[for="${inp.id}"]`);
-                    return { value: inp.value, text: lbl ? lbl.textContent.trim() : inp.value, input: inp };
-                });
-        }
-
         function deselectOption(name, value) {
-            const el = document.querySelector(`#filterForm [name="${name}"]`);
+            const el = document.querySelector(`[name="${name}"]`);
             if (!el) return;
             const opt = Array.from(el.options).find(o => o.value === value);
             if (opt) opt.selected = false;
@@ -550,8 +537,12 @@
             { name: 'region_id',            prefix: 'Region' },
             { name: 'site_group_id',         prefix: 'Site Group' },
             { name: 'at_any_site',           prefix: 'Site' },
+            { name: 'site_status',           prefix: 'Site status' },
             { name: 'site_tenant_id',        prefix: 'Tenant' },
+            { name: 'segment_status',        prefix: 'Seg. status' },
+            { name: 'segment_type',          prefix: 'Seg. type' },
             { name: 'segment_provider_id',   prefix: 'Seg. Provider' },
+            { name: 'circuit_status',        prefix: 'Circ. status' },
             { name: 'circuit_provider_id',   prefix: 'Circ. Provider' },
             { name: 'circuit_type_id',       prefix: 'Circ. Type' },
         ];
@@ -565,28 +556,13 @@
             });
         });
 
-        const checkFields = [
-            { name: 'site_status',    prefix: 'Site status' },
-            { name: 'segment_status', prefix: 'Seg. status' },
-            { name: 'segment_type',   prefix: 'Seg. type' },
-            { name: 'circuit_status', prefix: 'Circ. status' },
-        ];
-
-        checkFields.forEach(({ name, prefix }) => {
-            checkedInputs(name).forEach(({ text, input }) => {
-                chips.push({
-                    label: `${prefix}: ${text}`,
-                    clear: () => { input.checked = false; applyFilters(); },
-                });
-            });
-        });
-
         return chips;
     }
 
     function updateFilterChips() {
         const bar = document.getElementById('activeFilters');
         const countBadge = document.getElementById('filterCount');
+        const clearHeaderBtn = document.getElementById('clearFiltersHeader');
         if (!bar) return;
 
         const chips = collectActiveChips();
@@ -594,6 +570,7 @@
         if (!chips.length) {
             bar.style.display = 'none';
             if (countBadge) countBadge.style.display = 'none';
+            if (clearHeaderBtn) clearHeaderBtn.style.display = 'none';
             return;
         }
 
@@ -602,6 +579,7 @@
             countBadge.textContent = chips.length;
             countBadge.style.display = '';
         }
+        if (clearHeaderBtn) clearHeaderBtn.style.display = '';
 
         bar.innerHTML = chips.map((c, i) =>
             `<span class="badge text-bg-secondary d-flex align-items-center gap-1" style="font-size:.8rem;font-weight:500;">
@@ -694,6 +672,9 @@
             }
 
             marker.bindPopup(html, { maxWidth: 280 });
+            marker.on('click', function () {
+                if (siteObj) buildSiteInfoCard(siteObj);
+            });
             siteGroup.addLayer(marker);
             siteLayers.set(id.toString(), marker);
         }
@@ -771,6 +752,137 @@
         return nearby;
     }
 
+    // -------------------------------------------------------------------------
+    // Info card
+    // -------------------------------------------------------------------------
+    function showInfoCard(title, bodyHtml) {
+        const card  = document.getElementById('infoCard');
+        const titleEl = document.getElementById('infoCardTitle');
+        const body  = document.getElementById('infoCardBody');
+        if (!card) return;
+        titleEl.innerHTML = title;
+        body.innerHTML    = bodyHtml;
+        card.style.display = '';
+    }
+
+    function hideInfoCard() {
+        const card = document.getElementById('infoCard');
+        if (card) card.style.display = 'none';
+    }
+
+    function _row(label, value) {
+        if (value === null || value === undefined || value === '') return '';
+        return `<tr><td class="text-muted pe-2" style="white-space:nowrap">${label}</td><td>${value}</td></tr>`;
+    }
+
+    function _tagTextColor(hex) {
+        // Returns black or white depending on background luminance.
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        // Perceived luminance (ITU-R BT.601)
+        return (r * 0.299 + g * 0.587 + b * 0.114) > 150 ? '#000' : '#fff';
+    }
+
+    function _tags(tags) {
+        if (!tags || !tags.length) return '';
+        return tags.map(t => {
+            if (typeof t === 'object' && t.color) {
+                const fg = _tagTextColor(t.color);
+                return `<span class="badge me-1" style="background:#${t.color};color:${fg};">${t.name}</span>`;
+            }
+            return `<span class="badge text-bg-secondary me-1">${typeof t === 'object' ? t.name : t}</span>`;
+        }).join('');
+    }
+
+    function _table(rows) {
+        const inner = rows.filter(Boolean).join('');
+        if (!inner) return '';
+        return `<table class="table table-sm table-borderless mb-0">${inner}</table>`;
+    }
+
+    function buildSiteInfoCard(site) {
+        const badge = siteStatusBadge[site.status] || 'secondary';
+        const rows = _table([
+            _row('Region',    site.region  || '—'),
+            _row('Status',    `<span class="badge text-bg-${badge}">${site.status}</span>`),
+            _row('Tenant',    site.tenant  || '—'),
+            _row('Address',   site.physical_address ? site.physical_address.replace(/\n/g, ', ') : '—'),
+            _row('GPS',       `${site.lat}, ${site.lng}`),
+            _row('Facility',  site.facility || '—'),
+            _row('Tags',      site.tags && site.tags.length ? _tags(site.tags) : '—'),
+        ]);
+        const links = `<div class="mt-2"><a href="${site.url}" class="btn btn-outline-primary btn-sm w-100">
+            <i class="mdi mdi-open-in-new"></i> View site</a></div>`;
+        showInfoCard(
+            `<i class="mdi mdi-map-marker text-primary"></i> ${site.name}`,
+            rows + links
+        );
+    }
+
+    function buildSegmentInfoCard(seg) {
+        const sc = segmentStatusBadge[seg.status] || 'secondary';
+        let rows = _table([
+            _row('Provider',       seg.provider || '—'),
+            _row('Provider ID',    seg.provider_segment_id || '—'),
+            _row('Status',         `<span class="badge text-bg-${sc}">${seg.status}</span>`),
+            _row('Type',           seg.segment_type || '—'),
+            _row('Ownership',      seg.ownership_type || '—'),
+            _row('Length',         seg.path_length_km ? seg.path_length_km + ' km' : '—'),
+            _row('Site A',         seg.site_a ? seg.site_a.name : '—'),
+            _row('Site B',         seg.site_b ? seg.site_b.name : '—'),
+            _row('Tags',           seg.tags && seg.tags.length ? _tags(seg.tags) : '—'),
+        ]);
+        if (seg.type_data && Object.keys(seg.type_data).length) {
+            rows += `<hr class="my-1"><div class="text-muted text-uppercase small fw-bold mb-1">${seg.segment_type} details</div>`;
+            rows += _table(Object.entries(seg.type_data).map(([k, v]) => _row(k, v)));
+        }
+        const links = `<div class="mt-2 d-flex gap-1">
+            <a href="${seg.url}" class="btn btn-outline-primary btn-sm flex-fill">
+                <i class="mdi mdi-open-in-new"></i> View</a>
+            <a href="${seg.map_url}" class="btn btn-outline-secondary btn-sm flex-fill">
+                <i class="mdi mdi-map"></i> Map</a>
+        </div>`;
+        showInfoCard(
+            `<i class="mdi mdi-vector-polyline text-primary"></i> ${seg.name}`,
+            rows + links
+        );
+    }
+
+    function _termRows(label, term) {
+        if (!term) return _row(label + ' site', '—');
+        let out = _row(label + ' site',       term.site || '—');
+        out    += _row(label + ' connection', term.connection || '—');
+        if (term.xconnect_id) out += _row(label + ' Xconnect', term.xconnect_id);
+        if (term.pp_info)     out += _row(label + ' PP info',  term.pp_info);
+        if (term.port_speed)  out += _row(label + ' speed',    term.port_speed);
+        if (term.description) out += _row(label + ' note',     term.description);
+        return out;
+    }
+
+    function buildCircuitInfoCard(circ) {
+        const sc = circuitStatusBadge[circ.status] || 'secondary';
+        const rows = _table([
+            _row('Provider',     circ.provider || '—'),
+            _row('Status',       `<span class="badge text-bg-${sc}">${circ.status}</span>`),
+            _row('Type',         circ.type || '—'),
+            _row('Tenant',       circ.tenant || '—'),
+            _row('Install date', circ.install_date || '—'),
+            _row('Terminate',    circ.termination_date || '—'),
+            _row('Tags',         circ.tags && circ.tags.length ? _tags(circ.tags) : '—'),
+            '<tr><td colspan="2"><hr class="my-1"></td></tr>',
+            _termRows('Term A', circ.term_a),
+            '<tr><td colspan="2"><hr class="my-1"></td></tr>',
+            _termRows('Term Z', circ.term_z),
+        ]);
+        const links = `<div class="mt-2"><a href="${circ.url}" class="btn btn-outline-primary btn-sm w-100">
+            <i class="mdi mdi-open-in-new"></i> View circuit</a></div>`;
+        showInfoCard(
+            `<i class="mdi mdi-transit-connection-variant" style="color:#ad1457"></i> ${circ.cid}`,
+            rows + links
+        );
+    }
+
     function showSegmentPopup(seg, latlng) {
         const sc  = segmentStatusBadge[seg.status] || 'secondary';
         const siteA = seg.site_a ? seg.site_a.name : 'N/A';
@@ -787,20 +899,41 @@
                 `<a href="${seg.map_url}" class="small">Individual map</a>`
             )
             .openOn(map);
+        buildSegmentInfoCard(seg);
     }
+
+    // Segment lookup used by overlap popup click handlers
+    const _overlapSegById = {};
 
     function showOverlapPopup(items, latlng) {
         let html = `<div><strong>${items.length} segments here</strong>`;
         items.forEach(({ seg }) => {
             const sc = segmentStatusBadge[seg.status] || 'secondary';
+            _overlapSegById[seg.id] = seg;
             html += `<div class="border-top pt-1 mt-1">
-                <a href="${seg.url}">${seg.name}</a><br>
+                <span class="seg-overlap-name"
+                      data-seg-id="${seg.id}"
+                      style="cursor:pointer;font-weight:500;"
+                      title="Show details in info card">${seg.name}</span><br>
                 <span class="badge text-bg-${sc} small">${seg.status}</span>
-                <small>${seg.site_a ? seg.site_a.name : ''} ↔ ${seg.site_b ? seg.site_b.name : ''}</small>
+                <small> ${seg.site_a ? seg.site_a.name : ''} ↔ ${seg.site_b ? seg.site_b.name : ''}</small>
+                <small class="ms-1"><a href="${seg.url}">View</a></small>
             </div>`;
         });
         html += '</div>';
-        L.popup({ maxWidth: 340 }).setLatLng(latlng).setContent(html).openOn(map);
+
+        const popup = L.popup({ maxWidth: 340 }).setLatLng(latlng).setContent(html);
+        popup.on('add', function () {
+            const el = popup.getElement();
+            if (!el) return;
+            el.querySelectorAll('.seg-overlap-name').forEach(span => {
+                span.addEventListener('click', function () {
+                    const seg = _overlapSegById[Number(this.dataset.segId)];
+                    if (seg) buildSegmentInfoCard(seg);
+                });
+            });
+        });
+        popup.openOn(map);
     }
 
     function handleLineClick(e) {
@@ -891,6 +1024,9 @@
                 `<a href="${circ.url}" class="small">View circuit</a>`,
                 { maxWidth: 300 }
             );
+            line.on('click', (function(c) {
+                return function() { buildCircuitInfoCard(c); };
+            })(circ));
 
             circuitGroup.addLayer(line);
             circuitLayers.set(circ.id.toString(), line);
@@ -965,29 +1101,35 @@
         const fitBtn = document.getElementById('fitBounds');
         if (fitBtn) fitBtn.addEventListener('click', fitMap);
 
-        // Live filtering — wire all filter inputs in the offcanvas
-        const filterPanel = document.getElementById('filterForm');
+        // Live filtering — wire all filter inputs in the sidebar
+        const filterPanel = document.getElementById('filterSidebar');
         if (filterPanel) {
             filterPanel.addEventListener('change', applyFilters);
         }
 
-        // Clear filters
-        const clearBtn = document.getElementById('clearFilters');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function () {
-                document.querySelectorAll('#filterForm select').forEach(sel => {
-                    if (window.$ && $(sel).data('select2')) {
-                        $(sel).val(null).trigger('change');
-                    } else {
-                        Array.from(sel.options).forEach(o => { o.selected = false; });
-                        sel.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                });
-                document.querySelectorAll('#filterForm input[type="checkbox"]').forEach(cb => {
-                    cb.checked = false;
-                });
-                applyFilters();
+        // Clear filters — shared logic used by both the header X and the bottom button
+        function clearAllFilters() {
+            document.querySelectorAll('#filterSidebar select').forEach(sel => {
+                if (window.$ && $(sel).data('select2')) {
+                    $(sel).val(null).trigger('change');
+                } else {
+                    Array.from(sel.options).forEach(o => { o.selected = false; });
+                    sel.dispatchEvent(new Event('change', { bubbles: true }));
+                }
             });
+            applyFilters();
+        }
+
+        const clearBtn = document.getElementById('clearFilters');
+        if (clearBtn) clearBtn.addEventListener('click', clearAllFilters);
+
+        const clearHeaderBtn = document.getElementById('clearFiltersHeader');
+        if (clearHeaderBtn) clearHeaderBtn.addEventListener('click', clearAllFilters);
+
+        // Info card close button
+        const infoCardClose = document.getElementById('infoCardClose');
+        if (infoCardClose) {
+            infoCardClose.addEventListener('click', hideInfoCard);
         }
 
         // Tile layer switcher

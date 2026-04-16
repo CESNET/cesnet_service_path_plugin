@@ -50,7 +50,7 @@ class MapFilterForm(forms.Form):
         choices=SiteStatusChoices,
         required=False,
         label="Status",
-        widget=forms.CheckboxSelectMultiple(),
+        widget=forms.SelectMultiple(attrs={"class": "form-select form-select-sm", "size": "1"}),
     )
     site_tenant_id = DynamicModelMultipleChoiceField(
         queryset=Tenant.objects.all(),
@@ -65,13 +65,13 @@ class MapFilterForm(forms.Form):
         choices=StatusChoices,
         required=False,
         label="Status",
-        widget=forms.CheckboxSelectMultiple(),
+        widget=forms.SelectMultiple(attrs={"class": "form-select form-select-sm", "size": "1"}),
     )
     segment_type = forms.MultipleChoiceField(
         choices=SegmentTypeChoices,
         required=False,
         label="Type",
-        widget=forms.CheckboxSelectMultiple(),
+        widget=forms.SelectMultiple(attrs={"class": "form-select form-select-sm", "size": "1"}),
     )
     segment_provider_id = DynamicModelMultipleChoiceField(
         queryset=Provider.objects.all(),
@@ -86,7 +86,7 @@ class MapFilterForm(forms.Form):
         choices=[],          # populated in __init__ to avoid import-time issues
         required=False,
         label="Status",
-        widget=forms.CheckboxSelectMultiple(),
+        widget=forms.SelectMultiple(attrs={"class": "form-select form-select-sm", "size": "1"}),
     )
     circuit_type_id = DynamicModelMultipleChoiceField(
         queryset=CircuitType.objects.all(),
