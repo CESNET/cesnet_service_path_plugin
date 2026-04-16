@@ -849,10 +849,30 @@
         );
     }
 
-    function _termRows(label, term) {
+    function _connectDropdown(termPk, returnUrl) {
+        const base = `/dcim/cables/add/?a_terminations_type=circuits.circuittermination&a_terminations=${termPk}`;
+        const ret  = `&return_url=${encodeURIComponent(returnUrl)}`;
+        return `<div class="dropdown d-inline-block">
+            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="mdi mdi-ethernet-cable"></i> Connect
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="${base}&b_terminations_type=dcim.interface${ret}">Interface</a></li>
+                <li><a class="dropdown-item" href="${base}&b_terminations_type=dcim.frontport${ret}">Front Port</a></li>
+                <li><a class="dropdown-item" href="${base}&b_terminations_type=dcim.rearport${ret}">Rear Port</a></li>
+                <li><a class="dropdown-item" href="${base}&b_terminations_type=circuits.circuittermination${ret}">Circuit Termination</a></li>
+            </ul>
+        </div>`;
+    }
+
+    function _termRows(label, term, circuitUrl) {
         if (!term) return _row(label + ' site', '—');
-        let out = _row(label + ' site',       term.site || '—');
-        out    += _row(label + ' connection', term.connection || '—');
+        let out = _row(label + ' site', term.site || '—');
+        if (term.connection) {
+            out += _row(label + ' cable', term.connection);
+        } else if (term.termination_pk) {
+            out += _row(label + ' cable', _connectDropdown(term.termination_pk, circuitUrl));
+        }
         if (term.xconnect_id) out += _row(label + ' Xconnect', term.xconnect_id);
         if (term.pp_info)     out += _row(label + ' PP info',  term.pp_info);
         if (term.port_speed)  out += _row(label + ' speed',    term.port_speed);
@@ -870,10 +890,8 @@
             _row('Install date', circ.install_date || '—'),
             _row('Terminate',    circ.termination_date || '—'),
             _row('Tags',         circ.tags && circ.tags.length ? _tags(circ.tags) : '—'),
-            '<tr><td colspan="2"><hr class="my-1"></td></tr>',
-            _termRows('Term A', circ.term_a),
-            '<tr><td colspan="2"><hr class="my-1"></td></tr>',
-            _termRows('Term Z', circ.term_z),
+            _termRows('Term A', circ.term_a, circ.url),
+            _termRows('Term Z', circ.term_z, circ.url),
         ]);
         const links = `<div class="mt-2"><a href="${circ.url}" class="btn btn-outline-primary btn-sm w-100">
             <i class="mdi mdi-open-in-new"></i> View circuit</a></div>`;
