@@ -497,6 +497,7 @@
         updateLegend();
         updateCounts();
         updateFilterChips();
+        renderList();
     }
 
     function updateCounts() {
@@ -506,6 +507,102 @@
         if (cs) cs.textContent = visibility.sites    ? activeSites.length    : 0;
         if (cg) cg.textContent = visibility.segments ? activeSegments.length : 0;
         if (cc) cc.textContent = visibility.circuits ? activeCircuits.length : 0;
+    }
+
+    // -------------------------------------------------------------------------
+    // Object list (List tab)
+    // -------------------------------------------------------------------------
+
+    function renderList() {
+        const container = document.getElementById('objectList');
+        const countEl   = document.getElementById('listCount');
+        if (!container) return;
+
+        const q            = (document.getElementById('listSearch')?.value || '').toLowerCase();
+        const showSites    = document.getElementById('listShowSites')?.checked    !== false;
+        const showSegments = document.getElementById('listShowSegments')?.checked !== false;
+        const showCircuits = document.getElementById('listShowCircuits')?.checked !== false;
+
+        const rows = [];
+
+        if (showSites) {
+            activeSites.forEach(site => {
+                if (q && !site.name.toLowerCase().includes(q)) return;
+                rows.push({ type: 'site', label: site.name, id: site.id,
+                            icon: 'mdi-map-marker', color: '#1565c0' });
+            });
+        }
+
+        if (showSegments) {
+            activeSegments.forEach(seg => {
+                if (q && !seg.name.toLowerCase().includes(q)) return;
+                rows.push({ type: 'segment', label: seg.name, id: seg.id,
+                            icon: 'mdi-vector-polyline', color: '#6a1b9a' });
+            });
+        }
+
+        if (showCircuits) {
+            activeCircuits.forEach(circ => {
+                if (q && !circ.cid.toLowerCase().includes(q)) return;
+                rows.push({ type: 'circuit', label: circ.cid, id: circ.id,
+                            icon: 'mdi-transit-connection-variant', color: '#ad1457' });
+            });
+        }
+
+        if (countEl) countEl.textContent = `${rows.length} object${rows.length !== 1 ? 's' : ''}`;
+
+        container.innerHTML = rows.map((r, i) =>
+            `<div class="list-row d-flex align-items-center gap-1 py-1 px-1 rounded"
+                  data-row="${i}"
+                  style="cursor:pointer; border-bottom:1px solid rgba(128,128,128,.15);">
+                <i class="mdi ${r.icon}" style="color:${r.color}; font-size:1rem; flex-shrink:0;"></i>
+                <span style="font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.label}</span>
+             </div>`
+        ).join('');
+
+        // Store rows for click lookup
+        container._rows = rows;
+
+        // Hover highlight
+        container.querySelectorAll('.list-row').forEach(el => {
+            el.addEventListener('mouseenter', () => el.style.background = 'rgba(128,128,128,.12)');
+            el.addEventListener('mouseleave', () => el.style.background = '');
+        });
+    }
+
+    function handleListClick(rowIndex) {
+        const container = document.getElementById('objectList');
+        if (!container || !container._rows) return;
+        const row = container._rows[rowIndex];
+        if (!row) return;
+
+        if (row.type === 'site') {
+            const site   = activeSites.find(s => s.id === row.id);
+            const marker = siteLayers.get(row.id.toString());
+            if (!site) return;
+            map.flyTo([site.lat, site.lng], Math.max(map.getZoom(), 12));
+            if (marker) marker.openPopup();
+            buildSiteInfoCard(site);
+
+        } else if (row.type === 'segment') {
+            const seg = activeSegments.find(s => s.id === row.id);
+            if (!seg) return;
+            const lat = seg.site_a && seg.site_b ? (seg.site_a.lat + seg.site_b.lat) / 2 : (seg.site_a || seg.site_b || {}).lat;
+            const lng = seg.site_a && seg.site_b ? (seg.site_a.lng + seg.site_b.lng) / 2 : (seg.site_a || seg.site_b || {}).lng;
+            if (lat == null) return;
+            map.flyTo([lat, lng], Math.max(map.getZoom(), 10));
+            showSegmentPopup(seg, L.latLng(lat, lng));
+
+        } else if (row.type === 'circuit') {
+            const circ  = activeCircuits.find(c => c.id === row.id);
+            const layer = circuitLayers.get(row.id.toString());
+            if (!circ || !circ.site_a || !circ.site_b) return;
+            const lat = (circ.site_a.lat + circ.site_b.lat) / 2;
+            const lng = (circ.site_a.lng + circ.site_b.lng) / 2;
+            map.flyTo([lat, lng], Math.max(map.getZoom(), 10));
+            if (layer) layer.openPopup();
+            buildCircuitInfoCard(circ);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -561,25 +658,16 @@
 
     function updateFilterChips() {
         const bar = document.getElementById('activeFilters');
-        const countBadge = document.getElementById('filterCount');
-        const clearHeaderBtn = document.getElementById('clearFiltersHeader');
         if (!bar) return;
 
         const chips = collectActiveChips();
 
         if (!chips.length) {
             bar.style.display = 'none';
-            if (countBadge) countBadge.style.display = 'none';
-            if (clearHeaderBtn) clearHeaderBtn.style.display = 'none';
             return;
         }
 
         bar.style.display = 'flex';
-        if (countBadge) {
-            countBadge.textContent = chips.length;
-            countBadge.style.display = '';
-        }
-        if (clearHeaderBtn) clearHeaderBtn.style.display = '';
 
         bar.innerHTML = chips.map((c, i) =>
             `<span class="badge text-bg-secondary d-flex align-items-center gap-1" style="font-size:.8rem;font-weight:500;">
@@ -849,10 +937,30 @@
         );
     }
 
-    function _termRows(label, term) {
+    function _connectDropdown(termPk, returnUrl) {
+        const base = `/dcim/cables/add/?a_terminations_type=circuits.circuittermination&a_terminations=${termPk}`;
+        const ret  = `&return_url=${encodeURIComponent(returnUrl)}`;
+        return `<div class="dropdown d-inline-block">
+            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="mdi mdi-ethernet-cable"></i> Connect
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="${base}&b_terminations_type=dcim.interface${ret}">Interface</a></li>
+                <li><a class="dropdown-item" href="${base}&b_terminations_type=dcim.frontport${ret}">Front Port</a></li>
+                <li><a class="dropdown-item" href="${base}&b_terminations_type=dcim.rearport${ret}">Rear Port</a></li>
+                <li><a class="dropdown-item" href="${base}&b_terminations_type=circuits.circuittermination${ret}">Circuit Termination</a></li>
+            </ul>
+        </div>`;
+    }
+
+    function _termRows(label, term, circuitUrl) {
         if (!term) return _row(label + ' site', '—');
-        let out = _row(label + ' site',       term.site || '—');
-        out    += _row(label + ' connection', term.connection || '—');
+        let out = _row(label + ' site', term.site || '—');
+        if (term.connection) {
+            out += _row(label + ' cable', term.connection);
+        } else if (term.termination_pk) {
+            out += _row(label + ' cable', _connectDropdown(term.termination_pk, circuitUrl));
+        }
         if (term.xconnect_id) out += _row(label + ' Xconnect', term.xconnect_id);
         if (term.pp_info)     out += _row(label + ' PP info',  term.pp_info);
         if (term.port_speed)  out += _row(label + ' speed',    term.port_speed);
@@ -870,10 +978,8 @@
             _row('Install date', circ.install_date || '—'),
             _row('Terminate',    circ.termination_date || '—'),
             _row('Tags',         circ.tags && circ.tags.length ? _tags(circ.tags) : '—'),
-            '<tr><td colspan="2"><hr class="my-1"></td></tr>',
-            _termRows('Term A', circ.term_a),
-            '<tr><td colspan="2"><hr class="my-1"></td></tr>',
-            _termRows('Term Z', circ.term_z),
+            _termRows('Term A', circ.term_a, circ.url),
+            _termRows('Term Z', circ.term_z, circ.url),
         ]);
         const links = `<div class="mt-2"><a href="${circ.url}" class="btn btn-outline-primary btn-sm w-100">
             <i class="mdi mdi-open-in-new"></i> View circuit</a></div>`;
@@ -1123,14 +1229,32 @@
         const clearBtn = document.getElementById('clearFilters');
         if (clearBtn) clearBtn.addEventListener('click', clearAllFilters);
 
-        const clearHeaderBtn = document.getElementById('clearFiltersHeader');
-        if (clearHeaderBtn) clearHeaderBtn.addEventListener('click', clearAllFilters);
-
         // Info card close button
         const infoCardClose = document.getElementById('infoCardClose');
         if (infoCardClose) {
             infoCardClose.addEventListener('click', hideInfoCard);
         }
+
+        // Object list: search + type toggles
+        const listSearch = document.getElementById('listSearch');
+        if (listSearch) listSearch.addEventListener('input', renderList);
+
+        ['listShowSites', 'listShowSegments', 'listShowCircuits'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', renderList);
+        });
+
+        // Object list: click delegation
+        const objectList = document.getElementById('objectList');
+        if (objectList) {
+            objectList.addEventListener('click', function (e) {
+                const row = e.target.closest('.list-row');
+                if (row) handleListClick(Number(row.dataset.row));
+            });
+        }
+
+        // Initial list render
+        renderList();
 
         // Tile layer switcher
         initializeLayerSwitching(map);

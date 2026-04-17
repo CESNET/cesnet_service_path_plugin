@@ -205,6 +205,62 @@ def _build_segments_data(segment_qs):
     return segments_data
 
 
+def _term_connection(term):
+    """
+    Return a human-readable connection string for a CircuitTermination, or None.
+    Mirrors the logic in circuits/inc/circuit_termination_fields.html:
+      "<cable> to <device> / <peer port>"
+    Requires cable__terminations to be prefetched on the termination.
+    """
+    if not term:
+        return None
+    if term.mark_connected:
+        return "Marked as connected"
+    if not term.cable:
+        return None
+    parts = [str(term.cable)]
+    try:
+        for peer in term.link_peers:
+            peer_parts = []
+            if hasattr(peer, 'device') and peer.device:
+                peer_parts.append(str(peer.device))
+            elif hasattr(peer, 'circuit') and peer.circuit:
+                peer_parts.append(str(peer.circuit))
+            peer_parts.append(str(peer))
+            parts.append(" / ".join(peer_parts))
+    except Exception:
+        pass
+    return " → ".join(parts)
+
+
+def _term_info(term, resolved_site):
+    """
+    Build a dict of termination details for the info card.
+    resolved_site is the already-resolved Site object (from term._site
+    traversal earlier in the loop) — we use it directly rather than
+    re-reading term._site, which relies on a cached FK that may not be
+    populated for all termination types.
+    """
+    if not term:
+        return None
+    info = {
+        "site":           str(resolved_site),
+        "termination_pk": term.pk,
+    }
+    conn = _term_connection(term)
+    if conn:
+        info["connection"] = conn
+    if term.xconnect_id:
+        info["xconnect_id"] = term.xconnect_id
+    if term.pp_info:
+        info["pp_info"] = term.pp_info
+    if term.port_speed:
+        info["port_speed"] = f"{term.port_speed} Kbps"
+    if term.description:
+        info["description"] = term.description
+    return info
+
+
 def _build_circuits_data(circuit_qs):
     """
     Build the JS-ready list of circuit objects.
@@ -212,6 +268,8 @@ def _build_circuits_data(circuit_qs):
     """
     circuits_data = []
     for circuit in circuit_qs:
+        site_a = None
+        site_z = None
         site_a_data = None
         site_b_data = None
 
@@ -240,24 +298,6 @@ def _build_circuits_data(circuit_qs):
         if not site_a_data or not site_b_data:
             continue
 
-        def _term_info(term):
-            if not term:
-                return None
-            info = {"site": str(term._site) if term._site else None}
-            if term._provider_network:
-                info["connection"] = str(term._provider_network)
-            elif term._site:
-                info["connection"] = str(term._site)
-            if term.xconnect_id:
-                info["xconnect_id"] = term.xconnect_id
-            if term.pp_info:
-                info["pp_info"] = term.pp_info
-            if term.port_speed:
-                info["port_speed"] = f"{term.port_speed} Kbps"
-            if term.description:
-                info["description"] = term.description
-            return info
-
         circuits_data.append({
             "id":               circuit.pk,
             "cid":              circuit.cid,
@@ -271,8 +311,8 @@ def _build_circuits_data(circuit_qs):
             "install_date":     str(circuit.install_date) if circuit.install_date else None,
             "termination_date": str(circuit.termination_date) if circuit.termination_date else None,
             "tags":             [{"name": t.name, "color": t.color} for t in circuit.tags.all()],
-            "term_a":           _term_info(circuit.termination_a),
-            "term_z":           _term_info(circuit.termination_z),
+            "term_a":           _term_info(circuit.termination_a, site_a),
+            "term_z":           _term_info(circuit.termination_z, site_z),
             "site_a":           site_a_data,
             "site_b":           site_b_data,
             "url":              circuit.get_absolute_url(),
@@ -326,10 +366,13 @@ class ObjectMapView(View):
         ).select_related("region", "group", "tenant")
         segment_qs = Segment.objects.all()
         circuit_qs = Circuit.objects.select_related(
-            "termination_a___site",
-            "termination_z___site",
+            "termination_a",
+            "termination_z",
             "provider",
             "type",
+        ).prefetch_related(
+            "termination_a__cable__terminations",
+            "termination_z__cable__terminations",
         )
 
         # Cap at MAX_OBJECTS to keep the page load fast; JS filters within that set.

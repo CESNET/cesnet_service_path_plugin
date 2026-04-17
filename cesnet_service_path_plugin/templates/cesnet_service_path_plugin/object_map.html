@@ -157,7 +157,7 @@
 
     {# ── Map ──────────────────────────────────────────────────────────────── #}
     <div style="flex:1; min-width:0;">
-        <div id="map" style="height:800px; width:100%; border:1px solid #ddd; border-radius:4px;"></div>
+        <div id="map" style="height:1000px; width:100%; border:1px solid #ddd; border-radius:4px;"></div>
     </div>
 
     {# ── Right column: info card + filter sidebar ────────────────────────── #}
@@ -175,102 +175,160 @@
         </div>
     </div>
 
-    {# ── Filter sidebar ───────────────────────────────────────────────────── #}
+    {# ── Right panel: Filters | List tabs ────────────────────────────────── #}
     <div id="filterSidebar">
         <div class="card h-100">
-            <div class="card-header py-1 d-flex align-items-center justify-content-between">
-                <span class="fw-bold small">
-                    <i class="mdi mdi-filter-outline"></i> Filters
-                </span>
-                <span class="d-flex align-items-center gap-1">
-                    <span id="filterCount" class="badge text-bg-primary" style="display:none;"></span>
-                    <button type="button" id="clearFiltersHeader" class="btn btn-outline-secondary" style="display:none; font-size:0.7rem; padding:1px 6px; line-height:1.2;" title="Clear all filters">
-                        <i class="mdi mdi-filter-off-outline"></i> Clear
-                    </button>
-                </span>
+
+            {# Tab nav in card header #}
+            <div class="card-header py-1">
+                <div class="d-flex align-items-center justify-content-between">
+                    <ul class="nav nav-pills" id="rightPanelTabs" role="tablist" style="gap:2px;">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active py-1 px-2" id="tab-filters" data-bs-toggle="tab"
+                                    data-bs-target="#pane-filters" type="button" role="tab"
+                                    style="font-size:0.78rem;">
+                                <i class="mdi mdi-filter-outline"></i> Filters
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-1 px-2" id="tab-list" data-bs-toggle="tab"
+                                    data-bs-target="#pane-list" type="button" role="tab"
+                                    style="font-size:0.78rem;">
+                                <i class="mdi mdi-format-list-bulleted"></i> List
+                            </button>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div class="card-body p-2" style="overflow-y:auto; max-height:780px; font-size:0.78rem;">
 
-                {# ── Spatial (shared) ──────────────────────────── #}
-                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
-                    <i class="mdi mdi-map-search-outline"></i> Location
-                </div>
-                <div class="mb-1">
-                    <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.region_id.label }}</label>
-                    {{ filter_form.region_id }}
-                </div>
-                <div class="mb-1">
-                    <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_group_id.label }}</label>
-                    {{ filter_form.site_group_id }}
-                </div>
-                <div class="mb-1">
-                    <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.at_any_site.label }}</label>
-                    {{ filter_form.at_any_site }}
-                </div>
+            <div class="tab-content">
 
-                {# ── Sites ─────────────────────────────────────── #}
-                <div id="filterSectionSites">
-                    <hr class="my-1">
-                    <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
-                        <i class="mdi mdi-map-marker"></i> Sites
-                    </div>
-                    <div class="mb-1">
-                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_status.label }}</label>
-                        {{ filter_form.site_status }}
-                    </div>
-                    <div class="mb-1">
-                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_tenant_id.label }}</label>
-                        {{ filter_form.site_tenant_id }}
-                    </div>
-                </div>
+                {# ── Filters pane ──────────────────────────────── #}
+                <div class="tab-pane fade show active" id="pane-filters" role="tabpanel">
+                    <div class="card-body p-2" style="overflow-y:auto; max-height:970px; font-size:0.78rem;">
 
-                {# ── Segments ──────────────────────────────────── #}
-                <div id="filterSectionSegments">
-                    <hr class="my-1">
-                    <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
-                        <i class="mdi mdi-vector-polyline"></i> Segments
-                    </div>
-                    <div class="mb-1">
-                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_status.label }}</label>
-                        {{ filter_form.segment_status }}
-                    </div>
-                    <div class="mb-1">
-                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_type.label }}</label>
-                        {{ filter_form.segment_type }}
-                    </div>
-                    <div class="mb-1">
-                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_provider_id.label }}</label>
-                        {{ filter_form.segment_provider_id }}
-                    </div>
-                </div>
+                        {# ── Spatial (shared) ──────────────────── #}
+                        <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
+                            <i class="mdi mdi-map-search-outline"></i> Location
+                        </div>
+                        <div class="mb-1">
+                            <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.region_id.label }}</label>
+                            {{ filter_form.region_id }}
+                        </div>
+                        <div class="mb-1">
+                            <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_group_id.label }}</label>
+                            {{ filter_form.site_group_id }}
+                        </div>
+                        <div class="mb-1">
+                            <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.at_any_site.label }}</label>
+                            {{ filter_form.at_any_site }}
+                        </div>
 
-                {# ── Circuits ──────────────────────────────────── #}
-                <div id="filterSectionCircuits">
-                    <hr class="my-1">
-                    <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
-                        <i class="mdi mdi-transit-connection-variant"></i> Circuits
-                    </div>
-                    <div class="mb-1">
-                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_status.label }}</label>
-                        {{ filter_form.circuit_status }}
-                    </div>
-                    <div class="mb-1">
-                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_type_id.label }}</label>
-                        {{ filter_form.circuit_type_id }}
-                    </div>
-                    <div class="mb-1">
-                        <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_provider_id.label }}</label>
-                        {{ filter_form.circuit_provider_id }}
-                    </div>
-                </div>
+                        {# ── Sites ─────────────────────────────── #}
+                        <div id="filterSectionSites">
+                            <hr class="my-1">
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
+                                <i class="mdi mdi-map-marker"></i> Sites
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_status.label }}</label>
+                                {{ filter_form.site_status }}
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_tenant_id.label }}</label>
+                                {{ filter_form.site_tenant_id }}
+                            </div>
+                        </div>
 
-                <div class="d-grid mt-1">
-                    <button type="button" id="clearFilters" class="btn btn-outline-secondary btn-sm">
-                        <i class="mdi mdi-filter-off-outline" aria-hidden="true"></i> Clear Filters
-                    </button>
-                </div>
+                        {# ── Segments ──────────────────────────── #}
+                        <div id="filterSectionSegments">
+                            <hr class="my-1">
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
+                                <i class="mdi mdi-vector-polyline"></i> Segments
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_status.label }}</label>
+                                {{ filter_form.segment_status }}
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_type.label }}</label>
+                                {{ filter_form.segment_type }}
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_provider_id.label }}</label>
+                                {{ filter_form.segment_provider_id }}
+                            </div>
+                        </div>
 
-            </div>
+                        {# ── Circuits ──────────────────────────── #}
+                        <div id="filterSectionCircuits">
+                            <hr class="my-1">
+                            <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
+                                <i class="mdi mdi-transit-connection-variant"></i> Circuits
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_status.label }}</label>
+                                {{ filter_form.circuit_status }}
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_type_id.label }}</label>
+                                {{ filter_form.circuit_type_id }}
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_provider_id.label }}</label>
+                                {{ filter_form.circuit_provider_id }}
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-1">
+                            <button type="button" id="clearFilters" class="btn btn-outline-secondary btn-sm">
+                                <i class="mdi mdi-filter-off-outline" aria-hidden="true"></i> Clear Filters
+                            </button>
+                        </div>
+
+                    </div>
+                </div>{# end pane-filters #}
+
+                {# ── List pane ─────────────────────────────────── #}
+                <div class="tab-pane fade" id="pane-list" role="tabpanel">
+                    <div class="card-body p-2" style="font-size:0.78rem;">
+
+                        {# Type toggles #}
+                        <div class="d-flex gap-1 mb-1">
+                            <input type="checkbox" class="btn-check" id="listShowSites"     autocomplete="off" checked>
+                            <label class="btn btn-outline-primary flex-fill"     for="listShowSites"
+                                   style="font-size:0.72rem; padding:0; height:24px; display:flex; align-items:center; justify-content:center;">
+                                <i class="mdi mdi-map-marker" style="line-height:1;"></i>&nbsp;Sites
+                            </label>
+                            <input type="checkbox" class="btn-check" id="listShowSegments"  autocomplete="off" checked>
+                            <label class="btn btn-outline-success flex-fill"  for="listShowSegments"
+                                   style="font-size:0.72rem; padding:0; height:24px; display:flex; align-items:center; justify-content:center;">
+                                <i class="mdi mdi-vector-polyline" style="line-height:1;"></i>&nbsp;Segs
+                            </label>
+                            <input type="checkbox" class="btn-check" id="listShowCircuits"  autocomplete="off" checked>
+                            <label class="btn btn-outline-warning flex-fill"  for="listShowCircuits"
+                                   style="font-size:0.72rem; padding:0; height:24px; display:flex; align-items:center; justify-content:center;">
+                                <i class="mdi mdi-transit-connection-variant" style="line-height:1;"></i>&nbsp;Circs
+                            </label>
+                        </div>
+
+                        {# Search #}
+                        <div class="mb-1">
+                            <input type="search" id="listSearch" class="form-control form-control-sm"
+                                   placeholder="Search by name…" autocomplete="off">
+                        </div>
+
+                        {# Count #}
+                        <div id="listCount" class="text-muted mb-1" style="font-size:0.72rem;"></div>
+
+                        {# Scrollable object rows #}
+                        <div id="objectList" style="overflow-y:auto; max-height:870px;">
+                        </div>
+
+                    </div>
+                </div>{# end pane-list #}
+
+            </div>{# end tab-content #}
         </div>
     </div>
 
