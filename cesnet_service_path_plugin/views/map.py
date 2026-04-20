@@ -1,15 +1,47 @@
 import json
 
+from circuits.choices import CircuitStatusChoices
 from circuits.models import Circuit
+from dcim.choices import SiteStatusChoices
 from dcim.models import Region, Site
 from django.shortcuts import render
 from django.views import View
 
 from cesnet_service_path_plugin.forms.map import MapFilterForm
 from cesnet_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 
 MAX_OBJECTS = 500
+
+# Bootstrap color variant for each status/type value — used by btn-check filter buttons.
+_SITE_STATUS_COLORS = {
+    "planned":         "warning",
+    "staging":         "info",
+    "active":          "success",
+    "decommissioning": "warning",
+    "retired":         "secondary",
+}
+_SEGMENT_STATUS_COLORS = {
+    "active":         "success",
+    "planned":        "warning",
+    "offline":        "danger",
+    "decommissioned": "secondary",
+    "surveyed":       "info",
+}
+_SEGMENT_TYPE_COLORS = {
+    "dark_fiber":       "secondary",
+    "optical_spectrum": "warning",
+    "ethernet_service": "success",
+}
+_CIRCUIT_STATUS_COLORS = {
+    "planned":         "warning",
+    "provisioning":    "info",
+    "active":          "success",
+    "offline":         "danger",
+    "deprovisioning":  "warning",
+    "decommissioned":  "secondary",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -403,6 +435,22 @@ class ObjectMapView(View):
 
         context = {
             "filter_form": filter_form,
+            "site_status_choices": [
+                (v, label, _SITE_STATUS_COLORS.get(v, "secondary"))
+                for v, label in SiteStatusChoices
+            ],
+            "segment_status_choices": [
+                (v, label, _SEGMENT_STATUS_COLORS.get(v, "secondary"))
+                for v, label in StatusChoices
+            ],
+            "segment_type_choices": [
+                (v, label, _SEGMENT_TYPE_COLORS.get(v, "secondary"))
+                for v, label in SegmentTypeChoices
+            ],
+            "circuit_status_choices": [
+                (v, label, _CIRCUIT_STATUS_COLORS.get(v, "secondary"))
+                for v, label in CircuitStatusChoices
+            ],
             "sites_data_json":         json.dumps(sites_data),
             "segments_data_json":      json.dumps(segments_data),
             "circuits_data_json":      json.dumps(circuits_data),

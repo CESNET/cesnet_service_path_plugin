@@ -385,26 +385,30 @@
             }
             return [];
         }
+        function checkboxValues(name) {
+            return Array.from(document.querySelectorAll(`input[type="checkbox"][name="${name}"]:checked`))
+                .map(cb => cb.value).filter(Boolean);
+        }
         return {
             site: {
                 region_ids:  selectValues('region_id').map(Number),
                 group_ids:   selectValues('site_group_id').map(Number),
                 tenant_ids:  selectValues('site_tenant_id').map(Number),
-                statuses:    selectValues('site_status'),
+                statuses:    checkboxValues('site_status'),
             },
             segment: {
                 region_ids:   selectValues('region_id').map(Number),
                 at_any_sites: selectValues('at_any_site').map(Number),
                 provider_ids: selectValues('segment_provider_id').map(Number),
-                statuses:     selectValues('segment_status'),
-                types:        selectValues('segment_type'),
+                statuses:     checkboxValues('segment_status'),
+                types:        checkboxValues('segment_type'),
             },
             circuit: {
                 region_ids:   selectValues('region_id').map(Number),
                 at_any_sites: selectValues('at_any_site').map(Number),
                 provider_ids: selectValues('circuit_provider_id').map(Number),
                 type_ids:     selectValues('circuit_type_id').map(Number),
-                statuses:     selectValues('circuit_status'),
+                statuses:     checkboxValues('circuit_status'),
             },
         };
     }
@@ -630,18 +634,34 @@
             }
         }
 
+        function checkedInputs(name) {
+            return Array.from(document.querySelectorAll(`input[type="checkbox"][name="${name}"]:checked`))
+                .map(cb => ({ value: cb.value, text: cb.labels[0] ? cb.labels[0].textContent.trim() : cb.value }));
+        }
+
+        function uncheckInput(name, value) {
+            const cb = document.querySelector(`input[type="checkbox"][name="${name}"][value="${value}"]`);
+            if (cb) {
+                cb.checked = false;
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
         const selectFields = [
             { name: 'region_id',            prefix: 'Region' },
             { name: 'site_group_id',         prefix: 'Site Group' },
             { name: 'at_any_site',           prefix: 'Site' },
-            { name: 'site_status',           prefix: 'Site status' },
             { name: 'site_tenant_id',        prefix: 'Tenant' },
-            { name: 'segment_status',        prefix: 'Seg. status' },
-            { name: 'segment_type',          prefix: 'Seg. type' },
             { name: 'segment_provider_id',   prefix: 'Seg. Provider' },
-            { name: 'circuit_status',        prefix: 'Circ. status' },
             { name: 'circuit_provider_id',   prefix: 'Circ. Provider' },
             { name: 'circuit_type_id',       prefix: 'Circ. Type' },
+        ];
+
+        const checkFields = [
+            { name: 'site_status',    prefix: 'Site status' },
+            { name: 'segment_status', prefix: 'Seg. status' },
+            { name: 'segment_type',   prefix: 'Seg. type' },
+            { name: 'circuit_status', prefix: 'Circ. status' },
         ];
 
         selectFields.forEach(({ name, prefix }) => {
@@ -649,6 +669,15 @@
                 chips.push({
                     label: `${prefix}: ${text}`,
                     clear: () => deselectOption(name, value),
+                });
+            });
+        });
+
+        checkFields.forEach(({ name, prefix }) => {
+            checkedInputs(name).forEach(({ value, text }) => {
+                chips.push({
+                    label: `${prefix}: ${text}`,
+                    clear: () => uncheckInput(name, value),
                 });
             });
         });
@@ -1222,6 +1251,9 @@
                     Array.from(sel.options).forEach(o => { o.selected = false; });
                     sel.dispatchEvent(new Event('change', { bubbles: true }));
                 }
+            });
+            document.querySelectorAll('#filterSidebar input[type="checkbox"].btn-check').forEach(cb => {
+                cb.checked = false;
             });
             applyFilters();
         }
