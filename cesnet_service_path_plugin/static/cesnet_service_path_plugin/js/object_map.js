@@ -164,6 +164,57 @@
     const circuitLayers = new Map();
 
     // -------------------------------------------------------------------------
+    // Selection highlight
+    // -------------------------------------------------------------------------
+    let _selectedType = null;   // 'site' | 'segment' | 'circuit'
+    let _selectedId   = null;
+
+    function _applyLayerStyle(layer, style) {
+        if (layer instanceof L.CircleMarker) {
+            layer.setStyle(style);
+        } else if (layer instanceof L.Polyline) {
+            layer.setStyle(style);
+        } else if (layer.eachLayer) {
+            layer.eachLayer(sub => { if (sub.setStyle) sub.setStyle(style); });
+        }
+    }
+
+    function _restoreSelected() {
+        if (_selectedId === null) return;
+        if (_selectedType === 'segment') {
+            const layer = segmentLayers.get(_selectedId.toString());
+            const seg   = activeSegments.find(s => s.id === _selectedId);
+            if (layer && seg) _applyLayerStyle(layer, { color: getSegmentColor(seg), weight: seg.has_path_data ? 4 : 3, opacity: seg.has_path_data ? 0.85 : 0.7 });
+        } else if (_selectedType === 'circuit') {
+            const layer = circuitLayers.get(_selectedId.toString());
+            const circ  = activeCircuits.find(c => c.id === _selectedId);
+            if (layer && circ) _applyLayerStyle(layer, { color: getCircuitColor(circ), weight: 3, opacity: 0.7 });
+        } else if (_selectedType === 'site') {
+            const layer = siteLayers.get(_selectedId.toString());
+            const site  = activeSites.find(s => s.id === _selectedId);
+            if (layer && site) _applyLayerStyle(layer, { fillColor: getSiteColor(site), radius: 7, weight: 2, color: '#fff' });
+        }
+        _selectedType = null;
+        _selectedId   = null;
+    }
+
+    function highlightObject(type, id) {
+        _restoreSelected();
+        _selectedType = type;
+        _selectedId   = id;
+        if (type === 'segment') {
+            const layer = segmentLayers.get(id.toString());
+            if (layer) _applyLayerStyle(layer, { color: '#ff6d00', weight: 7, opacity: 1 });
+        } else if (type === 'circuit') {
+            const layer = circuitLayers.get(id.toString());
+            if (layer) _applyLayerStyle(layer, { color: '#ff6d00', weight: 6, opacity: 1 });
+        } else if (type === 'site') {
+            const layer = siteLayers.get(id.toString());
+            if (layer) _applyLayerStyle(layer, { fillColor: '#ff6d00', radius: 10, weight: 3, color: '#e65100' });
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Dynamic palette builders
     // -------------------------------------------------------------------------
     function buildPalette(items, store) {
@@ -747,6 +798,7 @@
     }
 
     function renderSites() {
+        if (_selectedType === 'site') { _selectedType = null; _selectedId = null; }
         siteGroup.clearLayers();
         siteLayers.clear();
 
@@ -774,7 +826,7 @@
                 html += `<br><span class="badge text-bg-${badge}">${siteObj.status}</span>`;
                 if (siteObj.region) html += `<br><small>Region: ${siteObj.region}</small>`;
                 if (siteObj.tenant) html += `<br><small>Tenant: ${siteObj.tenant}</small>`;
-                html += `<br><a href="${siteObj.url}" class="small">View site</a>`;
+                html += `<div class="d-flex gap-1 mt-1"><a href="${siteObj.url}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-open-in-new"></i> View</a></div>`;
             }
 
             const relatedSegs = siteSegmentIndex[id] || [];
@@ -892,6 +944,7 @@
     function hideInfoCard() {
         const card = document.getElementById('infoCard');
         if (card) card.style.display = 'none';
+        _restoreSelected();
     }
 
     function _row(label, value) {
@@ -926,6 +979,7 @@
     }
 
     function buildSiteInfoCard(site) {
+        highlightObject('site', site.id);
         const badge = siteStatusBadge[site.status] || 'secondary';
         const rows = _table([
             _row('Region',    site.region  || '—'),
@@ -945,6 +999,7 @@
     }
 
     function buildSegmentInfoCard(seg) {
+        highlightObject('segment', seg.id);
         const sc = segmentStatusBadge[seg.status] || 'secondary';
         let rows = _table([
             _row('Provider',       seg.provider || '—'),
@@ -1005,6 +1060,7 @@
     }
 
     function buildCircuitInfoCard(circ) {
+        highlightObject('circuit', circ.id);
         const sc = circuitStatusBadge[circ.status] || 'secondary';
         const rows = _table([
             _row('Provider',     circ.provider || '—'),
@@ -1037,8 +1093,10 @@
                 `<span class="badge text-bg-${sc}">${seg.status}</span><br>` +
                 `<small>${siteA} ↔ ${siteB}</small><br>` +
                 `<small>Provider: ${seg.provider || 'N/A'} · Length: ${len}</small><br>` +
-                `<a href="${seg.url}" class="small">View segment</a> ` +
-                `<a href="${seg.map_url}" class="small">Individual map</a>`
+                `<div class="d-flex gap-1 mt-1">` +
+                `<a href="${seg.url}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-open-in-new"></i> View</a>` +
+                `<a href="${seg.map_url}" class="btn btn-outline-secondary btn-sm"><i class="mdi mdi-map"></i> Map</a>` +
+                `</div>`
             )
             .openOn(map);
         buildSegmentInfoCard(seg);
@@ -1051,10 +1109,11 @@
         let html = `<div>
             <strong>${items.length} segments here</strong>
             <div style="font-size:0.78rem;color:#555;">Click a name to show details</div>`;
-        items.forEach(({ seg }) => {
+        items.forEach(({ seg }, i) => {
             const sc = segmentStatusBadge[seg.status] || 'secondary';
             _overlapSegById[seg.id] = seg;
-            html += `<div class="border-top pt-1 mt-1">
+            html += `<hr style="margin:4px 0;">
+            <div>
                 <span class="seg-overlap-name"
                       data-seg-id="${seg.id}"
                       style="cursor:pointer;font-weight:500;color:#0d6efd;text-decoration:none;"
@@ -1063,12 +1122,15 @@
                       title="Show details in info card">${seg.name}</span><br>
                 <span class="badge text-bg-${sc} small">${seg.status}</span>
                 <small> ${seg.site_a ? seg.site_a.name : ''} ↔ ${seg.site_b ? seg.site_b.name : ''}</small>
-                <small class="ms-1"><a href="${seg.url}">View</a></small>
+                <div class="d-flex gap-1 mt-1">
+                    <a href="${seg.url}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-open-in-new"></i> View</a>
+                    <a href="${seg.map_url}" class="btn btn-outline-secondary btn-sm"><i class="mdi mdi-map"></i> Map</a>
+                </div>
             </div>`;
         });
         html += '</div>';
 
-        const popup = L.popup({ maxWidth: 340 }).setLatLng(latlng).setContent(html);
+        const popup = L.popup({ maxWidth: 380 }).setLatLng(latlng).setContent(html);
         popup.on('add', function () {
             const el = popup.getElement();
             if (!el) return;
@@ -1097,6 +1159,7 @@
     let cachedGeoFeatures = null;
 
     function renderSegments() {
+        if (_selectedType === 'segment') { _selectedType = null; _selectedId = null; }
         segmentPathGroup.clearLayers();
         segmentLayers.clear();
 
@@ -1150,6 +1213,7 @@
     // Circuit rendering
     // -------------------------------------------------------------------------
     function renderCircuits() {
+        if (_selectedType === 'circuit') { _selectedType = null; _selectedId = null; }
         circuitGroup.clearLayers();
         circuitLayers.clear();
 
@@ -1167,7 +1231,9 @@
                 `<span class="badge text-bg-${sc}">${circ.status}</span><br>` +
                 `<small>${circ.site_a.name} ↔ ${circ.site_b.name}</small><br>` +
                 `<small>Provider: ${circ.provider || 'N/A'} · Type: ${circ.type || 'N/A'}</small><br>` +
-                `<a href="${circ.url}" class="small">View circuit</a>`,
+                `<div class="d-flex gap-1 mt-1">` +
+                `<a href="${circ.url}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-open-in-new"></i> View</a>` +
+                `</div>`,
                 { maxWidth: 300 }
             );
             line.on('click', (function(c) {
