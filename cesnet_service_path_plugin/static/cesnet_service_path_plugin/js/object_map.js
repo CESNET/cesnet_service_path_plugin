@@ -333,6 +333,8 @@
         circuits: ['btn-warning',  'btn-outline-warning'],
     };
 
+    const _listCheckboxId = { sites: 'listShowSites', segments: 'listShowSegments', circuits: 'listShowCircuits' };
+
     function toggleLayer(type, btn) {
         visibility[type] = !visibility[type];
         const group =
@@ -345,6 +347,10 @@
             'filterSectionSites'
         );
         const [onCls, offCls] = toggleStyles[type];
+
+        // Sync list checkbox to match toolbar visibility
+        const listCb = document.getElementById(_listCheckboxId[type]);
+        if (listCb) listCb.checked = visibility[type];
 
         if (visibility[type]) {
             group.addTo(map);
@@ -366,6 +372,7 @@
 
         updateLegend();
         updateCounts();
+        renderList();
     }
 
     // -------------------------------------------------------------------------
@@ -523,9 +530,9 @@
         if (!container) return;
 
         const q            = (document.getElementById('listSearch')?.value || '').toLowerCase();
-        const showSites    = document.getElementById('listShowSites')?.checked    !== false;
-        const showSegments = document.getElementById('listShowSegments')?.checked !== false;
-        const showCircuits = document.getElementById('listShowCircuits')?.checked !== false;
+        const showSites    = visibility.sites    && (document.getElementById('listShowSites')?.checked    !== false);
+        const showSegments = visibility.segments && (document.getElementById('listShowSegments')?.checked !== false);
+        const showCircuits = visibility.circuits && (document.getElementById('listShowCircuits')?.checked !== false);
 
         const rows = [];
 
@@ -1041,14 +1048,18 @@
     const _overlapSegById = {};
 
     function showOverlapPopup(items, latlng) {
-        let html = `<div><strong>${items.length} segments here</strong>`;
+        let html = `<div>
+            <strong>${items.length} segments here</strong>
+            <div style="font-size:0.78rem;color:#555;">Click a name to show details</div>`;
         items.forEach(({ seg }) => {
             const sc = segmentStatusBadge[seg.status] || 'secondary';
             _overlapSegById[seg.id] = seg;
             html += `<div class="border-top pt-1 mt-1">
                 <span class="seg-overlap-name"
                       data-seg-id="${seg.id}"
-                      style="cursor:pointer;font-weight:500;"
+                      style="cursor:pointer;font-weight:500;color:#0d6efd;text-decoration:none;"
+                      onmouseover="this.style.textDecoration='underline'"
+                      onmouseout="this.style.textDecoration='none'"
                       title="Show details in info card">${seg.name}</span><br>
                 <span class="badge text-bg-${sc} small">${seg.status}</span>
                 <small> ${seg.site_a ? seg.site_a.name : ''} ↔ ${seg.site_b ? seg.site_b.name : ''}</small>
@@ -1224,11 +1235,13 @@
         if (toggleSegBtn)  toggleSegBtn.addEventListener('click',  () => toggleLayer('segments', toggleSegBtn));
         if (toggleSiteBtn) toggleSiteBtn.addEventListener('click', () => toggleLayer('sites',    toggleSiteBtn));
         if (toggleCircBtn) {
-            // Circuits are hidden by default — sync button and filter section to off state
+            // Circuits are hidden by default — sync button, filter section and list checkbox to off state
             toggleCircBtn.classList.replace('btn-warning', 'btn-outline-warning');
             toggleCircBtn.title = 'Show circuits';
             const circFilterSection = document.getElementById('filterSectionCircuits');
             if (circFilterSection) circFilterSection.classList.add('d-none');
+            const listCircCb = document.getElementById('listShowCircuits');
+            if (listCircCb) listCircCb.checked = false;
             toggleCircBtn.addEventListener('click', () => toggleLayer('circuits', toggleCircBtn));
         }
 
@@ -1285,8 +1298,10 @@
             });
         }
 
-        // Initial list render
-        renderList();
+        // Initial list render — run applyFilters so active* arrays reflect any
+        // server-side pre-filters (region, etc.) baked into the page URL before
+        // the list is populated for the first time.
+        applyFilters();
 
         // Tile layer switcher
         initializeLayerSwitching(map);

@@ -321,7 +321,7 @@
                 <div class="tab-pane fade" id="pane-list" role="tabpanel">
                     <div class="card-body p-2" style="font-size:0.78rem;">
 
-                        {# Type toggles #}
+                        {# Type toggles — mirrors main toolbar visibility #}
                         <div class="d-flex gap-1 mb-1">
                             <input type="checkbox" class="btn-check" id="listShowSites"     autocomplete="off" checked>
                             <label class="btn btn-outline-primary flex-fill"     for="listShowSites"
@@ -338,6 +338,10 @@
                                    style="font-size:0.72rem; padding:0; height:24px; display:flex; align-items:center; justify-content:center;">
                                 <i class="mdi mdi-transit-connection-variant" style="line-height:1;"></i>&nbsp;Circs
                             </label>
+                        </div>
+                        <div class="text-muted mb-1" style="font-size:0.68rem;">
+                            <i class="mdi mdi-information-outline"></i>
+                            Mirrors map visibility. Use to narrow this list only — does not affect the map.
                         </div>
 
                         {# Search #}
