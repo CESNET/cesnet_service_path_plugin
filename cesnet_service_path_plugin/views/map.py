@@ -136,7 +136,7 @@ def _build_sites_data(site_qs):
             "lng": lng,
             "facility": site.facility or None,
             "physical_address": site.physical_address or None,
-            "tags": [{"name": t.name, "color": t.color} for t in site.tags.all()],
+            "tags": [{"id": t.pk, "name": t.name, "color": t.color} for t in site.tags.all()],
             "url": site.get_absolute_url(),
         })
     return sites_data

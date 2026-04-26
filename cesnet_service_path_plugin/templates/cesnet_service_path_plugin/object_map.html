@@ -207,6 +207,12 @@
                 <div class="tab-pane fade show active" id="pane-filters" role="tabpanel">
                     <div class="card-body p-2" style="overflow-y:auto; max-height:970px; font-size:0.78rem;">
 
+                        <div class="d-grid mb-2">
+                            <button type="button" id="clearFiltersTop" class="btn btn-outline-secondary btn-sm">
+                                <i class="mdi mdi-filter-off-outline" aria-hidden="true"></i> Clear Filters
+                            </button>
+                        </div>
+
                         {# ── Spatial (shared) ──────────────────── #}
                         <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
                             <i class="mdi mdi-map-search-outline"></i> Location
@@ -245,6 +251,10 @@
                                 <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_tenant_id.label }}</label>
                                 {{ filter_form.site_tenant_id }}
                             </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_tag_id.label }}</label>
+                                {{ filter_form.site_tag_id }}
+                            </div>
                         </div>
 
                         {# ── Segments ──────────────────────────── #}
@@ -279,6 +289,10 @@
                                 <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_provider_id.label }}</label>
                                 {{ filter_form.segment_provider_id }}
                             </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_tag_id.label }}</label>
+                                {{ filter_form.segment_tag_id }}
+                            </div>
                         </div>
 
                         {# ── Circuits ──────────────────────────── #}
@@ -305,6 +319,10 @@
                             <div class="mb-1">
                                 <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_provider_id.label }}</label>
                                 {{ filter_form.circuit_provider_id }}
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_tag_id.label }}</label>
+                                {{ filter_form.circuit_tag_id }}
                             </div>
                         </div>
 

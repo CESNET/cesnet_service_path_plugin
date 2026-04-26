@@ -2,6 +2,7 @@ from circuits.models import CircuitType, Provider
 from dcim.choices import SiteStatusChoices
 from dcim.models import Region, Site, SiteGroup
 from django import forms
+from extras.models import Tag
 from tenancy.models import Tenant
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 
@@ -56,6 +57,11 @@ class MapFilterForm(forms.Form):
         required=False,
         label="Tenant",
     )
+    site_tag_id = DynamicModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        label="Tag",
+    )
 
     # -------------------------------------------------------------------------
     # Segment filters
@@ -75,6 +81,11 @@ class MapFilterForm(forms.Form):
         required=False,
         label="Provider",
     )
+    segment_tag_id = DynamicModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        label="Tag",
+    )
 
     # -------------------------------------------------------------------------
     # Circuit filters
@@ -93,6 +104,11 @@ class MapFilterForm(forms.Form):
         queryset=Provider.objects.all(),
         required=False,
         label="Provider",
+    )
+    circuit_tag_id = DynamicModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        label="Tag",
     )
 
     def __init__(self, *args, **kwargs):

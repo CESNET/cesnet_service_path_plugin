@@ -452,12 +452,14 @@
                 region_ids:  selectValues('region_id').map(Number),
                 group_ids:   selectValues('site_group_id').map(Number),
                 tenant_ids:  selectValues('site_tenant_id').map(Number),
+                tag_ids:     selectValues('site_tag_id').map(Number),
                 statuses:    checkboxValues('site_status'),
             },
             segment: {
                 region_ids:   selectValues('region_id').map(Number),
                 at_any_sites: selectValues('at_any_site').map(Number),
                 provider_ids: selectValues('segment_provider_id').map(Number),
+                tag_ids:      selectValues('segment_tag_id').map(Number),
                 statuses:     checkboxValues('segment_status'),
                 types:        checkboxValues('segment_type'),
             },
@@ -466,6 +468,7 @@
                 at_any_sites: selectValues('at_any_site').map(Number),
                 provider_ids: selectValues('circuit_provider_id').map(Number),
                 type_ids:     selectValues('circuit_type_id').map(Number),
+                tag_ids:      selectValues('circuit_tag_id').map(Number),
                 statuses:     checkboxValues('circuit_status'),
             },
         };
@@ -488,6 +491,10 @@
             if (filters.region_ids.length && !siteInRegions(site.region_id, filters.region_ids)) return false;
             if (filters.group_ids.length  && !filters.group_ids.includes(site.group_id))         return false;
             if (filters.tenant_ids.length && !filters.tenant_ids.includes(site.tenant_id))       return false;
+            if (filters.tag_ids.length) {
+                const ids = (site.tags || []).map(t => t.id);
+                if (!filters.tag_ids.every(tid => ids.includes(tid))) return false;
+            }
             if (filters.statuses.length) {
                 const key = site.status ? site.status.toLowerCase().replace(/\s+/g, '_') : '';
                 if (!filters.statuses.some(s => key === s || site.status === s)) return false;
@@ -507,6 +514,10 @@
                 if (!filters.types.some(t => seg.segment_type === (typeMap[t] || t))) return false;
             }
             if (filters.provider_ids.length && !filters.provider_ids.includes(seg.provider_id)) return false;
+            if (filters.tag_ids.length) {
+                const ids = (seg.tags || []).map(t => t.id);
+                if (!filters.tag_ids.every(tid => ids.includes(tid))) return false;
+            }
             if (filters.at_any_sites.length) {
                 const siteAId = seg.site_a ? seg.site_a.id : null;
                 const siteBId = seg.site_b ? seg.site_b.id : null;
@@ -530,6 +541,10 @@
             }
             if (filters.provider_ids.length && !filters.provider_ids.includes(circ.provider_id)) return false;
             if (filters.type_ids.length     && !filters.type_ids.includes(circ.type_id))         return false;
+            if (filters.tag_ids.length) {
+                const ids = (circ.tags || []).map(t => t.id);
+                if (!filters.tag_ids.every(tid => ids.includes(tid))) return false;
+            }
             if (filters.at_any_sites.length) {
                 const siteAId = circ.site_a ? circ.site_a.id : null;
                 const siteBId = circ.site_b ? circ.site_b.id : null;
@@ -632,6 +647,23 @@
         });
     }
 
+    function _segmentMidpoint(seg) {
+        const layer = segmentLayers.get(seg.id.toString());
+        if (layer) {
+            // Collect all latlngs from the rendered layer (GeoJSON group or plain polyline)
+            const lls = [];
+            const collect = l => { if (l instanceof L.Polyline) lls.push(...l.getLatLngs().flat(Infinity)); };
+            if (layer instanceof L.Polyline) collect(layer);
+            else if (layer.eachLayer) layer.eachLayer(collect);
+            if (lls.length) return lls[Math.floor(lls.length / 2)];
+        }
+        // Fallback for segments not yet rendered or without path data
+        if (seg.site_a && seg.site_b)
+            return L.latLng((seg.site_a.lat + seg.site_b.lat) / 2, (seg.site_a.lng + seg.site_b.lng) / 2);
+        const s = seg.site_a || seg.site_b;
+        return s ? L.latLng(s.lat, s.lng) : null;
+    }
+
     function handleListClick(rowIndex) {
         const container = document.getElementById('objectList');
         if (!container || !container._rows) return;
@@ -649,11 +681,10 @@
         } else if (row.type === 'segment') {
             const seg = activeSegments.find(s => s.id === row.id);
             if (!seg) return;
-            const lat = seg.site_a && seg.site_b ? (seg.site_a.lat + seg.site_b.lat) / 2 : (seg.site_a || seg.site_b || {}).lat;
-            const lng = seg.site_a && seg.site_b ? (seg.site_a.lng + seg.site_b.lng) / 2 : (seg.site_a || seg.site_b || {}).lng;
-            if (lat == null) return;
-            map.flyTo([lat, lng], Math.max(map.getZoom(), 10));
-            showSegmentPopup(seg, L.latLng(lat, lng));
+            const latlng = _segmentMidpoint(seg);
+            if (!latlng) return;
+            map.flyTo(latlng, Math.max(map.getZoom(), 10));
+            showSegmentPopup(seg, latlng);
 
         } else if (row.type === 'circuit') {
             const circ  = activeCircuits.find(c => c.id === row.id);
@@ -710,9 +741,12 @@
             { name: 'site_group_id',         prefix: 'Site Group' },
             { name: 'at_any_site',           prefix: 'Site' },
             { name: 'site_tenant_id',        prefix: 'Tenant' },
+            { name: 'site_tag_id',           prefix: 'Site tag' },
             { name: 'segment_provider_id',   prefix: 'Seg. Provider' },
+            { name: 'segment_tag_id',        prefix: 'Seg. tag' },
             { name: 'circuit_provider_id',   prefix: 'Circ. Provider' },
             { name: 'circuit_type_id',       prefix: 'Circ. Type' },
+            { name: 'circuit_tag_id',        prefix: 'Circ. tag' },
         ];
 
         const checkFields = [
@@ -1324,7 +1358,11 @@
         // Clear filters — shared logic used by both the header X and the bottom button
         function clearAllFilters() {
             document.querySelectorAll('#filterSidebar select').forEach(sel => {
-                if (window.$ && $(sel).data('select2')) {
+                if (sel.tomselect) {
+                    sel.tomselect.clear();
+                    sel.tomselect.clearOptions();
+                    sel.dispatchEvent(new Event('change', { bubbles: true }));
+                } else if (window.$ && $(sel).data('select2')) {
                     $(sel).val(null).trigger('change');
                 } else {
                     Array.from(sel.options).forEach(o => { o.selected = false; });
@@ -1339,6 +1377,8 @@
 
         const clearBtn = document.getElementById('clearFilters');
         if (clearBtn) clearBtn.addEventListener('click', clearAllFilters);
+        const clearBtnTop = document.getElementById('clearFiltersTop');
+        if (clearBtnTop) clearBtnTop.addEventListener('click', clearAllFilters);
 
         // Info card close button
         const infoCardClose = document.getElementById('infoCardClose');
