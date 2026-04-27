@@ -2,6 +2,7 @@ from circuits.models import CircuitType, Provider
 from dcim.choices import SiteStatusChoices
 from dcim.models import Region, Site, SiteGroup
 from django import forms
+from extras.models import Tag
 from tenancy.models import Tenant
 from utilities.forms.fields import DynamicModelMultipleChoiceField
 
@@ -17,11 +18,11 @@ class MapFilterForm(forms.Form):
 
     Field naming convention:
     - Shared spatial fields: native filterset names (region_id, site_group_id, at_any_site)
-    - Site-specific fields: site_ prefix (site_status, site_tenant_id)
-    - Segment-specific fields: segment_ prefix (segment_status, segment_type, segment_provider_id)
+    - Site-specific fields: site_ prefix (site_status, site_tenant_id, site_tag_id)
+    - Segment-specific fields: segment_ prefix (segment_status, segment_type, segment_provider_id, segment_tag_id)
+    - Circuit-specific fields: circuit_ prefix (circuit_status, circuit_type_id, circuit_provider_id, circuit_tag_id)
 
-    The view's _extract_*_params() helpers strip/remap these prefixes before
-    passing GET params to each filterset.
+    All filtering is performed client-side in object_map.js using the JSON data blob.
     """
 
     # -------------------------------------------------------------------------
@@ -50,12 +51,16 @@ class MapFilterForm(forms.Form):
         choices=SiteStatusChoices,
         required=False,
         label="Status",
-        widget=forms.SelectMultiple(attrs={"class": "form-select form-select-sm", "size": "1"}),
     )
     site_tenant_id = DynamicModelMultipleChoiceField(
         queryset=Tenant.objects.all(),
         required=False,
         label="Tenant",
+    )
+    site_tag_id = DynamicModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        label="Tag",
     )
 
     # -------------------------------------------------------------------------
@@ -65,18 +70,21 @@ class MapFilterForm(forms.Form):
         choices=StatusChoices,
         required=False,
         label="Status",
-        widget=forms.SelectMultiple(attrs={"class": "form-select form-select-sm", "size": "1"}),
     )
     segment_type = forms.MultipleChoiceField(
         choices=SegmentTypeChoices,
         required=False,
         label="Type",
-        widget=forms.SelectMultiple(attrs={"class": "form-select form-select-sm", "size": "1"}),
     )
     segment_provider_id = DynamicModelMultipleChoiceField(
         queryset=Provider.objects.all(),
         required=False,
         label="Provider",
+    )
+    segment_tag_id = DynamicModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        label="Tag",
     )
 
     # -------------------------------------------------------------------------
@@ -86,7 +94,6 @@ class MapFilterForm(forms.Form):
         choices=[],          # populated in __init__ to avoid import-time issues
         required=False,
         label="Status",
-        widget=forms.SelectMultiple(attrs={"class": "form-select form-select-sm", "size": "1"}),
     )
     circuit_type_id = DynamicModelMultipleChoiceField(
         queryset=CircuitType.objects.all(),
@@ -97,6 +104,11 @@ class MapFilterForm(forms.Form):
         queryset=Provider.objects.all(),
         required=False,
         label="Provider",
+    )
+    circuit_tag_id = DynamicModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        label="Tag",
     )
 
     def __init__(self, *args, **kwargs):

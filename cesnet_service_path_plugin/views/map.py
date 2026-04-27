@@ -1,33 +1,56 @@
 import json
 
+from circuits.choices import CircuitStatusChoices
 from circuits.models import Circuit
+from dcim.choices import SiteStatusChoices
 from dcim.models import Region, Site
 from django.shortcuts import render
 from django.views import View
 
 from cesnet_service_path_plugin.forms.map import MapFilterForm
 from cesnet_service_path_plugin.models import Segment
+from cesnet_service_path_plugin.models.custom_choices import StatusChoices
 from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 
 MAX_OBJECTS = 500
 
+# Bootstrap color variant for each status/type value — used by btn-check filter buttons.
+_SITE_STATUS_COLORS = {
+    "planned":         "warning",
+    "staging":         "info",
+    "active":          "success",
+    "decommissioning": "warning",
+    "retired":         "secondary",
+}
+_SEGMENT_STATUS_COLORS = {
+    "active":         "success",
+    "planned":        "warning",
+    "offline":        "danger",
+    "decommissioned": "secondary",
+    "surveyed":       "info",
+}
+_SEGMENT_TYPE_COLORS = {
+    "dark_fiber":       "secondary",
+    "optical_spectrum": "warning",
+    "ethernet_service": "success",
+}
+_CIRCUIT_STATUS_COLORS = {
+    "planned":         "warning",
+    "provisioning":    "info",
+    "active":          "success",
+    "offline":         "danger",
+    "deprovisioning":  "warning",
+    "decommissioned":  "secondary",
+}
 
-# ---------------------------------------------------------------------------
-# The helpers below are kept for the unit tests — the view no longer uses
-# server-side filtering (all filtering is done client-side in JS).
-# ---------------------------------------------------------------------------
 
-def _remap_params(get_params, mapping, passthrough):
+def _remap_params(get, *, mapping, passthrough):
     """
-    Build a plain dict suitable for passing to a django-filter FilterSet.
-    Values are kept as lists (getlist), matching the pattern used by NetBox's
-    own filterset tests (e.g. {'region_id': [pk]}).
-
-    mapping    — {form_field_name: filterset_field_name}
-    passthrough — set of field names identical in both form and filterset
+    Translate form field names in *get* (a QueryDict-like object) into filterset
+    field names, discarding anything not in *mapping* or *passthrough*.
     """
     result = {}
-    for key, values in get_params.lists():
+    for key, values in get.lists():
         if key in passthrough:
             result[key] = values
         elif key in mapping:
@@ -35,28 +58,27 @@ def _remap_params(get_params, mapping, passthrough):
     return result
 
 
-def _extract_site_params(get_params):
-    return _remap_params(
-        get_params,
-        mapping={
-            "site_status":    "status",
-            "site_tenant_id": "tenant_id",
-            "site_group_id":  "group_id",
-        },
-        passthrough={"region_id"},
-    )
+_SITE_PASSTHROUGH = {"region_id", "site_id", "group_id", "tenant_id", "tag_id"}
+_SITE_MAPPING = {
+    "site_status":    "status",
+    "site_group_id":  "group_id",
+    "site_tenant_id": "tenant_id",
+}
+
+_SEGMENT_PASSTHROUGH = {"region_id", "at_any_site", "segment_type"}
+_SEGMENT_MAPPING = {
+    "segment_status":      "status",
+    "segment_provider_id": "provider_id",
+    "segment_tag_id":      "tag_id",
+}
 
 
-def _extract_segment_params(get_params):
-    return _remap_params(
-        get_params,
-        mapping={
-            "segment_status":      "status",
-            "segment_type":        "segment_type",
-            "segment_provider_id": "provider_id",
-        },
-        passthrough={"region_id", "at_any_site"},
-    )
+def _extract_site_params(get):
+    return _remap_params(get, mapping=_SITE_MAPPING, passthrough=_SITE_PASSTHROUGH)
+
+
+def _extract_segment_params(get):
+    return _remap_params(get, mapping=_SEGMENT_MAPPING, passthrough=_SEGMENT_PASSTHROUGH)
 
 
 def _build_region_ancestors():
@@ -104,7 +126,7 @@ def _build_sites_data(site_qs):
             "lng": lng,
             "facility": site.facility or None,
             "physical_address": site.physical_address or None,
-            "tags": [{"name": t.name, "color": t.color} for t in site.tags.all()],
+            "tags": [{"id": t.pk, "name": t.name, "color": t.color} for t in site.tags.all()],
             "url": site.get_absolute_url(),
         })
     return sites_data
@@ -198,7 +220,7 @@ def _build_segments_data(segment_qs):
             "site_b": site_b_data,
             "has_path_data": segment.has_path_data(),
             "type_data": type_data,
-            "tags": [{"name": t.name, "color": t.color} for t in segment.tags.all()],
+            "tags": [{"id": t.pk, "name": t.name, "color": t.color} for t in segment.tags.all()],
             "url": segment.get_absolute_url(),
             "map_url": f"/plugins/cesnet-service-path-plugin/segments/{segment.pk}/map/",
         })
@@ -310,7 +332,7 @@ def _build_circuits_data(circuit_qs):
             "tenant_id":        circuit.tenant.pk if circuit.tenant else None,
             "install_date":     str(circuit.install_date) if circuit.install_date else None,
             "termination_date": str(circuit.termination_date) if circuit.termination_date else None,
-            "tags":             [{"name": t.name, "color": t.color} for t in circuit.tags.all()],
+            "tags":             [{"id": t.pk, "name": t.name, "color": t.color} for t in circuit.tags.all()],
             "term_a":           _term_info(circuit.termination_a, site_a),
             "term_z":           _term_info(circuit.termination_z, site_z),
             "site_a":           site_a_data,
@@ -363,32 +385,34 @@ class ObjectMapView(View):
         site_qs = Site.objects.filter(
             latitude__isnull=False,
             longitude__isnull=False,
-        ).select_related("region", "group", "tenant")
-        segment_qs = Segment.objects.all()
+        ).select_related("region", "group", "tenant").prefetch_related("tags")
+        segment_qs = Segment.objects.select_related(
+            "site_a", "site_b", "provider",
+        ).prefetch_related("tags")
         circuit_qs = Circuit.objects.select_related(
             "termination_a",
             "termination_z",
             "provider",
             "type",
+            "tenant",
         ).prefetch_related(
             "termination_a__cable__terminations",
             "termination_z__cable__terminations",
+            "tags",
         )
 
         # Cap at MAX_OBJECTS to keep the page load fast; JS filters within that set.
+        # Count via the DB, then slice at the DB level so we never load more than MAX_OBJECTS+1 rows.
         sites_truncated    = site_qs.count()    > MAX_OBJECTS
         segments_truncated = segment_qs.count() > MAX_OBJECTS
         circuits_truncated = circuit_qs.count() > MAX_OBJECTS
-        if sites_truncated:
-            site_qs = site_qs[:MAX_OBJECTS]
-        if segments_truncated:
-            segment_qs = segment_qs[:MAX_OBJECTS]
-        if circuits_truncated:
-            circuit_qs = circuit_qs[:MAX_OBJECTS]
+        site_list    = list(site_qs[:MAX_OBJECTS])
+        segment_list = list(segment_qs[:MAX_OBJECTS])
+        circuit_list = list(circuit_qs[:MAX_OBJECTS])
 
-        sites_data       = _build_sites_data(site_qs)
-        segments_data    = _build_segments_data(segment_qs)
-        circuits_data    = _build_circuits_data(circuit_qs)
+        sites_data       = _build_sites_data(site_list)
+        segments_data    = _build_segments_data(segment_list)
+        circuits_data    = _build_circuits_data(circuit_list)
         region_ancestors = _build_region_ancestors()
         map_bounds       = _compute_bounds(sites_data, segments_data, circuits_data)
 
@@ -403,6 +427,22 @@ class ObjectMapView(View):
 
         context = {
             "filter_form": filter_form,
+            "site_status_choices": [
+                (v, label, _SITE_STATUS_COLORS.get(v, "secondary"))
+                for v, label in SiteStatusChoices
+            ],
+            "segment_status_choices": [
+                (v, label, _SEGMENT_STATUS_COLORS.get(v, "secondary"))
+                for v, label in StatusChoices
+            ],
+            "segment_type_choices": [
+                (v, label, _SEGMENT_TYPE_COLORS.get(v, "secondary"))
+                for v, label in SegmentTypeChoices
+            ],
+            "circuit_status_choices": [
+                (v, label, _CIRCUIT_STATUS_COLORS.get(v, "secondary"))
+                for v, label in CircuitStatusChoices
+            ],
             "sites_data_json":         json.dumps(sites_data),
             "segments_data_json":      json.dumps(segments_data),
             "circuits_data_json":      json.dumps(circuits_data),

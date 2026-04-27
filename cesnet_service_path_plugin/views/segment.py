@@ -217,7 +217,6 @@ class SegmentListView(generic.ObjectListView):
     table = SegmentTable
     filterset = SegmentFilterSet
     filterset_form = SegmentFilterForm
-    template_name = "cesnet_service_path_plugin/segment_list.html"
 
 
 @register_model_view(Segment, "add", detail=False)
@@ -413,17 +412,16 @@ def segments_map_api(request):
     API endpoint to return filtered segments as GeoJSON for map display
     """
     # Use the same filterset as the table view
-    filterset = SegmentFilterSet(request.GET, queryset=Segment.objects.all())
-    segments = filterset.qs
-
-    # Limit segments for performance
+    filterset = SegmentFilterSet(
+        request.GET,
+        queryset=Segment.objects.select_related("site_a", "site_b", "provider"),
+    )
     MAX_SEGMENTS = 500
-    if segments.count() > MAX_SEGMENTS:
-        segments = segments[:MAX_SEGMENTS]
+    segment_list = list(filterset.qs[:MAX_SEGMENTS])
 
     features = []
 
-    for segment in segments:
+    for segment in segment_list:
         if segment.has_path_data():
             # Add segment with actual path data
             try:
@@ -497,5 +495,3 @@ def segments_map_api(request):
     geojson = {"type": "FeatureCollection", "features": features}
 
     return JsonResponse(geojson)
-
-

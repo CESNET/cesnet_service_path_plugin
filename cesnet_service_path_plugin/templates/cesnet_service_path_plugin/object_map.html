@@ -207,6 +207,12 @@
                 <div class="tab-pane fade show active" id="pane-filters" role="tabpanel">
                     <div class="card-body p-2" style="overflow-y:auto; max-height:970px; font-size:0.78rem;">
 
+                        <div class="d-grid mb-2">
+                            <button type="button" id="clearFiltersTop" class="btn btn-outline-secondary btn-sm">
+                                <i class="mdi mdi-filter-off-outline" aria-hidden="true"></i> Clear Filters
+                            </button>
+                        </div>
+
                         {# ── Spatial (shared) ──────────────────── #}
                         <div class="text-muted text-uppercase fw-bold mb-1" style="font-size:0.68rem; letter-spacing:.04em;">
                             <i class="mdi mdi-map-search-outline"></i> Location
@@ -231,12 +237,23 @@
                                 <i class="mdi mdi-map-marker"></i> Sites
                             </div>
                             <div class="mb-1">
-                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_status.label }}</label>
-                                {{ filter_form.site_status }}
+                                <div class="mb-1" style="font-size:0.75rem;">Status</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for value, label, color in site_status_choices %}
+                                    <input type="checkbox" class="btn-check" name="site_status"
+                                           id="site_status_{{ value }}" value="{{ value }}" autocomplete="off">
+                                    <label class="btn btn-outline-{{ color }}" for="site_status_{{ value }}"
+                                           style="font-size:0.65rem; padding:0 6px; height:20px; display:inline-flex; align-items:center;">{{ label }}</label>
+                                    {% endfor %}
+                                </div>
                             </div>
                             <div class="mb-1">
                                 <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_tenant_id.label }}</label>
                                 {{ filter_form.site_tenant_id }}
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.site_tag_id.label }}</label>
+                                {{ filter_form.site_tag_id }}
                             </div>
                         </div>
 
@@ -247,16 +264,34 @@
                                 <i class="mdi mdi-vector-polyline"></i> Segments
                             </div>
                             <div class="mb-1">
-                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_status.label }}</label>
-                                {{ filter_form.segment_status }}
+                                <div class="mb-1" style="font-size:0.75rem;">Status</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for value, label, color in segment_status_choices %}
+                                    <input type="checkbox" class="btn-check" name="segment_status"
+                                           id="segment_status_{{ value }}" value="{{ value }}" autocomplete="off">
+                                    <label class="btn btn-outline-{{ color }}" for="segment_status_{{ value }}"
+                                           style="font-size:0.65rem; padding:0 6px; height:20px; display:inline-flex; align-items:center;">{{ label }}</label>
+                                    {% endfor %}
+                                </div>
                             </div>
                             <div class="mb-1">
-                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_type.label }}</label>
-                                {{ filter_form.segment_type }}
+                                <div class="mb-1" style="font-size:0.75rem;">Type</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for value, label, color in segment_type_choices %}
+                                    <input type="checkbox" class="btn-check" name="segment_type"
+                                           id="segment_type_{{ value }}" value="{{ value }}" autocomplete="off">
+                                    <label class="btn btn-outline-{{ color }}" for="segment_type_{{ value }}"
+                                           style="font-size:0.65rem; padding:0 6px; height:20px; display:inline-flex; align-items:center;">{{ label }}</label>
+                                    {% endfor %}
+                                </div>
                             </div>
                             <div class="mb-1">
                                 <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_provider_id.label }}</label>
                                 {{ filter_form.segment_provider_id }}
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.segment_tag_id.label }}</label>
+                                {{ filter_form.segment_tag_id }}
                             </div>
                         </div>
 
@@ -267,8 +302,15 @@
                                 <i class="mdi mdi-transit-connection-variant"></i> Circuits
                             </div>
                             <div class="mb-1">
-                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_status.label }}</label>
-                                {{ filter_form.circuit_status }}
+                                <div class="mb-1" style="font-size:0.75rem;">Status</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for value, label, color in circuit_status_choices %}
+                                    <input type="checkbox" class="btn-check" name="circuit_status"
+                                           id="circuit_status_{{ value }}" value="{{ value }}" autocomplete="off">
+                                    <label class="btn btn-outline-{{ color }}" for="circuit_status_{{ value }}"
+                                           style="font-size:0.65rem; padding:0 6px; height:20px; display:inline-flex; align-items:center;">{{ label }}</label>
+                                    {% endfor %}
+                                </div>
                             </div>
                             <div class="mb-1">
                                 <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_type_id.label }}</label>
@@ -277,6 +319,10 @@
                             <div class="mb-1">
                                 <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_provider_id.label }}</label>
                                 {{ filter_form.circuit_provider_id }}
+                            </div>
+                            <div class="mb-1">
+                                <label class="mb-0" style="font-size:0.75rem;">{{ filter_form.circuit_tag_id.label }}</label>
+                                {{ filter_form.circuit_tag_id }}
                             </div>
                         </div>
 
@@ -293,7 +339,7 @@
                 <div class="tab-pane fade" id="pane-list" role="tabpanel">
                     <div class="card-body p-2" style="font-size:0.78rem;">
 
-                        {# Type toggles #}
+                        {# Type toggles — mirrors main toolbar visibility #}
                         <div class="d-flex gap-1 mb-1">
                             <input type="checkbox" class="btn-check" id="listShowSites"     autocomplete="off" checked>
                             <label class="btn btn-outline-primary flex-fill"     for="listShowSites"
@@ -310,6 +356,10 @@
                                    style="font-size:0.72rem; padding:0; height:24px; display:flex; align-items:center; justify-content:center;">
                                 <i class="mdi mdi-transit-connection-variant" style="line-height:1;"></i>&nbsp;Circs
                             </label>
+                        </div>
+                        <div class="text-muted mb-1" style="font-size:0.68rem;">
+                            <i class="mdi mdi-information-outline"></i>
+                            Mirrors map visibility. Use to narrow this list only — does not affect the map.
                         </div>
 
                         {# Search #}
@@ -358,6 +408,7 @@
 var _mapData = JSON.parse(document.getElementById('map-data').textContent);
 var map = L.map('map').setView([_mapData.mapCenter.lat, _mapData.mapCenter.lng], _mapData.mapCenter.zoom);
 initializeMapLayers(map);
+initializeLayerSwitching(map);
 </script>
 <script src="{% static 'cesnet_service_path_plugin/js/object_map.js' %}"></script>
 

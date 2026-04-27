@@ -146,10 +146,20 @@
     let circuitScheme = 'status';
     const visibility  = { segments: true, sites: true, circuits: false };
 
+    // O(1) lookup maps for the full (unfiltered) datasets — keyed by id as string
+    const allSitesById     = new Map(allSites.map(s => [s.id.toString(), s]));
+    const allSegmentsById  = new Map(allSegments.map(s => [s.id.toString(), s]));
+    const allCircuitsById  = new Map(allCircuits.map(c => [c.id.toString(), c]));
+
     // Currently rendered (filtered) subsets
     let activeSites    = allSites.slice();
     let activeSegments = allSegments.slice();
     let activeCircuits = allCircuits.slice();
+
+    // O(1) lookup maps for active (filtered) subsets — rebuilt in applyFilters()
+    let activeSitesById    = new Map(activeSites.map(s => [s.id.toString(), s]));
+    let activeSegmentsById = new Map(activeSegments.map(s => [s.id.toString(), s]));
+    let activeCircuitsById = new Map(activeCircuits.map(c => [c.id.toString(), c]));
 
     // -------------------------------------------------------------------------
     // Leaflet layer groups
@@ -162,6 +172,58 @@
     const segmentLayers = new Map();
     const siteLayers    = new Map();
     const circuitLayers = new Map();
+
+    // -------------------------------------------------------------------------
+    // Selection highlight
+    // -------------------------------------------------------------------------
+    let _selectedType = null;   // 'site' | 'segment' | 'circuit'
+    let _selectedId   = null;
+
+    function _applyLayerStyle(layer, style) {
+        if (layer instanceof L.CircleMarker) {
+            layer.setStyle(style);
+        } else if (layer instanceof L.Polyline) {
+            layer.setStyle(style);
+        } else if (layer.eachLayer) {
+            layer.eachLayer(sub => { if (sub.setStyle) sub.setStyle(style); });
+        }
+    }
+
+    function _restoreSelected() {
+        if (_selectedId === null) return;
+        const key = _selectedId.toString();
+        if (_selectedType === 'segment') {
+            const layer = segmentLayers.get(key);
+            const seg   = activeSegmentsById.get(key);
+            if (layer && seg) _applyLayerStyle(layer, { color: getSegmentColor(seg), weight: seg.has_path_data ? 4 : 3, opacity: seg.has_path_data ? 0.85 : 0.7 });
+        } else if (_selectedType === 'circuit') {
+            const layer = circuitLayers.get(key);
+            const circ  = activeCircuitsById.get(key);
+            if (layer && circ) _applyLayerStyle(layer, { color: getCircuitColor(circ), weight: 3, opacity: 0.7 });
+        } else if (_selectedType === 'site') {
+            const layer = siteLayers.get(key);
+            const site  = activeSitesById.get(key);
+            if (layer && site) _applyLayerStyle(layer, { fillColor: getSiteColor(site), radius: 7, weight: 2, color: '#fff' });
+        }
+        _selectedType = null;
+        _selectedId   = null;
+    }
+
+    function highlightObject(type, id) {
+        _restoreSelected();
+        _selectedType = type;
+        _selectedId   = id;
+        if (type === 'segment') {
+            const layer = segmentLayers.get(id.toString());
+            if (layer) _applyLayerStyle(layer, { color: '#ff6d00', weight: 7, opacity: 1 });
+        } else if (type === 'circuit') {
+            const layer = circuitLayers.get(id.toString());
+            if (layer) _applyLayerStyle(layer, { color: '#ff6d00', weight: 6, opacity: 1 });
+        } else if (type === 'site') {
+            const layer = siteLayers.get(id.toString());
+            if (layer) _applyLayerStyle(layer, { fillColor: '#ff6d00', radius: 10, weight: 3, color: '#e65100' });
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Dynamic palette builders
@@ -281,7 +343,7 @@
         if (el) el.textContent = labels[scheme] || scheme;
 
         segmentLayers.forEach((layer, sid) => {
-            const seg = allSegments.find(s => s.id.toString() === sid);
+            const seg = allSegmentsById.get(sid);
             if (!seg) return;
             const color = getSegmentColor(seg);
             if (layer instanceof L.Polyline) {
@@ -290,6 +352,7 @@
                 layer.eachLayer(sub => { if (sub.setStyle) sub.setStyle({ color }); });
             }
         });
+        if (_selectedType === 'segment') highlightObject('segment', _selectedId);
         updateLegend();
     }
 
@@ -300,10 +363,11 @@
         if (el) el.textContent = labels[scheme] || scheme;
 
         siteLayers.forEach((marker, sid) => {
-            const site = allSites.find(s => s.id.toString() === sid);
+            const site = allSitesById.get(sid);
             if (!site) return;
             marker.setStyle({ fillColor: getSiteColor(site) });
         });
+        if (_selectedType === 'site') highlightObject('site', _selectedId);
         updateLegend();
     }
 
@@ -314,13 +378,14 @@
         if (el) el.textContent = labels[scheme] || scheme;
 
         circuitLayers.forEach((layer, cid) => {
-            const circ = allCircuits.find(c => c.id.toString() === cid);
+            const circ = allCircuitsById.get(cid);
             if (!circ) return;
             const color = getCircuitColor(circ);
             if (layer instanceof L.Polyline) {
                 layer.setStyle({ color });
             }
         });
+        if (_selectedType === 'circuit') highlightObject('circuit', _selectedId);
         updateLegend();
     }
 
@@ -332,6 +397,8 @@
         sites:    ['btn-primary',  'btn-outline-primary'],
         circuits: ['btn-warning',  'btn-outline-warning'],
     };
+
+    const _listCheckboxId = { sites: 'listShowSites', segments: 'listShowSegments', circuits: 'listShowCircuits' };
 
     function toggleLayer(type, btn) {
         visibility[type] = !visibility[type];
@@ -345,6 +412,10 @@
             'filterSectionSites'
         );
         const [onCls, offCls] = toggleStyles[type];
+
+        // Sync list checkbox to match toolbar visibility
+        const listCb = document.getElementById(_listCheckboxId[type]);
+        if (listCb) listCb.checked = visibility[type];
 
         if (visibility[type]) {
             group.addTo(map);
@@ -366,6 +437,7 @@
 
         updateLegend();
         updateCounts();
+        renderList();
     }
 
     // -------------------------------------------------------------------------
@@ -385,26 +457,33 @@
             }
             return [];
         }
+        function checkboxValues(name) {
+            return Array.from(document.querySelectorAll(`input[type="checkbox"][name="${name}"]:checked`))
+                .map(cb => cb.value).filter(Boolean);
+        }
         return {
             site: {
                 region_ids:  selectValues('region_id').map(Number),
                 group_ids:   selectValues('site_group_id').map(Number),
                 tenant_ids:  selectValues('site_tenant_id').map(Number),
-                statuses:    selectValues('site_status'),
+                tag_ids:     selectValues('site_tag_id').map(Number),
+                statuses:    checkboxValues('site_status'),
             },
             segment: {
                 region_ids:   selectValues('region_id').map(Number),
                 at_any_sites: selectValues('at_any_site').map(Number),
                 provider_ids: selectValues('segment_provider_id').map(Number),
-                statuses:     selectValues('segment_status'),
-                types:        selectValues('segment_type'),
+                tag_ids:      selectValues('segment_tag_id').map(Number),
+                statuses:     checkboxValues('segment_status'),
+                types:        checkboxValues('segment_type'),
             },
             circuit: {
                 region_ids:   selectValues('region_id').map(Number),
                 at_any_sites: selectValues('at_any_site').map(Number),
                 provider_ids: selectValues('circuit_provider_id').map(Number),
                 type_ids:     selectValues('circuit_type_id').map(Number),
-                statuses:     selectValues('circuit_status'),
+                tag_ids:      selectValues('circuit_tag_id').map(Number),
+                statuses:     checkboxValues('circuit_status'),
             },
         };
     }
@@ -426,6 +505,10 @@
             if (filters.region_ids.length && !siteInRegions(site.region_id, filters.region_ids)) return false;
             if (filters.group_ids.length  && !filters.group_ids.includes(site.group_id))         return false;
             if (filters.tenant_ids.length && !filters.tenant_ids.includes(site.tenant_id))       return false;
+            if (filters.tag_ids.length) {
+                const ids = (site.tags || []).map(t => t.id);
+                if (!filters.tag_ids.every(tid => ids.includes(tid))) return false;
+            }
             if (filters.statuses.length) {
                 const key = site.status ? site.status.toLowerCase().replace(/\s+/g, '_') : '';
                 if (!filters.statuses.some(s => key === s || site.status === s)) return false;
@@ -445,6 +528,10 @@
                 if (!filters.types.some(t => seg.segment_type === (typeMap[t] || t))) return false;
             }
             if (filters.provider_ids.length && !filters.provider_ids.includes(seg.provider_id)) return false;
+            if (filters.tag_ids.length) {
+                const ids = (seg.tags || []).map(t => t.id);
+                if (!filters.tag_ids.every(tid => ids.includes(tid))) return false;
+            }
             if (filters.at_any_sites.length) {
                 const siteAId = seg.site_a ? seg.site_a.id : null;
                 const siteBId = seg.site_b ? seg.site_b.id : null;
@@ -468,6 +555,10 @@
             }
             if (filters.provider_ids.length && !filters.provider_ids.includes(circ.provider_id)) return false;
             if (filters.type_ids.length     && !filters.type_ids.includes(circ.type_id))         return false;
+            if (filters.tag_ids.length) {
+                const ids = (circ.tags || []).map(t => t.id);
+                if (!filters.tag_ids.every(tid => ids.includes(tid))) return false;
+            }
             if (filters.at_any_sites.length) {
                 const siteAId = circ.site_a ? circ.site_a.id : null;
                 const siteBId = circ.site_b ? circ.site_b.id : null;
@@ -490,6 +581,10 @@
         const activeSiteIds = new Set(activeSites.map(s => s.id));
         activeSegments = filterSegments(f.segment, activeSiteIds);
         activeCircuits = filterCircuits(f.circuit, activeSiteIds);
+
+        activeSitesById    = new Map(activeSites.map(s => [s.id.toString(), s]));
+        activeSegmentsById = new Map(activeSegments.map(s => [s.id.toString(), s]));
+        activeCircuitsById = new Map(activeCircuits.map(c => [c.id.toString(), c]));
 
         renderSites();
         renderSegments();
@@ -519,9 +614,9 @@
         if (!container) return;
 
         const q            = (document.getElementById('listSearch')?.value || '').toLowerCase();
-        const showSites    = document.getElementById('listShowSites')?.checked    !== false;
-        const showSegments = document.getElementById('listShowSegments')?.checked !== false;
-        const showCircuits = document.getElementById('listShowCircuits')?.checked !== false;
+        const showSites    = visibility.sites    && (document.getElementById('listShowSites')?.checked    !== false);
+        const showSegments = visibility.segments && (document.getElementById('listShowSegments')?.checked !== false);
+        const showCircuits = visibility.circuits && (document.getElementById('listShowCircuits')?.checked !== false);
 
         const rows = [];
 
@@ -570,32 +665,49 @@
         });
     }
 
+    function _segmentMidpoint(seg) {
+        const layer = segmentLayers.get(seg.id.toString());
+        if (layer) {
+            // Collect all latlngs from the rendered layer (GeoJSON group or plain polyline)
+            const lls = [];
+            const collect = l => { if (l instanceof L.Polyline) lls.push(...l.getLatLngs().flat(Infinity)); };
+            if (layer instanceof L.Polyline) collect(layer);
+            else if (layer.eachLayer) layer.eachLayer(collect);
+            if (lls.length) return lls[Math.floor(lls.length / 2)];
+        }
+        // Fallback for segments not yet rendered or without path data
+        if (seg.site_a && seg.site_b)
+            return L.latLng((seg.site_a.lat + seg.site_b.lat) / 2, (seg.site_a.lng + seg.site_b.lng) / 2);
+        const s = seg.site_a || seg.site_b;
+        return s ? L.latLng(s.lat, s.lng) : null;
+    }
+
     function handleListClick(rowIndex) {
         const container = document.getElementById('objectList');
         if (!container || !container._rows) return;
         const row = container._rows[rowIndex];
         if (!row) return;
 
+        const key = row.id.toString();
         if (row.type === 'site') {
-            const site   = activeSites.find(s => s.id === row.id);
-            const marker = siteLayers.get(row.id.toString());
+            const site   = activeSitesById.get(key);
+            const marker = siteLayers.get(key);
             if (!site) return;
             map.flyTo([site.lat, site.lng], Math.max(map.getZoom(), 12));
             if (marker) marker.openPopup();
             buildSiteInfoCard(site);
 
         } else if (row.type === 'segment') {
-            const seg = activeSegments.find(s => s.id === row.id);
+            const seg = activeSegmentsById.get(key);
             if (!seg) return;
-            const lat = seg.site_a && seg.site_b ? (seg.site_a.lat + seg.site_b.lat) / 2 : (seg.site_a || seg.site_b || {}).lat;
-            const lng = seg.site_a && seg.site_b ? (seg.site_a.lng + seg.site_b.lng) / 2 : (seg.site_a || seg.site_b || {}).lng;
-            if (lat == null) return;
-            map.flyTo([lat, lng], Math.max(map.getZoom(), 10));
-            showSegmentPopup(seg, L.latLng(lat, lng));
+            const latlng = _segmentMidpoint(seg);
+            if (!latlng) return;
+            map.flyTo(latlng, Math.max(map.getZoom(), 10));
+            showSegmentPopup(seg, latlng);
 
         } else if (row.type === 'circuit') {
-            const circ  = activeCircuits.find(c => c.id === row.id);
-            const layer = circuitLayers.get(row.id.toString());
+            const circ  = activeCircuitsById.get(key);
+            const layer = circuitLayers.get(key);
             if (!circ || !circ.site_a || !circ.site_b) return;
             const lat = (circ.site_a.lat + circ.site_b.lat) / 2;
             const lng = (circ.site_a.lng + circ.site_b.lng) / 2;
@@ -630,18 +742,37 @@
             }
         }
 
+        function checkedInputs(name) {
+            return Array.from(document.querySelectorAll(`input[type="checkbox"][name="${name}"]:checked`))
+                .map(cb => ({ value: cb.value, text: cb.labels[0] ? cb.labels[0].textContent.trim() : cb.value }));
+        }
+
+        function uncheckInput(name, value) {
+            const cb = document.querySelector(`input[type="checkbox"][name="${name}"][value="${value}"]`);
+            if (cb) {
+                cb.checked = false;
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
         const selectFields = [
             { name: 'region_id',            prefix: 'Region' },
             { name: 'site_group_id',         prefix: 'Site Group' },
             { name: 'at_any_site',           prefix: 'Site' },
-            { name: 'site_status',           prefix: 'Site status' },
             { name: 'site_tenant_id',        prefix: 'Tenant' },
-            { name: 'segment_status',        prefix: 'Seg. status' },
-            { name: 'segment_type',          prefix: 'Seg. type' },
+            { name: 'site_tag_id',           prefix: 'Site tag' },
             { name: 'segment_provider_id',   prefix: 'Seg. Provider' },
-            { name: 'circuit_status',        prefix: 'Circ. status' },
+            { name: 'segment_tag_id',        prefix: 'Seg. tag' },
             { name: 'circuit_provider_id',   prefix: 'Circ. Provider' },
             { name: 'circuit_type_id',       prefix: 'Circ. Type' },
+            { name: 'circuit_tag_id',        prefix: 'Circ. tag' },
+        ];
+
+        const checkFields = [
+            { name: 'site_status',    prefix: 'Site status' },
+            { name: 'segment_status', prefix: 'Seg. status' },
+            { name: 'segment_type',   prefix: 'Seg. type' },
+            { name: 'circuit_status', prefix: 'Circ. status' },
         ];
 
         selectFields.forEach(({ name, prefix }) => {
@@ -649,6 +780,15 @@
                 chips.push({
                     label: `${prefix}: ${text}`,
                     clear: () => deselectOption(name, value),
+                });
+            });
+        });
+
+        checkFields.forEach(({ name, prefix }) => {
+            checkedInputs(name).forEach(({ value, text }) => {
+                chips.push({
+                    label: `${prefix}: ${text}`,
+                    clear: () => uncheckInput(name, value),
                 });
             });
         });
@@ -738,7 +878,7 @@
                 html += `<br><span class="badge text-bg-${badge}">${siteObj.status}</span>`;
                 if (siteObj.region) html += `<br><small>Region: ${siteObj.region}</small>`;
                 if (siteObj.tenant) html += `<br><small>Tenant: ${siteObj.tenant}</small>`;
-                html += `<br><a href="${siteObj.url}" class="small">View site</a>`;
+                html += `<div class="d-flex gap-1 mt-1"><a href="${siteObj.url}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-open-in-new"></i> View</a></div>`;
             }
 
             const relatedSegs = siteSegmentIndex[id] || [];
@@ -797,6 +937,8 @@
                 });
             });
         }
+
+        if (_selectedType === 'site') highlightObject('site', _selectedId);
     }
 
     // -------------------------------------------------------------------------
@@ -825,7 +967,7 @@
         const tol = 10;
         const nearby = [];
         segmentLayers.forEach((layer, sid) => {
-            const seg = activeSegments.find(s => s.id.toString() === sid);
+            const seg = activeSegmentsById.get(sid);
             if (!seg) return;
             let near = false;
             if (layer instanceof L.Polyline) {
@@ -856,6 +998,7 @@
     function hideInfoCard() {
         const card = document.getElementById('infoCard');
         if (card) card.style.display = 'none';
+        _restoreSelected();
     }
 
     function _row(label, value) {
@@ -890,6 +1033,7 @@
     }
 
     function buildSiteInfoCard(site) {
+        highlightObject('site', site.id);
         const badge = siteStatusBadge[site.status] || 'secondary';
         const rows = _table([
             _row('Region',    site.region  || '—'),
@@ -909,6 +1053,7 @@
     }
 
     function buildSegmentInfoCard(seg) {
+        highlightObject('segment', seg.id);
         const sc = segmentStatusBadge[seg.status] || 'secondary';
         let rows = _table([
             _row('Provider',       seg.provider || '—'),
@@ -969,6 +1114,7 @@
     }
 
     function buildCircuitInfoCard(circ) {
+        highlightObject('circuit', circ.id);
         const sc = circuitStatusBadge[circ.status] || 'secondary';
         const rows = _table([
             _row('Provider',     circ.provider || '—'),
@@ -1001,40 +1147,49 @@
                 `<span class="badge text-bg-${sc}">${seg.status}</span><br>` +
                 `<small>${siteA} ↔ ${siteB}</small><br>` +
                 `<small>Provider: ${seg.provider || 'N/A'} · Length: ${len}</small><br>` +
-                `<a href="${seg.url}" class="small">View segment</a> ` +
-                `<a href="${seg.map_url}" class="small">Individual map</a>`
+                `<div class="d-flex gap-1 mt-1">` +
+                `<a href="${seg.url}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-open-in-new"></i> View</a>` +
+                `<a href="${seg.map_url}" class="btn btn-outline-secondary btn-sm"><i class="mdi mdi-map"></i> Map</a>` +
+                `</div>`
             )
             .openOn(map);
         buildSegmentInfoCard(seg);
     }
 
-    // Segment lookup used by overlap popup click handlers
-    const _overlapSegById = {};
-
     function showOverlapPopup(items, latlng) {
-        let html = `<div><strong>${items.length} segments here</strong>`;
+        // Build a local map for this popup's click handlers — no persistent state.
+        const segById = new Map(items.map(({ seg }) => [seg.id, seg]));
+
+        let html = `<div>
+            <strong>${items.length} segments here</strong>
+            <div style="font-size:0.78rem;color:#555;">Click a name to show details</div>`;
         items.forEach(({ seg }) => {
             const sc = segmentStatusBadge[seg.status] || 'secondary';
-            _overlapSegById[seg.id] = seg;
-            html += `<div class="border-top pt-1 mt-1">
+            html += `<hr style="margin:4px 0;">
+            <div>
                 <span class="seg-overlap-name"
                       data-seg-id="${seg.id}"
-                      style="cursor:pointer;font-weight:500;"
+                      style="cursor:pointer;font-weight:500;color:#0d6efd;text-decoration:none;"
+                      onmouseover="this.style.textDecoration='underline'"
+                      onmouseout="this.style.textDecoration='none'"
                       title="Show details in info card">${seg.name}</span><br>
                 <span class="badge text-bg-${sc} small">${seg.status}</span>
                 <small> ${seg.site_a ? seg.site_a.name : ''} ↔ ${seg.site_b ? seg.site_b.name : ''}</small>
-                <small class="ms-1"><a href="${seg.url}">View</a></small>
+                <div class="d-flex gap-1 mt-1">
+                    <a href="${seg.url}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-open-in-new"></i> View</a>
+                    <a href="${seg.map_url}" class="btn btn-outline-secondary btn-sm"><i class="mdi mdi-map"></i> Map</a>
+                </div>
             </div>`;
         });
         html += '</div>';
 
-        const popup = L.popup({ maxWidth: 340 }).setLatLng(latlng).setContent(html);
+        const popup = L.popup({ maxWidth: 380 }).setLatLng(latlng).setContent(html);
         popup.on('add', function () {
             const el = popup.getElement();
             if (!el) return;
             el.querySelectorAll('.seg-overlap-name').forEach(span => {
                 span.addEventListener('click', function () {
-                    const seg = _overlapSegById[Number(this.dataset.segId)];
+                    const seg = segById.get(Number(this.dataset.segId));
                     if (seg) buildSegmentInfoCard(seg);
                 });
             });
@@ -1082,13 +1237,14 @@
                 const existing = segmentLayers.get(feature.properties.id.toString());
                 if (existing) segmentPathGroup.removeLayer(existing);
 
-                const seg   = activeSegments.find(s => s.id === feature.properties.id);
+                const seg   = activeSegmentsById.get(feature.properties.id.toString());
                 const color = seg ? getSegmentColor(seg) : '#6c757d';
                 const layer = L.geoJSON(feature, { style: { color, weight: 4, opacity: 0.85 } });
                 layer.on('click', handleLineClick);
                 segmentPathGroup.addLayer(layer);
                 segmentLayers.set(feature.properties.id.toString(), layer);
             });
+            if (_selectedType === 'segment') highlightObject('segment', _selectedId);
             fitMap();
         }
 
@@ -1127,7 +1283,9 @@
                 `<span class="badge text-bg-${sc}">${circ.status}</span><br>` +
                 `<small>${circ.site_a.name} ↔ ${circ.site_b.name}</small><br>` +
                 `<small>Provider: ${circ.provider || 'N/A'} · Type: ${circ.type || 'N/A'}</small><br>` +
-                `<a href="${circ.url}" class="small">View circuit</a>`,
+                `<div class="d-flex gap-1 mt-1">` +
+                `<a href="${circ.url}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-open-in-new"></i> View</a>` +
+                `</div>`,
                 { maxWidth: 300 }
             );
             line.on('click', (function(c) {
@@ -1137,6 +1295,8 @@
             circuitGroup.addLayer(line);
             circuitLayers.set(circ.id.toString(), line);
         });
+
+        if (_selectedType === 'circuit') highlightObject('circuit', _selectedId);
     }
 
     // -------------------------------------------------------------------------
@@ -1195,11 +1355,13 @@
         if (toggleSegBtn)  toggleSegBtn.addEventListener('click',  () => toggleLayer('segments', toggleSegBtn));
         if (toggleSiteBtn) toggleSiteBtn.addEventListener('click', () => toggleLayer('sites',    toggleSiteBtn));
         if (toggleCircBtn) {
-            // Circuits are hidden by default — sync button and filter section to off state
+            // Circuits are hidden by default — sync button, filter section and list checkbox to off state
             toggleCircBtn.classList.replace('btn-warning', 'btn-outline-warning');
             toggleCircBtn.title = 'Show circuits';
             const circFilterSection = document.getElementById('filterSectionCircuits');
             if (circFilterSection) circFilterSection.classList.add('d-none');
+            const listCircCb = document.getElementById('listShowCircuits');
+            if (listCircCb) listCircCb.checked = false;
             toggleCircBtn.addEventListener('click', () => toggleLayer('circuits', toggleCircBtn));
         }
 
@@ -1216,18 +1378,27 @@
         // Clear filters — shared logic used by both the header X and the bottom button
         function clearAllFilters() {
             document.querySelectorAll('#filterSidebar select').forEach(sel => {
-                if (window.$ && $(sel).data('select2')) {
+                if (sel.tomselect) {
+                    sel.tomselect.clear();
+                    sel.tomselect.clearOptions();
+                    sel.dispatchEvent(new Event('change', { bubbles: true }));
+                } else if (window.$ && $(sel).data('select2')) {
                     $(sel).val(null).trigger('change');
                 } else {
                     Array.from(sel.options).forEach(o => { o.selected = false; });
                     sel.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             });
+            document.querySelectorAll('#filterSidebar input[type="checkbox"].btn-check').forEach(cb => {
+                cb.checked = false;
+            });
             applyFilters();
         }
 
         const clearBtn = document.getElementById('clearFilters');
         if (clearBtn) clearBtn.addEventListener('click', clearAllFilters);
+        const clearBtnTop = document.getElementById('clearFiltersTop');
+        if (clearBtnTop) clearBtnTop.addEventListener('click', clearAllFilters);
 
         // Info card close button
         const infoCardClose = document.getElementById('infoCardClose');
@@ -1253,8 +1424,10 @@
             });
         }
 
-        // Initial list render
-        renderList();
+        // Initial list render — run applyFilters so active* arrays reflect any
+        // server-side pre-filters (region, etc.) baked into the page URL before
+        // the list is populated for the first time.
+        applyFilters();
 
         // Tile layer switcher
         initializeLayerSwitching(map);
