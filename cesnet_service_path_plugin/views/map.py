@@ -44,6 +44,43 @@ _CIRCUIT_STATUS_COLORS = {
 }
 
 
+def _remap_params(get, *, mapping, passthrough):
+    """
+    Translate form field names in *get* (a QueryDict-like object) into filterset
+    field names, discarding anything not in *mapping* or *passthrough*.
+    """
+    result = {}
+    for key, values in get.lists():
+        if key in passthrough:
+            result[key] = values
+        elif key in mapping:
+            result[mapping[key]] = values
+    return result
+
+
+_SITE_PASSTHROUGH = {"region_id", "site_id", "group_id", "tenant_id", "tag_id"}
+_SITE_MAPPING = {
+    "site_status":    "status",
+    "site_group_id":  "group_id",
+    "site_tenant_id": "tenant_id",
+}
+
+_SEGMENT_PASSTHROUGH = {"region_id", "at_any_site", "segment_type"}
+_SEGMENT_MAPPING = {
+    "segment_status":      "status",
+    "segment_provider_id": "provider_id",
+    "segment_tag_id":      "tag_id",
+}
+
+
+def _extract_site_params(get):
+    return _remap_params(get, mapping=_SITE_MAPPING, passthrough=_SITE_PASSTHROUGH)
+
+
+def _extract_segment_params(get):
+    return _remap_params(get, mapping=_SEGMENT_MAPPING, passthrough=_SEGMENT_PASSTHROUGH)
+
+
 def _build_region_ancestors():
     """
     Return a dict mapping each region PK to the list of its ancestor PKs
@@ -183,7 +220,7 @@ def _build_segments_data(segment_qs):
             "site_b": site_b_data,
             "has_path_data": segment.has_path_data(),
             "type_data": type_data,
-            "tags": [{"name": t.name, "color": t.color} for t in segment.tags.all()],
+            "tags": [{"id": t.pk, "name": t.name, "color": t.color} for t in segment.tags.all()],
             "url": segment.get_absolute_url(),
             "map_url": f"/plugins/cesnet-service-path-plugin/segments/{segment.pk}/map/",
         })
@@ -295,7 +332,7 @@ def _build_circuits_data(circuit_qs):
             "tenant_id":        circuit.tenant.pk if circuit.tenant else None,
             "install_date":     str(circuit.install_date) if circuit.install_date else None,
             "termination_date": str(circuit.termination_date) if circuit.termination_date else None,
-            "tags":             [{"name": t.name, "color": t.color} for t in circuit.tags.all()],
+            "tags":             [{"id": t.pk, "name": t.name, "color": t.color} for t in circuit.tags.all()],
             "term_a":           _term_info(circuit.termination_a, site_a),
             "term_z":           _term_info(circuit.termination_z, site_z),
             "site_a":           site_a_data,
@@ -365,20 +402,13 @@ class ObjectMapView(View):
         )
 
         # Cap at MAX_OBJECTS to keep the page load fast; JS filters within that set.
-        # Evaluate querysets once into lists so we can len() without extra COUNT queries.
-        site_list     = list(site_qs)
-        segment_list  = list(segment_qs)
-        circuit_list  = list(circuit_qs)
-
-        sites_truncated    = len(site_list)    > MAX_OBJECTS
-        segments_truncated = len(segment_list) > MAX_OBJECTS
-        circuits_truncated = len(circuit_list) > MAX_OBJECTS
-        if sites_truncated:
-            site_list = site_list[:MAX_OBJECTS]
-        if segments_truncated:
-            segment_list = segment_list[:MAX_OBJECTS]
-        if circuits_truncated:
-            circuit_list = circuit_list[:MAX_OBJECTS]
+        # Count via the DB, then slice at the DB level so we never load more than MAX_OBJECTS+1 rows.
+        sites_truncated    = site_qs.count()    > MAX_OBJECTS
+        segments_truncated = segment_qs.count() > MAX_OBJECTS
+        circuits_truncated = circuit_qs.count() > MAX_OBJECTS
+        site_list    = list(site_qs[:MAX_OBJECTS])
+        segment_list = list(segment_qs[:MAX_OBJECTS])
+        circuit_list = list(circuit_qs[:MAX_OBJECTS])
 
         sites_data       = _build_sites_data(site_list)
         segments_data    = _build_segments_data(segment_list)

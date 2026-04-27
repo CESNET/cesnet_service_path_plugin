@@ -416,12 +416,8 @@ def segments_map_api(request):
         request.GET,
         queryset=Segment.objects.select_related("site_a", "site_b", "provider"),
     )
-    segment_list = list(filterset.qs)
-
-    # Limit segments for performance
     MAX_SEGMENTS = 500
-    if len(segment_list) > MAX_SEGMENTS:
-        segment_list = segment_list[:MAX_SEGMENTS]
+    segment_list = list(filterset.qs[:MAX_SEGMENTS])
 
     features = []
 
