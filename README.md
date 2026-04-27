@@ -47,6 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version | Notes |
 |----------------|----------------|-------|
+|     4.5.4+     |      6.2.x     | Network Map UX overhaul, tag filters, object highlight |
 |     4.5.4+     |      6.1.x     | Requires NetBox >= 4.5.4 (strawberry-graphql-django >= 0.79.0) |
 |   4.5.0–4.5.3  |      6.0.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
 |     4.4.x      |      5.4.x     | Last version compatible with NetBox 4.4.x |
@@ -133,6 +134,12 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Fallback visualization** showing straight lines when path data unavailable
 - **Overlapping segment detection** and selection on maps
 - **Path data export** as GeoJSON for external use
+- **Network Map** (new in 6.0.0, enhanced in 6.2.0): combined Sites + Segments + Circuits view
+  - Permanent right-side panel with filter sidebar and searchable object list
+  - Tag filters for Sites, Segments, and Circuits
+  - Object selection highlight — selected object shown in orange on the map
+  - Clickable info card showing full object details including tag colors and circuit termination info
+  - Filter pill buttons for status and type with instant client-side filtering
 - An example of a geographic service path visualized using the plugin:
     ![Sample Service Path Map](./docs/sample_path.png)
 
@@ -196,8 +203,8 @@ Before installing the plugin, ensure you have:
 
 1. **PostgreSQL with PostGIS extension** (version 3.0 or higher recommended)
 2. **System libraries**: GDAL, GEOS, and PROJ runtime binaries
-3. **NetBox 4.5.4 or higher** (for plugin version 6.1.x)
-   - **Important**: Plugin version 6.1.x requires NetBox >= 4.5.4 (ships with strawberry-graphql-django >= 0.79.0)
+3. **NetBox 4.5.4 or higher** (for plugin version 6.2.x)
+   - **Important**: Plugin version 6.2.x requires NetBox >= 4.5.4 (ships with strawberry-graphql-django >= 0.79.0)
    - For NetBox 4.5.0–4.5.3, use plugin version 6.0.x
    - If you're running NetBox 4.4.x, use plugin version 5.4.x or earlier
 
@@ -865,7 +872,7 @@ check_gis_environment()
 
 The plugin adds a **Service Paths** menu with:
 - **Segments** - List and manage network segments with quick Add/Import buttons
-- **Segments Map** - Interactive map view of all segments
+- **Network Map** - Combined interactive map of Sites, Segments, and Circuits
 - **Service Paths** - Manage service path definitions with quick Add/Import buttons
 - **Contract Info** - Manage contracts with versioning support (new in 5.4.0)
 - **Mappings** - Relationship management tools with quick Add/Import buttons

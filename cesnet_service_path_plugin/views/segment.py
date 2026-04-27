@@ -217,7 +217,6 @@ class SegmentListView(generic.ObjectListView):
     table = SegmentTable
     filterset = SegmentFilterSet
     filterset_form = SegmentFilterForm
-    template_name = "cesnet_service_path_plugin/segment_list.html"
 
 
 @register_model_view(Segment, "add", detail=False)
@@ -497,5 +496,3 @@ def segments_map_api(request):
     geojson = {"type": "FeatureCollection", "features": features}
 
     return JsonResponse(geojson)
-
-

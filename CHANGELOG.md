@@ -1,5 +1,67 @@
 # Changelog
 
+## [6.2.0] - 2026-04-27
+
+### Added
+
+- **Network Map — Tag filters**: Tag filter dropdowns added for Sites, Segments, and Circuits.
+  Filtering uses AND logic — an object must carry all selected tags to match.
+- **Network Map — Object selection highlight**: Clicking a segment, circuit, or site now
+  highlights the selected object on the map in orange. Highlight is restored when another
+  object is selected or the info card is closed.
+- **Network Map — Tag colors in info card**: Tag badges in the detail info card now use the
+  tag's configured color (with automatic light/dark contrast text).
+- **Network Map — Object list panel**: A second "List" tab in the right panel provides a
+  searchable, scrollable list of all visible objects with type toggles and click-to-locate.
+- **Network Map — Filter sidebar**: Permanent right-side filter column replaces the offcanvas
+  sidebar. Includes two "Clear Filters" buttons (top and bottom of the column).
+- **Network Map — Circuit termination details**: Info card shows cable connection, cross-connect
+  ID, port speed, and a "Connect" dropdown button for unconnected terminations.
+
+### Changed
+
+- **Network Map — Status/type filter buttons**: Reverted from `<select multiple>` dropdowns
+  back to btn-check pill buttons following user testing feedback. Button sizing reduced
+  (0.65 rem, 20 px height) using flexbox to eliminate Bootstrap padding asymmetry.
+- **Network Map — Map popup links**: Plain text links in segment, circuit, and site popups
+  replaced with `btn-outline` buttons (View / Map) for better discoverability.
+- **Network Map — Overlap popup**: Added `<hr>` separators between entries and View/Map
+  buttons per segment. Segment names styled as blue links with hover underline and a
+  "Click a name to show details" subtitle.
+- **Network Map — Object list sync**: List type buttons (Sites / Segs / Circs) now mirror
+  the state of the main toolbar visibility toggles. List count and rows update immediately
+  when toolbar toggles change. Circuits list button starts unchecked to match default
+  hidden state.
+- **Network Map — Map height**: Increased to 1000 px for better usability on larger screens.
+- **Network Map — Color palette**: Segment and circuit colors updated to avoid green tones
+  that blend with OSM map background.
+
+### Fixed
+
+- **Network Map — Object list initial count**: List now populates via `applyFilters()` on
+  first load so counts reflect server-side pre-filters (e.g. region in URL) immediately.
+- **Network Map — List visibility respect**: Object list respects layer visibility flags;
+  hidden layers are excluded from the list count and rows.
+- **Network Map — Segment popup midpoint**: When selecting a segment from the list, the
+  popup now anchors to the middle vertex of the actual rendered GeoJSON polyline instead
+  of the midpoint between the two endpoint sites.
+- **Network Map — Clear Filters Tom Select**: Region and other dynamic fields (Tom Select
+  widgets) are now correctly cleared via `sel.tomselect.clear()` / `clearOptions()`.
+- **Network Map — Nav-tabs dark theme**: Switched from `nav-tabs` to `nav-pills` for the
+  Filters / List tab switcher so tab labels are visible in NetBox dark mode.
+- **Network Map — Toggle button padding**: Fixed uneven top/bottom padding on btn-check
+  filter pill buttons caused by Bootstrap `--bs-btn-padding-y` override.
+
+### Compatibility
+
+| cesnet_service_path_plugin | NetBox |
+|---|---|
+| 6.2.x | 4.5.4+ |
+| 6.1.x | 4.5.4+ |
+| 6.0.x | 4.5.0 – 4.5.3 |
+
+---
+
 ## [6.1.1] - 2026-03-19
 
 ### Fixed
