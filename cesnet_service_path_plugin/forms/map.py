@@ -18,11 +18,11 @@ class MapFilterForm(forms.Form):
 
     Field naming convention:
     - Shared spatial fields: native filterset names (region_id, site_group_id, at_any_site)
-    - Site-specific fields: site_ prefix (site_status, site_tenant_id)
-    - Segment-specific fields: segment_ prefix (segment_status, segment_type, segment_provider_id)
+    - Site-specific fields: site_ prefix (site_status, site_tenant_id, site_tag_id)
+    - Segment-specific fields: segment_ prefix (segment_status, segment_type, segment_provider_id, segment_tag_id)
+    - Circuit-specific fields: circuit_ prefix (circuit_status, circuit_type_id, circuit_provider_id, circuit_tag_id)
 
-    The view's _extract_*_params() helpers strip/remap these prefixes before
-    passing GET params to each filterset.
+    All filtering is performed client-side in object_map.js using the JSON data blob.
     """
 
     # -------------------------------------------------------------------------

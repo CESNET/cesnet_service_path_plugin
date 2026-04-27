@@ -44,53 +44,6 @@ _CIRCUIT_STATUS_COLORS = {
 }
 
 
-# ---------------------------------------------------------------------------
-# The helpers below are kept for the unit tests — the view no longer uses
-# server-side filtering (all filtering is done client-side in JS).
-# ---------------------------------------------------------------------------
-
-def _remap_params(get_params, mapping, passthrough):
-    """
-    Build a plain dict suitable for passing to a django-filter FilterSet.
-    Values are kept as lists (getlist), matching the pattern used by NetBox's
-    own filterset tests (e.g. {'region_id': [pk]}).
-
-    mapping    — {form_field_name: filterset_field_name}
-    passthrough — set of field names identical in both form and filterset
-    """
-    result = {}
-    for key, values in get_params.lists():
-        if key in passthrough:
-            result[key] = values
-        elif key in mapping:
-            result[mapping[key]] = values
-    return result
-
-
-def _extract_site_params(get_params):
-    return _remap_params(
-        get_params,
-        mapping={
-            "site_status":    "status",
-            "site_tenant_id": "tenant_id",
-            "site_group_id":  "group_id",
-        },
-        passthrough={"region_id"},
-    )
-
-
-def _extract_segment_params(get_params):
-    return _remap_params(
-        get_params,
-        mapping={
-            "segment_status":      "status",
-            "segment_type":        "segment_type",
-            "segment_provider_id": "provider_id",
-        },
-        passthrough={"region_id", "at_any_site"},
-    )
-
-
 def _build_region_ancestors():
     """
     Return a dict mapping each region PK to the list of its ancestor PKs
@@ -395,32 +348,41 @@ class ObjectMapView(View):
         site_qs = Site.objects.filter(
             latitude__isnull=False,
             longitude__isnull=False,
-        ).select_related("region", "group", "tenant")
-        segment_qs = Segment.objects.all()
+        ).select_related("region", "group", "tenant").prefetch_related("tags")
+        segment_qs = Segment.objects.select_related(
+            "site_a", "site_b", "provider",
+        ).prefetch_related("tags")
         circuit_qs = Circuit.objects.select_related(
             "termination_a",
             "termination_z",
             "provider",
             "type",
+            "tenant",
         ).prefetch_related(
             "termination_a__cable__terminations",
             "termination_z__cable__terminations",
+            "tags",
         )
 
         # Cap at MAX_OBJECTS to keep the page load fast; JS filters within that set.
-        sites_truncated    = site_qs.count()    > MAX_OBJECTS
-        segments_truncated = segment_qs.count() > MAX_OBJECTS
-        circuits_truncated = circuit_qs.count() > MAX_OBJECTS
-        if sites_truncated:
-            site_qs = site_qs[:MAX_OBJECTS]
-        if segments_truncated:
-            segment_qs = segment_qs[:MAX_OBJECTS]
-        if circuits_truncated:
-            circuit_qs = circuit_qs[:MAX_OBJECTS]
+        # Evaluate querysets once into lists so we can len() without extra COUNT queries.
+        site_list     = list(site_qs)
+        segment_list  = list(segment_qs)
+        circuit_list  = list(circuit_qs)
 
-        sites_data       = _build_sites_data(site_qs)
-        segments_data    = _build_segments_data(segment_qs)
-        circuits_data    = _build_circuits_data(circuit_qs)
+        sites_truncated    = len(site_list)    > MAX_OBJECTS
+        segments_truncated = len(segment_list) > MAX_OBJECTS
+        circuits_truncated = len(circuit_list) > MAX_OBJECTS
+        if sites_truncated:
+            site_list = site_list[:MAX_OBJECTS]
+        if segments_truncated:
+            segment_list = segment_list[:MAX_OBJECTS]
+        if circuits_truncated:
+            circuit_list = circuit_list[:MAX_OBJECTS]
+
+        sites_data       = _build_sites_data(site_list)
+        segments_data    = _build_segments_data(segment_list)
+        circuits_data    = _build_circuits_data(circuit_list)
         region_ancestors = _build_region_ancestors()
         map_bounds       = _compute_bounds(sites_data, segments_data, circuits_data)
 

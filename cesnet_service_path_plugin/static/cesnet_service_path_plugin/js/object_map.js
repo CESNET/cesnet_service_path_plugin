@@ -146,10 +146,20 @@
     let circuitScheme = 'status';
     const visibility  = { segments: true, sites: true, circuits: false };
 
+    // O(1) lookup maps for the full (unfiltered) datasets — keyed by id as string
+    const allSitesById     = new Map(allSites.map(s => [s.id.toString(), s]));
+    const allSegmentsById  = new Map(allSegments.map(s => [s.id.toString(), s]));
+    const allCircuitsById  = new Map(allCircuits.map(c => [c.id.toString(), c]));
+
     // Currently rendered (filtered) subsets
     let activeSites    = allSites.slice();
     let activeSegments = allSegments.slice();
     let activeCircuits = allCircuits.slice();
+
+    // O(1) lookup maps for active (filtered) subsets — rebuilt in applyFilters()
+    let activeSitesById    = new Map(activeSites.map(s => [s.id.toString(), s]));
+    let activeSegmentsById = new Map(activeSegments.map(s => [s.id.toString(), s]));
+    let activeCircuitsById = new Map(activeCircuits.map(c => [c.id.toString(), c]));
 
     // -------------------------------------------------------------------------
     // Leaflet layer groups
@@ -181,17 +191,18 @@
 
     function _restoreSelected() {
         if (_selectedId === null) return;
+        const key = _selectedId.toString();
         if (_selectedType === 'segment') {
-            const layer = segmentLayers.get(_selectedId.toString());
-            const seg   = activeSegments.find(s => s.id === _selectedId);
+            const layer = segmentLayers.get(key);
+            const seg   = activeSegmentsById.get(key);
             if (layer && seg) _applyLayerStyle(layer, { color: getSegmentColor(seg), weight: seg.has_path_data ? 4 : 3, opacity: seg.has_path_data ? 0.85 : 0.7 });
         } else if (_selectedType === 'circuit') {
-            const layer = circuitLayers.get(_selectedId.toString());
-            const circ  = activeCircuits.find(c => c.id === _selectedId);
+            const layer = circuitLayers.get(key);
+            const circ  = activeCircuitsById.get(key);
             if (layer && circ) _applyLayerStyle(layer, { color: getCircuitColor(circ), weight: 3, opacity: 0.7 });
         } else if (_selectedType === 'site') {
-            const layer = siteLayers.get(_selectedId.toString());
-            const site  = activeSites.find(s => s.id === _selectedId);
+            const layer = siteLayers.get(key);
+            const site  = activeSitesById.get(key);
             if (layer && site) _applyLayerStyle(layer, { fillColor: getSiteColor(site), radius: 7, weight: 2, color: '#fff' });
         }
         _selectedType = null;
@@ -332,7 +343,7 @@
         if (el) el.textContent = labels[scheme] || scheme;
 
         segmentLayers.forEach((layer, sid) => {
-            const seg = allSegments.find(s => s.id.toString() === sid);
+            const seg = allSegmentsById.get(sid);
             if (!seg) return;
             const color = getSegmentColor(seg);
             if (layer instanceof L.Polyline) {
@@ -351,7 +362,7 @@
         if (el) el.textContent = labels[scheme] || scheme;
 
         siteLayers.forEach((marker, sid) => {
-            const site = allSites.find(s => s.id.toString() === sid);
+            const site = allSitesById.get(sid);
             if (!site) return;
             marker.setStyle({ fillColor: getSiteColor(site) });
         });
@@ -365,7 +376,7 @@
         if (el) el.textContent = labels[scheme] || scheme;
 
         circuitLayers.forEach((layer, cid) => {
-            const circ = allCircuits.find(c => c.id.toString() === cid);
+            const circ = allCircuitsById.get(cid);
             if (!circ) return;
             const color = getCircuitColor(circ);
             if (layer instanceof L.Polyline) {
@@ -568,6 +579,10 @@
         activeSegments = filterSegments(f.segment, activeSiteIds);
         activeCircuits = filterCircuits(f.circuit, activeSiteIds);
 
+        activeSitesById    = new Map(activeSites.map(s => [s.id.toString(), s]));
+        activeSegmentsById = new Map(activeSegments.map(s => [s.id.toString(), s]));
+        activeCircuitsById = new Map(activeCircuits.map(c => [c.id.toString(), c]));
+
         renderSites();
         renderSegments();
         renderCircuits();
@@ -670,16 +685,17 @@
         const row = container._rows[rowIndex];
         if (!row) return;
 
+        const key = row.id.toString();
         if (row.type === 'site') {
-            const site   = activeSites.find(s => s.id === row.id);
-            const marker = siteLayers.get(row.id.toString());
+            const site   = activeSitesById.get(key);
+            const marker = siteLayers.get(key);
             if (!site) return;
             map.flyTo([site.lat, site.lng], Math.max(map.getZoom(), 12));
             if (marker) marker.openPopup();
             buildSiteInfoCard(site);
 
         } else if (row.type === 'segment') {
-            const seg = activeSegments.find(s => s.id === row.id);
+            const seg = activeSegmentsById.get(key);
             if (!seg) return;
             const latlng = _segmentMidpoint(seg);
             if (!latlng) return;
@@ -687,8 +703,8 @@
             showSegmentPopup(seg, latlng);
 
         } else if (row.type === 'circuit') {
-            const circ  = activeCircuits.find(c => c.id === row.id);
-            const layer = circuitLayers.get(row.id.toString());
+            const circ  = activeCircuitsById.get(key);
+            const layer = circuitLayers.get(key);
             if (!circ || !circ.site_a || !circ.site_b) return;
             const lat = (circ.site_a.lat + circ.site_b.lat) / 2;
             const lng = (circ.site_a.lng + circ.site_b.lng) / 2;
@@ -947,7 +963,7 @@
         const tol = 10;
         const nearby = [];
         segmentLayers.forEach((layer, sid) => {
-            const seg = activeSegments.find(s => s.id.toString() === sid);
+            const seg = activeSegmentsById.get(sid);
             if (!seg) return;
             let near = false;
             if (layer instanceof L.Polyline) {
@@ -1136,16 +1152,15 @@
         buildSegmentInfoCard(seg);
     }
 
-    // Segment lookup used by overlap popup click handlers
-    const _overlapSegById = {};
-
     function showOverlapPopup(items, latlng) {
+        // Build a local map for this popup's click handlers — no persistent state.
+        const segById = new Map(items.map(({ seg }) => [seg.id, seg]));
+
         let html = `<div>
             <strong>${items.length} segments here</strong>
             <div style="font-size:0.78rem;color:#555;">Click a name to show details</div>`;
-        items.forEach(({ seg }, i) => {
+        items.forEach(({ seg }) => {
             const sc = segmentStatusBadge[seg.status] || 'secondary';
-            _overlapSegById[seg.id] = seg;
             html += `<hr style="margin:4px 0;">
             <div>
                 <span class="seg-overlap-name"
@@ -1170,7 +1185,7 @@
             if (!el) return;
             el.querySelectorAll('.seg-overlap-name').forEach(span => {
                 span.addEventListener('click', function () {
-                    const seg = _overlapSegById[Number(this.dataset.segId)];
+                    const seg = segById.get(Number(this.dataset.segId));
                     if (seg) buildSegmentInfoCard(seg);
                 });
             });
@@ -1219,7 +1234,7 @@
                 const existing = segmentLayers.get(feature.properties.id.toString());
                 if (existing) segmentPathGroup.removeLayer(existing);
 
-                const seg   = activeSegments.find(s => s.id === feature.properties.id);
+                const seg   = activeSegmentsById.get(feature.properties.id.toString());
                 const color = seg ? getSegmentColor(seg) : '#6c757d';
                 const layer = L.geoJSON(feature, { style: { color, weight: 4, opacity: 0.85 } });
                 layer.on('click', handleLineClick);
