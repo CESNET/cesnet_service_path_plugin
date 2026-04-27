@@ -408,6 +408,7 @@
 var _mapData = JSON.parse(document.getElementById('map-data').textContent);
 var map = L.map('map').setView([_mapData.mapCenter.lat, _mapData.mapCenter.lng], _mapData.mapCenter.zoom);
 initializeMapLayers(map);
+initializeLayerSwitching(map);
 </script>
 <script src="{% static 'cesnet_service_path_plugin/js/object_map.js' %}"></script>
 

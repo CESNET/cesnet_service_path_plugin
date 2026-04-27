@@ -352,6 +352,7 @@
                 layer.eachLayer(sub => { if (sub.setStyle) sub.setStyle({ color }); });
             }
         });
+        if (_selectedType === 'segment') highlightObject('segment', _selectedId);
         updateLegend();
     }
 
@@ -366,6 +367,7 @@
             if (!site) return;
             marker.setStyle({ fillColor: getSiteColor(site) });
         });
+        if (_selectedType === 'site') highlightObject('site', _selectedId);
         updateLegend();
     }
 
@@ -383,6 +385,7 @@
                 layer.setStyle({ color });
             }
         });
+        if (_selectedType === 'circuit') highlightObject('circuit', _selectedId);
         updateLegend();
     }
 
@@ -848,7 +851,6 @@
     }
 
     function renderSites() {
-        if (_selectedType === 'site') { _selectedType = null; _selectedId = null; }
         siteGroup.clearLayers();
         siteLayers.clear();
 
@@ -935,6 +937,8 @@
                 });
             });
         }
+
+        if (_selectedType === 'site') highlightObject('site', _selectedId);
     }
 
     // -------------------------------------------------------------------------
@@ -1208,7 +1212,6 @@
     let cachedGeoFeatures = null;
 
     function renderSegments() {
-        if (_selectedType === 'segment') { _selectedType = null; _selectedId = null; }
         segmentPathGroup.clearLayers();
         segmentLayers.clear();
 
@@ -1241,6 +1244,7 @@
                 segmentPathGroup.addLayer(layer);
                 segmentLayers.set(feature.properties.id.toString(), layer);
             });
+            if (_selectedType === 'segment') highlightObject('segment', _selectedId);
             fitMap();
         }
 
@@ -1262,7 +1266,6 @@
     // Circuit rendering
     // -------------------------------------------------------------------------
     function renderCircuits() {
-        if (_selectedType === 'circuit') { _selectedType = null; _selectedId = null; }
         circuitGroup.clearLayers();
         circuitLayers.clear();
 
@@ -1292,6 +1295,8 @@
             circuitGroup.addLayer(line);
             circuitLayers.set(circ.id.toString(), line);
         });
+
+        if (_selectedType === 'circuit') highlightObject('circuit', _selectedId);
     }
 
     // -------------------------------------------------------------------------
