@@ -1033,6 +1033,8 @@
     }
 
     function buildSiteInfoCard(site) {
+        window._editModeLastSite = site;
+        window._editModeLastConnection = null;
         highlightObject('site', site.id);
         const badge = siteStatusBadge[site.status] || 'secondary';
         const rows = _table([
@@ -1053,6 +1055,8 @@
     }
 
     function buildSegmentInfoCard(seg) {
+        window._editModeLastSite = null;
+        window._editModeLastConnection = { objectType: 'segment', obj: seg };
         highlightObject('segment', seg.id);
         const sc = segmentStatusBadge[seg.status] || 'secondary';
         let rows = _table([
@@ -1114,6 +1118,8 @@
     }
 
     function buildCircuitInfoCard(circ) {
+        window._editModeLastSite = null;
+        window._editModeLastConnection = { objectType: 'circuit', obj: circ };
         highlightObject('circuit', circ.id);
         const sc = circuitStatusBadge[circ.status] || 'secondary';
         const rows = _table([
@@ -1230,7 +1236,7 @@
             }
         });
 
-        function applyGeoFeatures(features) {
+        function applyGeoFeatures(features, initialLoad) {
             features.forEach(feature => {
                 if (feature.properties.type !== 'path') return;
                 if (!visibleIds.has(feature.properties.id)) return;
@@ -1245,18 +1251,18 @@
                 segmentLayers.set(feature.properties.id.toString(), layer);
             });
             if (_selectedType === 'segment') highlightObject('segment', _selectedId);
-            fitMap();
+            if (initialLoad) fitMap();
         }
 
         if (cachedGeoFeatures) {
-            applyGeoFeatures(cachedGeoFeatures);
+            applyGeoFeatures(cachedGeoFeatures, false);
         } else {
             fetch(apiUrl)
                 .then(r => r.json())
                 .then(data => {
                     if (!data.features) return;
                     cachedGeoFeatures = data.features;
-                    applyGeoFeatures(cachedGeoFeatures);
+                    applyGeoFeatures(cachedGeoFeatures, true);
                 })
                 .catch(() => fitMap());
         }
@@ -1288,9 +1294,7 @@
                 `</div>`,
                 { maxWidth: 300 }
             );
-            line.on('click', (function(c) {
-                return function() { buildCircuitInfoCard(c); };
-            })(circ));
+            line.on('click', () => buildCircuitInfoCard(circ));
 
             circuitGroup.addLayer(line);
             circuitLayers.set(circ.id.toString(), line);
@@ -1431,6 +1435,31 @@
 
         // Tile layer switcher
         initializeLayerSwitching(map);
+
+        // Edit mode — only wired when the toolbar button is present (user has permission)
+        if (_mapData.canEdit && typeof EditModeUI !== 'undefined') {
+            new EditModeUI(
+                map,
+                allSites,
+                allSegments,
+                allCircuits,
+                allSitesById,
+                renderSites,
+                renderSegments,
+                renderCircuits,
+                buildSiteInfoCard,
+                buildSegmentInfoCard,
+                buildCircuitInfoCard,
+                showInfoCard,
+                hideInfoCard,
+                siteLayers,
+                segmentLayers,
+                applyFilters,
+                circuitLayers,
+                handleLineClick,
+                findNearbySegments
+            );
+        }
     });
 
 })();

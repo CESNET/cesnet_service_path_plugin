@@ -280,3 +280,10 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Node / JavaScript tooling
+node_modules/
+npm-debug.log*
+.npm
+coverage/
+.nyc_output/

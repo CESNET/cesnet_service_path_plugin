@@ -136,6 +136,15 @@
             {# Tile layer picker #}
             {% include './inc/map_layer_dropdown.html' %}
 
+            {# Edit mode toggle — only for users with dcim.change_site #}
+            {% if can_edit %}
+            <button type="button" id="editModeToggle"
+                    class="btn btn-outline-warning btn-sm ms-2"
+                    title="Toggle edit mode">
+                <i class="mdi mdi-pencil"></i> Edit
+            </button>
+            {% endif %}
+
         </div>
     </div>
 </div>
@@ -160,7 +169,7 @@
         <div id="map" style="height:1000px; width:100%; border:1px solid #ddd; border-radius:4px;"></div>
     </div>
 
-    {# ── Right column: info card + filter sidebar ────────────────────────── #}
+    {# ── Right column: info card + filter sidebar + edit panel ─────────── #}
     <div style="width:285px; flex-shrink:0; display:flex; flex-direction:column; gap:0.5rem;">
 
     {# ── Info card — populated by JS on click ─────────────────────────────── #}
@@ -382,6 +391,13 @@
         </div>
     </div>
 
+    {# ── Edit mode panel — shown instead of filter sidebar in edit mode ── #}
+    {% if can_edit %}
+    <div id="editModePanel" style="display:none;">
+        {# Populated entirely by edit_mode_ui.js #}
+    </div>
+    {% endif %}
+
     </div>{# end right column #}
 
 </div>{# end two-column layout #}
@@ -398,7 +414,8 @@
     "regionAncestors": {{ region_ancestors_json|safe }},
     "mapBounds":       {{ map_bounds_json|safe }},
     "mapCenter":       {{ map_center_json|safe }},
-    "apiUrl":          "{{ segments_api_url|escapejs }}"
+    "apiUrl":          "{{ segments_api_url|escapejs }}",
+    "canEdit":         {{ can_edit|yesno:"true,false" }}
 }
 </script>
 
@@ -410,6 +427,12 @@ var map = L.map('map').setView([_mapData.mapCenter.lat, _mapData.mapCenter.lng],
 initializeMapLayers(map);
 initializeLayerSwitching(map);
 </script>
-<script src="{% static 'cesnet_service_path_plugin/js/object_map.js' %}"></script>
+<script src="{% static 'cesnet_service_path_plugin/js/object_map.js' %}?v=2"></script>
+{% if can_edit %}
+<script src="{% static 'cesnet_service_path_plugin/js/edit_mode_state_machine.js' %}?v=7"></script>
+<script src="{% static 'cesnet_service_path_plugin/js/edit_mode_api.js' %}?v=7"></script>
+<script src="{% static 'cesnet_service_path_plugin/js/edit_mode_marker.js' %}?v=7"></script>
+<script src="{% static 'cesnet_service_path_plugin/js/edit_mode_ui.js' %}?v=7"></script>
+{% endif %}
 
 {% endblock content %}
