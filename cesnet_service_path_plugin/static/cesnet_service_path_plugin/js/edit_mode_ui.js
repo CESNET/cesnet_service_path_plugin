@@ -8,12 +8,6 @@
  *   edit_mode_state_machine.js  → window.EditModeStateMachine
  *   edit_mode_api.js            → window.EditModeApi
  *   edit_mode_marker.js         → window.EditModeMarker
- *   object_map.js globals:
- *     map, allSites, allSegments, allCircuits,
- *     allSitesById, allSegmentsById, allCircuitsById,
- *     renderSites, renderSegments, renderCircuits,
- *     buildSiteInfoCard, buildSegmentInfoCard, buildCircuitInfoCard,
- *     showInfoCard, hideInfoCard, siteLayers, segmentLayers, circuitLayers
  *
  * Instantiated at the bottom of object_map.js when _mapData.canEdit === true.
  */
@@ -23,72 +17,58 @@
 
     const S = EditModeStateMachine.STATES;
 
-    // -------------------------------------------------------------------------
-    // Slug auto-generation (mirrors NetBox behaviour)
-    // NetBox DecimalField for lat/lng allows max 8 significant digits.
-    // 6 decimal places (~11 cm precision) fits comfortably within that limit.
     function _roundCoord(v) { return Math.round(v * 1e6) / 1e6; }
 
-    // -------------------------------------------------------------------------
     function slugify(str) {
-        return str
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .trim()
-            .replace(/[\s_]+/g, '-')
-            .replace(/-+/g, '-');
+        return str.toLowerCase()
+            .replace(/[^\w\s-]/g, '').trim()
+            .replace(/[\s_]+/g, '-').replace(/-+/g, '-');
     }
 
     // -------------------------------------------------------------------------
-    // Simple event bus used to communicate between object_map and this module
+    // Minimal event bus
     // -------------------------------------------------------------------------
-    const _editEvents = { _handlers: {} };
-    _editEvents.on = function (name, fn) {
-        if (!this._handlers[name]) this._handlers[name] = [];
-        this._handlers[name].push(fn);
-    };
-    _editEvents.emit = function (name, data) {
-        (_editEvents._handlers[name] || []).forEach(fn => fn(data));
-    };
+    class EventBus {
+        constructor() { this._h = {}; }
+        on(name, fn)  { (this._h[name] ??= []).push(fn); }
+        emit(name, d) { (this._h[name] || []).forEach(fn => fn(d)); }
+    }
 
     // -------------------------------------------------------------------------
-    // Module init — called once from object_map.js
+    // EditModeUI
     // -------------------------------------------------------------------------
     class EditModeUI {
-        constructor(map, allSitesArr, allSegmentsArr, allCircuitsArr,
-                    allSitesByIdMap, renderSitesFn, renderSegmentsFn, renderCircuitsFn,
-                    buildSiteInfoCardFn, buildSegmentInfoCardFn, buildCircuitInfoCardFn,
-                    showInfoCardFn, hideInfoCardFn, siteLayersMap, segmentLayersMap,
-                    applyFiltersFn, circuitLayersMap, handleLineClickFn, findNearbySegmentsFn) {
+        /**
+         * @param {object} opts  All dependencies passed as a single named-arg object.
+         */
+        constructor(opts) {
+            this._map            = opts.map;
+            this._allSites       = opts.allSites;
+            this._allSegments    = opts.allSegments;
+            this._allCircuits    = opts.allCircuits;
+            this._allSitesById   = opts.allSitesById;
+            this._renderSites    = opts.renderSites;
+            this._renderSegments = opts.renderSegments;
+            this._renderCircuits = opts.renderCircuits;
+            this._applyFilters   = opts.applyFilters || opts.renderSites;
+            this._buildSiteCard  = opts.buildSiteInfoCard;
+            this._buildSegCard   = opts.buildSegmentInfoCard;
+            this._buildCircCard  = opts.buildCircuitInfoCard;
+            this._showInfoCard   = opts.showInfoCard;
+            this._hideInfoCard   = opts.hideInfoCard;
+            this._siteLayers     = opts.siteLayers;
+            this._segmentLayers  = opts.segmentLayers;
+            this._circuitLayers  = opts.circuitLayers || new Map();
+            this._handleLineClick    = opts.handleLineClick    || null;
+            this._findNearbySegments = opts.findNearbySegments || null;
+            this._editSegMapHandler  = null;
 
-            this._map            = map;
-            this._allSites       = allSitesArr;
-            this._allSegments    = allSegmentsArr;
-            this._allCircuits    = allCircuitsArr;
-            this._allSitesById   = allSitesByIdMap;
-            this._renderSites    = renderSitesFn;
-            this._renderSegments = renderSegmentsFn;
-            this._renderCircuits = renderCircuitsFn;
-            this._applyFilters   = applyFiltersFn || renderSitesFn;
-            this._buildSiteCard  = buildSiteInfoCardFn;
-            this._buildSegCard   = buildSegmentInfoCardFn;
-            this._buildCircCard  = buildCircuitInfoCardFn;
-            this._showInfoCard   = showInfoCardFn;
-            this._hideInfoCard   = hideInfoCardFn;
-            this._siteLayers     = siteLayersMap;
-            this._segmentLayers  = segmentLayersMap;
-            this._circuitLayers      = circuitLayersMap || new Map();
-            this._handleLineClick    = handleLineClickFn || null;
-            this._findNearbySegments = findNearbySegmentsFn || null;
-            this._editSegMapHandler  = null;   // map-level click handler for segment selection
-
-            this._sm      = new EditModeStateMachine(_editEvents);
+            this._events  = new EventBus();
+            this._sm      = new EditModeStateMachine(this._events);
             this._api     = new EditModeApi();
-            this._marker  = new EditModeMarker(map);
-            this._preview = null;   // dashed Leaflet Polyline for connection preview
-
-            // Edit-mode highlight tracking — distinct from read-mode highlight
-            this._editHL = null;    // { layer, style } — currently highlighted layer
+            this._marker  = new EditModeMarker(opts.map);
+            this._preview = null;
+            this._editHL  = null;   // { layer, restoreStyle } — current edit highlight
 
             this._init();
         }
@@ -97,42 +77,27 @@
         // Initialisation
         // -------------------------------------------------------------------------
         _init() {
-            // Listen for state changes and re-render the right panel accordingly
-            _editEvents.on('editModeStateChanged', ev => {
-                this._onStateChanged(ev.state, ev.prev);
-            });
-            _editEvents.on('editModeSitePositionUpdated', ev => {
-                this._onPositionUpdated(ev.lat, ev.lng);
-            });
-            _editEvents.on('editModeSaveFailed', ev => {
-                this._showError(ev.message);
-            });
+            this._events.on('editModeStateChanged',    ev => this._onStateChanged(ev.state, ev.prev));
+            this._events.on('editModeSitePositionUpdated', ev => this._onPositionUpdated(ev.lat, ev.lng));
+            this._events.on('editModeSaveFailed',      ev => this._showError(ev.message));
 
-            // Escape key — global
             document.addEventListener('keydown', e => {
                 if (e.key === 'Escape') this._sm.escape();
             });
 
-            // Wire the toolbar toggle button
             const toggleBtn = document.getElementById('editModeToggle');
             if (toggleBtn) {
                 toggleBtn.addEventListener('click', () => {
-                    if (this._sm.state === S.VIEW) {
-                        this._enterEditMode();
-                    } else {
-                        this._sm.exitEditMode();
-                    }
+                    if (this._sm.state === S.VIEW) this._enterEditMode();
+                    else                           this._sm.exitEditMode();
                 });
             }
 
-            // Map click — context-sensitive
-            this._map.on('click', e => {
-                this._onMapClick(e.latlng.lat, e.latlng.lng);
-            });
+            this._map.on('click', e => this._onMapClick(e.latlng.lat, e.latlng.lng));
         }
 
         // -------------------------------------------------------------------------
-        // Enter edit mode — load reference data first
+        // Enter edit mode
         // -------------------------------------------------------------------------
         _enterEditMode() {
             const toggleBtn = document.getElementById('editModeToggle');
@@ -142,7 +107,6 @@
             }
             this._api.loadReferenceData().then(refData => {
                 this._sm.enterEditMode(refData);
-                // Pre-select the object that was showing in the info card before edit mode was entered
                 const presite = window._editModeLastSite || null;
                 const preconn = window._editModeLastConnection || null;
                 if (presite && presite.lat != null && presite.lng != null) {
@@ -166,10 +130,9 @@
         }
 
         // -------------------------------------------------------------------------
-        // State change handler — drives all panel and cursor changes
+        // State change handler
         // -------------------------------------------------------------------------
-        _onStateChanged(state, prev) {
-            // Toolbar button label
+        _onStateChanged(state) {
             const toggleBtn = document.getElementById('editModeToggle');
             if (toggleBtn) {
                 toggleBtn.disabled = false;
@@ -182,7 +145,6 @@
                 }
             }
 
-            // Cursor on the map container
             const mapEl = document.getElementById('map');
             if (mapEl) {
                 mapEl.classList.remove('edit-cursor-crosshair', 'edit-cursor-pointer');
@@ -195,7 +157,6 @@
                 }
             }
 
-            // Show/hide filter sidebar vs edit panel
             const filterSidebar = document.getElementById('filterSidebar');
             const editPanel     = document.getElementById('editModePanel');
             if (state === S.VIEW) {
@@ -203,7 +164,6 @@
                 if (editPanel)     editPanel.style.display     = 'none';
                 this._marker.remove();
                 this._removePreview();
-                this._makeAllSitesNonDraggable();
                 this._clearEditHighlight();
             } else {
                 if (filterSidebar) filterSidebar.style.display = 'none';
@@ -212,95 +172,60 @@
                 this._renderEditPanel(state);
             }
 
-            // Re-wire site click listeners for edit mode site selection
             if (state !== S.VIEW) {
                 this._wireSiteClicksForEditMode();
-            } else {
-                this._wireSiteClicksForReadMode();
-            }
-
-            // Re-wire segment/circuit clicks
-            if (state !== S.VIEW) {
                 this._wireConnectionClicksForEditMode();
             } else {
+                this._wireSiteClicksForReadMode();
                 this._wireConnectionClicksForReadMode();
             }
         }
 
         // -------------------------------------------------------------------------
-        // Render the edit panel content based on state
+        // Edit panel rendering
         // -------------------------------------------------------------------------
         _renderEditPanel(state) {
             const sm    = this._sm;
             const panel = document.getElementById('editModePanel');
             if (!panel) return;
 
-            let html = '';
+            const pendingA = sm.pendingConnection && sm.pendingConnection.siteA;
+            const pendingB = sm.pendingConnection && sm.pendingConnection.siteB;
 
-            switch (state) {
-
-            case S.EDIT_IDLE:
-                html = this._renderIdlePanel();
-                break;
-
-            case S.SITE_SELECTED:
-                html = this._renderSiteSelectedPanel();
-                break;
-
-            case S.PLACING_UNPOSITIONED: {
-                const name = sm.pendingSite ? sm.pendingSite.name : '';
-                html = _instruction('mdi-map-marker-plus', `Click on the map to place <strong>${_esc(name)}</strong>`);
-                break;
-            }
-
-            case S.PLACING_NEW_SITE:
-                html = _instruction('mdi-map-marker-plus', 'Click on the map to place a new site marker');
-                break;
-
-            case S.NEW_SITE_FORM:
-                html = this._renderNewSiteForm();
-                break;
-
-            case S.PICKING_SEGMENT_START:
-                html = _instruction('mdi-vector-polyline', 'Click <strong>site A</strong> on the map to start a new segment');
-                break;
-
-            case S.PICKING_SEGMENT_END: {
-                const aName = sm.pendingConnection && sm.pendingConnection.siteA ? sm.pendingConnection.siteA.name : '?';
-                html = _instruction('mdi-vector-polyline',
-                    `Site A: <strong>${_esc(aName)}</strong><br>Now click <strong>site B</strong> on the map`);
-                break;
-            }
-
-            case S.NEW_SEGMENT_FORM:
-                html = this._renderNewSegmentForm();
-                break;
-
-            case S.PICKING_CIRCUIT_START:
-                html = _instruction('mdi-transit-connection-variant', 'Click <strong>site A</strong> on the map to start a new circuit');
-                break;
-
-            case S.PICKING_CIRCUIT_END: {
-                const caName = sm.pendingConnection && sm.pendingConnection.siteA ? sm.pendingConnection.siteA.name : '?';
-                html = _instruction('mdi-transit-connection-variant',
-                    `Site A: <strong>${_esc(caName)}</strong><br>Now click <strong>site B</strong> on the map`);
-                break;
-            }
-
-            case S.NEW_CIRCUIT_FORM:
-                html = this._renderNewCircuitForm();
-                break;
-
-            case S.EDITING_CONNECTION:
-                html = this._renderEditConnectionPanel();
-                break;
-
-            case S.PICKING_REPLACEMENT_SITE: {
-                const endLabel = sm.pendingConnection && sm.pendingConnection.endToChange === 'a' ? 'A' : 'B';
-                html = _instruction('mdi-cursor-pointer', `Click the new <strong>site ${endLabel}</strong> on the map`);
-                break;
-            }
-            }
+            const html = (() => { switch (state) {
+                case S.EDIT_IDLE:
+                    return this._renderIdlePanel();
+                case S.SITE_SELECTED:
+                    return this._renderSiteSelectedPanel();
+                case S.PLACING_UNPOSITIONED:
+                    return _instruction('mdi-map-marker-plus',
+                        `Click on the map to place <strong>${_esc(sm.pendingSite ? sm.pendingSite.name : '')}</strong>`);
+                case S.PLACING_NEW_SITE:
+                    return _instruction('mdi-map-marker-plus', 'Click on the map to place a new site marker');
+                case S.NEW_SITE_FORM:
+                    return this._renderNewSiteForm();
+                case S.PICKING_SEGMENT_START:
+                    return _instruction('mdi-vector-polyline', 'Click <strong>site A</strong> on the map to start a new segment');
+                case S.PICKING_SEGMENT_END:
+                    return _instruction('mdi-vector-polyline',
+                        `Site A: <strong>${_esc(pendingA ? pendingA.name : '?')}</strong><br>Now click <strong>site B</strong> on the map`);
+                case S.NEW_SEGMENT_FORM:
+                    return this._renderNewSegmentForm();
+                case S.PICKING_CIRCUIT_START:
+                    return _instruction('mdi-transit-connection-variant', 'Click <strong>site A</strong> on the map to start a new circuit');
+                case S.PICKING_CIRCUIT_END:
+                    return _instruction('mdi-transit-connection-variant',
+                        `Site A: <strong>${_esc(pendingA ? pendingA.name : '?')}</strong><br>Now click <strong>site B</strong> on the map`);
+                case S.NEW_CIRCUIT_FORM:
+                    return this._renderNewCircuitForm();
+                case S.EDITING_CONNECTION:
+                    return this._renderEditConnectionPanel();
+                case S.PICKING_REPLACEMENT_SITE: {
+                    const endLabel = sm.pendingConnection && sm.pendingConnection.endToChange === 'a' ? 'A' : 'B';
+                    return _instruction('mdi-cursor-pointer', `Click the new <strong>site ${endLabel}</strong> on the map`);
+                }
+                default: return '';
+            }})();
 
             panel.innerHTML = html;
             this._bindEditPanelEvents(state);
@@ -309,54 +234,40 @@
         // -------------------------------------------------------------------------
         // Panel HTML builders
         // -------------------------------------------------------------------------
-
         _renderIdlePanel() {
-            const sm    = this._sm;
-            const sites = sm.unpositionedSites;
-            let listHtml;
+            const sites = this._sm.unpositionedSites;
+            const listHtml = sites.length === 0
+                ? '<div class="text-muted small">All sites have GPS coordinates.</div>'
+                : '<input type="search" id="unposSearch" class="form-control form-control-sm mb-1" placeholder="Search…" autocomplete="off">' +
+                  '<div id="unpositionedList" style="overflow-y:auto; max-height:320px;">' +
+                  sites.map(s =>
+                      `<div class="list-row py-1 px-1 border-bottom" data-site-id="${s.id}" ` +
+                      `style="cursor:pointer; font-size:0.78rem;" title="Click to place on map">` +
+                      `<i class="mdi mdi-map-marker-off text-muted me-1"></i>${_esc(s.name)}</div>`
+                  ).join('') +
+                  '</div>';
 
-            if (sites.length === 0) {
-                listHtml = '<div class="text-muted small">All sites have GPS coordinates.</div>';
-            } else {
-                listHtml =
-                    '<input type="search" id="unposSearch" class="form-control form-control-sm mb-1" placeholder="Search…" autocomplete="off">' +
-                    '<div id="unpositionedList" style="overflow-y:auto; max-height:320px;">' +
-                    sites.map(s =>
-                        `<div class="list-row py-1 px-1 border-bottom" data-site-id="${s.id}" ` +
-                        `style="cursor:pointer; font-size:0.78rem;" title="Click to place on map">` +
-                        `<i class="mdi mdi-map-marker-off text-muted me-1"></i>${_esc(s.name)}` +
-                        `</div>`
-                    ).join('') +
-                    '</div>';
-            }
-
-            return _card(
-                '<i class="mdi mdi-pencil"></i> Edit Mode',
+            return _card('<i class="mdi mdi-pencil"></i> Edit Mode',
                 '<div class="mb-2">' +
                 '<div class="text-muted small mb-1 fw-bold text-uppercase" style="font-size:0.68rem;">Actions</div>' +
                 '<div class="d-grid gap-1">' +
-                '<button id="btnAddNewSite"     class="btn btn-outline-primary  btn-sm"><i class="mdi mdi-map-marker-plus"></i> Add new site</button>' +
-                '<button id="btnNewSegment"     class="btn btn-outline-success  btn-sm"><i class="mdi mdi-vector-polyline-plus"></i> New segment</button>' +
-                '<button id="btnNewCircuit"     class="btn btn-outline-warning  btn-sm"><i class="mdi mdi-transit-connection-variant"></i> New circuit</button>' +
-                '</div></div>' +
-                '<hr class="my-1">' +
+                '<button id="btnAddNewSite" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-map-marker-plus"></i> Add new site</button>' +
+                '<button id="btnNewSegment" class="btn btn-outline-success btn-sm"><i class="mdi mdi-vector-polyline-plus"></i> New segment</button>' +
+                '<button id="btnNewCircuit" class="btn btn-outline-warning btn-sm"><i class="mdi mdi-transit-connection-variant"></i> New circuit</button>' +
+                '</div></div><hr class="my-1">' +
                 `<div class="text-muted small mb-1 fw-bold text-uppercase" style="font-size:0.68rem;">` +
-                `<i class="mdi mdi-map-marker-off"></i> Sites without GPS (${sites.length})` +
-                '</div>' +
+                `<i class="mdi mdi-map-marker-off"></i> Sites without GPS (${sites.length})</div>` +
                 listHtml
             );
         }
 
         _renderSiteSelectedPanel() {
-            const sm  = this._sm;
-            const ps  = sm.pendingSite;
+            const sm = this._sm;
+            const ps = sm.pendingSite;
             if (!ps) return '';
-            const isNew     = ps.isNew;
-            const title     = isNew ? 'New site' : _esc(ps.name);
-            const saveLabel = isNew ? 'Save &amp; open full form' : 'Save coordinates';
-
+            const saveLabel = ps.isNew ? 'Save &amp; open full form' : 'Save coordinates';
             return _card(
-                `<i class="mdi mdi-map-marker-check"></i> ${title}`,
+                `<i class="mdi mdi-map-marker-check"></i> ${ps.isNew ? 'New site' : _esc(ps.name)}`,
                 '<div class="mb-2">' +
                 '<div class="mb-1"><label class="form-label mb-0 small">Latitude</label>' +
                 `<input type="number" id="editLat" class="form-control form-control-sm" step="0.000001" value="${ps.currentLat || ''}"></div>` +
@@ -366,31 +277,25 @@
                 '<div class="d-flex gap-1">' +
                 `<button id="btnSaveSite" class="btn btn-primary btn-sm flex-fill"${sm.isSaving ? ' disabled' : ''}>` +
                 (sm.isSaving ? '<i class="mdi mdi-loading mdi-spin"></i> Saving…' : `<i class="mdi mdi-content-save"></i> ${saveLabel}`) +
-                '</button>' +
-                '<button id="btnCancelSite" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
+                '</button><button id="btnCancelSite" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
                 '</div></div>'
             );
         }
 
         _renderNewSiteForm() {
-            const sm  = this._sm;
-            const ps  = sm.pendingSite;
-            const lat = ps ? ps.currentLat : '';
-            const lng = ps ? ps.currentLng : '';
-
-            return _card(
-                '<i class="mdi mdi-map-marker-plus"></i> New Site',
+            const sm = this._sm;
+            const ps = sm.pendingSite;
+            return _card('<i class="mdi mdi-map-marker-plus"></i> New Site',
                 '<form id="newSiteForm" autocomplete="off">' +
                 _formField('Name', 'newSiteName', 'text', '', true) +
                 _formField('Slug', 'newSiteSlug', 'text', '', true) +
-                _formField('Latitude',  'newSiteLat', 'number', lat) +
-                _formField('Longitude', 'newSiteLng', 'number', lng) +
+                _formField('Latitude',  'newSiteLat', 'number', ps ? ps.currentLat : '') +
+                _formField('Longitude', 'newSiteLng', 'number', ps ? ps.currentLng : '') +
                 (sm.saveError ? `<div class="alert alert-danger py-1 small mb-2">${_esc(sm.saveError)}</div>` : '') +
                 '<div class="d-flex gap-1 mb-1">' +
                 `<button type="submit" class="btn btn-primary btn-sm flex-fill"${sm.isSaving ? ' disabled' : ''}>` +
                 (sm.isSaving ? '<i class="mdi mdi-loading mdi-spin"></i> Saving…' : '<i class="mdi mdi-content-save"></i> Create site') +
-                '</button>' +
-                '<button type="button" id="btnCancelNewSite" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
+                '</button><button type="button" id="btnCancelNewSite" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
                 '</div>' +
                 '<a href="/dcim/sites/add/" target="_blank" class="btn btn-outline-secondary btn-sm w-100">' +
                 '<i class="mdi mdi-open-in-new"></i> Open full form</a>' +
@@ -403,13 +308,8 @@
             const conn      = sm.pendingConnection;
             const siteAName = conn && conn.siteA ? _esc(conn.siteA.name) : '—';
             const siteBName = conn && conn.siteB ? _esc(conn.siteB.name) : '—';
-
-            const providerOptions = sm.providers.map(p =>
-                `<option value="${p.id}">${_esc(p.name)}</option>`
-            ).join('');
-
-            return _card(
-                '<i class="mdi mdi-vector-polyline-plus"></i> New Segment',
+            const providerOptions = sm.providers.map(p => `<option value="${p.id}">${_esc(p.name)}</option>`).join('');
+            return _card('<i class="mdi mdi-vector-polyline-plus"></i> New Segment',
                 '<form id="newSegmentForm" autocomplete="off">' +
                 _formField('Name', 'newSegName', 'text', '', true) +
                 '<div class="mb-1"><label class="form-label mb-0 small">Segment type <span class="text-danger">*</span></label>' +
@@ -422,17 +322,13 @@
                 `<select id="newSegProvider" class="form-select form-select-sm"><option value="">— select —</option>${providerOptions}</select></div>` +
                 '<div class="mb-1"><label class="form-label mb-0 small">Ownership type</label>' +
                 '<select id="newSegOwnership" class="form-select form-select-sm">' +
-                '<option value="leased" selected>Leased</option>' +
-                '<option value="owned">Owned</option>' +
-                '<option value="shared">Shared</option>' +
-                '<option value="foreign">Foreign</option>' +
+                '<option value="leased" selected>Leased</option><option value="owned">Owned</option>' +
+                '<option value="shared">Shared</option><option value="foreign">Foreign</option>' +
                 '</select></div>' +
                 '<div class="mb-2"><label class="form-label mb-0 small">Status</label>' +
                 '<select id="newSegStatus" class="form-select form-select-sm">' +
-                '<option value="active" selected>Active</option>' +
-                '<option value="planned">Planned</option>' +
-                '<option value="offline">Offline</option>' +
-                '<option value="decommissioned">Decommissioned</option>' +
+                '<option value="active" selected>Active</option><option value="planned">Planned</option>' +
+                '<option value="offline">Offline</option><option value="decommissioned">Decommissioned</option>' +
                 '<option value="surveyed">Surveyed</option>' +
                 '</select></div>' +
                 `<div class="mb-1 small"><strong>Site A:</strong> ${siteAName}</div>` +
@@ -441,8 +337,7 @@
                 '<div class="d-flex gap-1 mb-1">' +
                 `<button type="submit" class="btn btn-primary btn-sm flex-fill"${sm.isSaving ? ' disabled' : ''}>` +
                 (sm.isSaving ? '<i class="mdi mdi-loading mdi-spin"></i> Saving…' : '<i class="mdi mdi-content-save"></i> Create segment') +
-                '</button>' +
-                '<button type="button" id="btnCancelNewSeg" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
+                '</button><button type="button" id="btnCancelNewSeg" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
                 '</div>' +
                 '<a href="/plugins/cesnet-service-path-plugin/segments/add/" target="_blank" class="btn btn-outline-secondary btn-sm w-100">' +
                 '<i class="mdi mdi-open-in-new"></i> Open full form</a>' +
@@ -455,16 +350,9 @@
             const conn      = sm.pendingConnection;
             const siteAName = conn && conn.siteA ? _esc(conn.siteA.name) : '—';
             const siteBName = conn && conn.siteB ? _esc(conn.siteB.name) : '—';
-
-            const providerOptions = sm.providers.map(p =>
-                `<option value="${p.id}">${_esc(p.name)}</option>`
-            ).join('');
-            const typeOptions = sm.circuitTypes.map(t =>
-                `<option value="${t.id}">${_esc(t.name)}</option>`
-            ).join('');
-
-            return _card(
-                '<i class="mdi mdi-transit-connection-variant"></i> New Circuit',
+            const providerOptions = sm.providers.map(p => `<option value="${p.id}">${_esc(p.name)}</option>`).join('');
+            const typeOptions     = sm.circuitTypes.map(t => `<option value="${t.id}">${_esc(t.name)}</option>`).join('');
+            return _card('<i class="mdi mdi-transit-connection-variant"></i> New Circuit',
                 '<form id="newCircuitForm" autocomplete="off">' +
                 _formField('Circuit ID', 'newCircCid', 'text', '', true) +
                 '<div class="mb-1"><label class="form-label mb-0 small">Provider <span class="text-danger">*</span></label>' +
@@ -477,8 +365,7 @@
                 '<div class="d-flex gap-1 mb-1">' +
                 `<button type="submit" class="btn btn-primary btn-sm flex-fill"${sm.isSaving ? ' disabled' : ''}>` +
                 (sm.isSaving ? '<i class="mdi mdi-loading mdi-spin"></i> Saving…' : '<i class="mdi mdi-content-save"></i> Create circuit') +
-                '</button>' +
-                '<button type="button" id="btnCancelNewCirc" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
+                '</button><button type="button" id="btnCancelNewCirc" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
                 '</div>' +
                 '<a href="/circuits/circuits/add/" target="_blank" class="btn btn-outline-secondary btn-sm w-100">' +
                 '<i class="mdi mdi-open-in-new"></i> Open full form</a>' +
@@ -487,21 +374,17 @@
         }
 
         _renderEditConnectionPanel() {
-            const sm      = this._sm;
-            const conn    = sm.pendingConnection;
+            const sm   = this._sm;
+            const conn = sm.pendingConnection;
             if (!conn) return '';
-            const isSegment = conn.objectType === 'segment';
-            const icon      = isSegment ? 'mdi-vector-polyline' : 'mdi-transit-connection-variant';
+            const icon      = conn.objectType === 'segment' ? 'mdi-vector-polyline' : 'mdi-transit-connection-variant';
             const siteAName = conn.siteA ? _esc(conn.siteA.name) : '—';
             const siteBName = conn.siteB ? _esc(conn.siteB.name) : '—';
-
-            return _card(
-                `<i class="mdi ${icon}"></i> Edit endpoints`,
+            return _card(`<i class="mdi ${icon}"></i> Edit endpoints`,
                 '<div class="mb-2 small">' +
                 '<div class="mb-1 d-flex align-items-center justify-content-between">' +
                 `<span><strong>Site A:</strong> ${siteAName}</span>` +
-                '<button id="btnChangeEndA" class="btn btn-outline-primary btn-sm py-0">Change</button>' +
-                '</div>' +
+                '<button id="btnChangeEndA" class="btn btn-outline-primary btn-sm py-0">Change</button></div>' +
                 '<div class="d-flex align-items-center justify-content-between">' +
                 `<span><strong>Site B:</strong> ${siteBName}</span>` +
                 '<button id="btnChangeEndB" class="btn btn-outline-primary btn-sm py-0">Change</button>' +
@@ -512,152 +395,94 @@
         }
 
         // -------------------------------------------------------------------------
-        // Bind panel event handlers after innerHTML is set
+        // Panel event binding
         // -------------------------------------------------------------------------
         _bindEditPanelEvents(state) {
             const sm = this._sm;
-
-            const on = (id, event, fn) => {
-                const el = document.getElementById(id);
-                if (el) el.addEventListener(event, fn);
-            };
+            const on = (id, event, fn) => document.getElementById(id)?.addEventListener(event, fn);
 
             switch (state) {
-
             case S.EDIT_IDLE:
                 on('btnAddNewSite', 'click', () => sm.beginPlacingNewSite());
                 on('btnNewSegment', 'click', () => sm.beginNewSegment());
                 on('btnNewCircuit', 'click', () => sm.beginNewCircuit());
-
-                // Unpositioned site list click
-                {
-                    const list = document.getElementById('unpositionedList');
-                    if (list) {
-                        list.addEventListener('click', e => {
-                            const row = e.target.closest('.list-row');
-                            if (!row) return;
-                            const siteId = Number(row.dataset.siteId);
-                            const site   = sm.unpositionedSites.find(s => s.id === siteId);
-                            if (site) sm.beginPlacingUnpositioned(site);
-                        });
-                    }
-
-                    // Unpositioned site search
-                    const search = document.getElementById('unposSearch');
-                    if (search) {
-                        search.addEventListener('input', function () {
-                            const q = this.value.toLowerCase();
-                            document.querySelectorAll('#unpositionedList .list-row').forEach(row => {
-                                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-                            });
-                        });
-                    }
-                }
+                document.getElementById('unpositionedList')?.addEventListener('click', e => {
+                    const row = e.target.closest('.list-row');
+                    if (!row) return;
+                    const site = sm.unpositionedSites.find(s => s.id === Number(row.dataset.siteId));
+                    if (site) sm.beginPlacingUnpositioned(site);
+                });
+                document.getElementById('unposSearch')?.addEventListener('input', function () {
+                    const q = this.value.toLowerCase();
+                    document.querySelectorAll('#unpositionedList .list-row').forEach(row => {
+                        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+                    });
+                });
                 break;
 
             case S.SITE_SELECTED:
-                // Live lat/lng inputs update both the marker position and state machine
-                on('editLat', 'input', e => {
-                    const lat = parseFloat(e.target.value);
-                    const lng = parseFloat(document.getElementById('editLng').value);
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        this._marker.moveTo(lat, lng);
-                        sm.updateSitePosition(lat, lng);
-                    }
-                });
-                on('editLng', 'input', e => {
+                on('editLat', 'input', () => {
                     const lat = parseFloat(document.getElementById('editLat').value);
-                    const lng = parseFloat(e.target.value);
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        this._marker.moveTo(lat, lng);
-                        sm.updateSitePosition(lat, lng);
-                    }
+                    const lng = parseFloat(document.getElementById('editLng').value);
+                    if (!isNaN(lat) && !isNaN(lng)) { this._marker.moveTo(lat, lng); sm.updateSitePosition(lat, lng); }
+                });
+                on('editLng', 'input', () => {
+                    const lat = parseFloat(document.getElementById('editLat').value);
+                    const lng = parseFloat(document.getElementById('editLng').value);
+                    if (!isNaN(lat) && !isNaN(lng)) { this._marker.moveTo(lat, lng); sm.updateSitePosition(lat, lng); }
                 });
                 on('btnSaveSite',   'click', () => this._saveSiteCoordinates());
-                on('btnCancelSite', 'click', () => {
-                    this._marker.remove();
-                    sm.escape();
-                });
+                on('btnCancelSite', 'click', () => { this._marker.remove(); sm.escape(); });
                 break;
 
             case S.NEW_SITE_FORM: {
-                // Slug auto-generation
                 on('newSiteName', 'input', function () {
                     const slugEl = document.getElementById('newSiteSlug');
-                    if (slugEl && !slugEl.dataset.userEdited) {
-                        slugEl.value = slugify(this.value);
-                    }
+                    if (slugEl && !slugEl.dataset.userEdited) slugEl.value = slugify(this.value);
                 });
-                on('newSiteSlug', 'input', function () {
-                    this.dataset.userEdited = '1';
-                });
-                // Marker drag updates lat/lng inputs
-                const latInput = document.getElementById('newSiteLat');
-                const lngInput = document.getElementById('newSiteLng');
-                this._marker.remove();
+                on('newSiteSlug', 'input', function () { this.dataset.userEdited = '1'; });
                 const ps = sm.pendingSite;
                 if (ps) {
+                    this._marker.remove();
                     this._marker.place(ps.currentLat, ps.currentLng, (lat, lng) => {
-                        lat = _roundCoord(lat);
-                        lng = _roundCoord(lng);
-                        if (latInput) latInput.value = lat.toFixed(6);
-                        if (lngInput) lngInput.value = lng.toFixed(6);
+                        lat = _roundCoord(lat); lng = _roundCoord(lng);
+                        const latEl = document.getElementById('newSiteLat');
+                        const lngEl = document.getElementById('newSiteLng');
+                        if (latEl) latEl.value = lat.toFixed(6);
+                        if (lngEl) lngEl.value = lng.toFixed(6);
                         sm.updateSitePosition(lat, lng);
                     });
                 }
-                on('newSiteLat', 'input', function () {
-                    const lat = parseFloat(this.value);
+                on('newSiteLat', 'input', () => {
+                    const lat = parseFloat(document.getElementById('newSiteLat').value);
                     const lng = parseFloat(document.getElementById('newSiteLng').value);
                     if (!isNaN(lat) && !isNaN(lng)) this._marker.moveTo(lat, lng);
-                }.bind(this));
-                on('newSiteLng', 'input', function () {
+                });
+                on('newSiteLng', 'input', () => {
                     const lat = parseFloat(document.getElementById('newSiteLat').value);
-                    const lng = parseFloat(this.value);
+                    const lng = parseFloat(document.getElementById('newSiteLng').value);
                     if (!isNaN(lat) && !isNaN(lng)) this._marker.moveTo(lat, lng);
-                }.bind(this));
-                const newSiteForm = document.getElementById('newSiteForm');
-                if (newSiteForm) {
-                    newSiteForm.addEventListener('submit', e => {
-                        e.preventDefault();
-                        this._submitNewSiteForm();
-                    });
-                }
-                on('btnCancelNewSite', 'click', () => {
-                    this._marker.remove();
-                    sm.escape();
                 });
+                document.getElementById('newSiteForm')?.addEventListener('submit', e => {
+                    e.preventDefault(); this._submitNewSiteForm();
+                });
+                on('btnCancelNewSite', 'click', () => { this._marker.remove(); sm.escape(); });
                 break;
             }
 
-            case S.NEW_SEGMENT_FORM: {
-                const newSegForm = document.getElementById('newSegmentForm');
-                if (newSegForm) {
-                    newSegForm.addEventListener('submit', e => {
-                        e.preventDefault();
-                        this._submitNewSegmentForm();
-                    });
-                }
-                on('btnCancelNewSeg', 'click', () => {
-                    this._removePreview();
-                    sm.escape();
+            case S.NEW_SEGMENT_FORM:
+                document.getElementById('newSegmentForm')?.addEventListener('submit', e => {
+                    e.preventDefault(); this._submitNewSegmentForm();
                 });
+                on('btnCancelNewSeg', 'click', () => { this._removePreview(); sm.escape(); });
                 break;
-            }
 
-            case S.NEW_CIRCUIT_FORM: {
-                const newCircForm = document.getElementById('newCircuitForm');
-                if (newCircForm) {
-                    newCircForm.addEventListener('submit', e => {
-                        e.preventDefault();
-                        this._submitNewCircuitForm();
-                    });
-                }
-                on('btnCancelNewCirc', 'click', () => {
-                    this._removePreview();
-                    sm.escape();
+            case S.NEW_CIRCUIT_FORM:
+                document.getElementById('newCircuitForm')?.addEventListener('submit', e => {
+                    e.preventDefault(); this._submitNewCircuitForm();
                 });
+                on('btnCancelNewCirc', 'click', () => { this._removePreview(); sm.escape(); });
                 break;
-            }
 
             case S.EDITING_CONNECTION:
                 on('btnChangeEndA',     'click', () => sm.beginChangingEnd('a'));
@@ -668,9 +493,11 @@
         }
 
         // -------------------------------------------------------------------------
-        // Position update — called when marker is dragged in site_selected
+        // Position update — marker dragged in site_selected / new_site_form
         // -------------------------------------------------------------------------
         _onPositionUpdated(lat, lng) {
+            document.getElementById('editLat')?.setAttribute('value', lat.toFixed(6));
+            document.getElementById('editLng')?.setAttribute('value', lng.toFixed(6));
             const latEl = document.getElementById('editLat');
             const lngEl = document.getElementById('editLng');
             if (latEl) latEl.value = lat.toFixed(6);
@@ -678,39 +505,36 @@
         }
 
         // -------------------------------------------------------------------------
-        // Map click handler
+        // Map click
         // -------------------------------------------------------------------------
         _onMapClick(lat, lng) {
-            const sm    = this._sm;
-            const state = sm.state;
+            const state = this._sm.state;
             lat = _roundCoord(lat);
             lng = _roundCoord(lng);
-
             if (state === S.PLACING_UNPOSITIONED) {
-                this._marker.place(lat, lng, (dlat, dlng) => {
-                    sm.updateSitePosition(_roundCoord(dlat), _roundCoord(dlng));
-                });
-                sm.placeUnpositionedSite(lat, lng);
-                // Now in site_selected — place draggable marker
-                this._marker.place(lat, lng, (dlat, dlng) => {
-                    sm.updateSitePosition(_roundCoord(dlat), _roundCoord(dlng));
-                });
+                const cb = (dlat, dlng) => this._sm.updateSitePosition(_roundCoord(dlat), _roundCoord(dlng));
+                this._marker.place(lat, lng, cb);
+                this._sm.placeUnpositionedSite(lat, lng);
             } else if (state === S.PLACING_NEW_SITE) {
-                sm.placeNewSite(lat, lng);
-                // new_site_form state — marker placed by _bindEditPanelEvents
+                this._sm.placeNewSite(lat, lng);
             }
-            // PICKING_* states are handled by site/connection click wiring
         }
 
         // -------------------------------------------------------------------------
-        // Site click wiring
+        // Layer highlight
         // -------------------------------------------------------------------------
-        // -------------------------------------------------------------------------
-        // Edit-mode layer highlight — vivid green, distinct from read-mode orange
-        // -------------------------------------------------------------------------
+        _setLayerStyle(layer, style) {
+            if (layer instanceof L.CircleMarker || layer instanceof L.Polyline) {
+                layer.setStyle(style);
+            } else if (layer.eachLayer) {
+                layer.eachLayer(sub => { if (sub.setStyle) sub.setStyle(style); });
+            }
+        }
+
         _applyEditHighlight(type, id) {
             this._clearEditHighlight();
             let layer, hlStyle, restoreStyle;
+
             if (type === 'site') {
                 layer = this._siteLayers.get(id.toString());
                 if (layer) {
@@ -718,42 +542,32 @@
                     restoreStyle = { fillColor: o.fillColor, radius: o.radius, weight: o.weight, color: o.color };
                     hlStyle      = { fillColor: '#ffff00', radius: 11, weight: 3, color: '#e65100' };
                 }
-            } else if (type === 'segment') {
-                layer = this._segmentLayers.get(id.toString());
+            } else {
+                layer = (type === 'segment' ? this._segmentLayers : this._circuitLayers).get(id.toString());
                 if (layer) {
-                    const first = (layer instanceof L.Polyline) ? layer : (() => { let f; layer.eachLayer(l => { if (!f) f = l; }); return f; })();
-                    const o = first ? first.options : {};
+                    let ref = layer;
+                    if (!(layer instanceof L.Polyline)) layer.eachLayer(l => { if (ref === layer) ref = l; });
+                    const o = ref.options || {};
                     restoreStyle = { color: o.color, weight: o.weight, opacity: o.opacity };
-                    hlStyle      = { color: '#ffff00', weight: 7, opacity: 1 };
-                }
-            } else if (type === 'circuit') {
-                layer = this._circuitLayers.get(id.toString());
-                if (layer) {
-                    const o = layer.options;
-                    restoreStyle = { color: o.color, weight: o.weight, opacity: o.opacity };
-                    hlStyle      = { color: '#ffff00', weight: 6, opacity: 1 };
+                    hlStyle      = { color: '#ffff00', weight: type === 'segment' ? 7 : 6, opacity: 1 };
                 }
             }
+
             if (!layer || !hlStyle) return;
             this._editHL = { layer, restoreStyle };
-            if (layer instanceof L.CircleMarker || layer instanceof L.Polyline) {
-                layer.setStyle(hlStyle);
-            } else if (layer.eachLayer) {
-                layer.eachLayer(sub => { if (sub.setStyle) sub.setStyle(hlStyle); });
-            }
+            this._setLayerStyle(layer, hlStyle);
         }
 
         _clearEditHighlight() {
             if (!this._editHL) return;
             const { layer, restoreStyle } = this._editHL;
             this._editHL = null;
-            if (layer instanceof L.CircleMarker || layer instanceof L.Polyline) {
-                layer.setStyle(restoreStyle);
-            } else if (layer.eachLayer) {
-                layer.eachLayer(sub => { if (sub.setStyle) sub.setStyle(restoreStyle); });
-            }
+            this._setLayerStyle(layer, restoreStyle);
         }
 
+        // -------------------------------------------------------------------------
+        // Site click wiring
+        // -------------------------------------------------------------------------
         _wireSiteClicksForEditMode() {
             const sm = this._sm;
             this._siteLayers.forEach((marker, idStr) => {
@@ -762,39 +576,25 @@
                     L.DomEvent.stopPropagation(e);
                     const site  = this._allSitesById.get(idStr);
                     const state = sm.state;
-
                     if (state === S.EDIT_IDLE || state === S.SITE_SELECTED) {
-                        // Select site for coordinate editing
                         if (!site) return;
-                        if (state === S.SITE_SELECTED) sm.escape(); // back to EDIT_IDLE first
+                        if (state === S.SITE_SELECTED) sm.escape();
                         this._marker.place(site.lat, site.lng, (lat, lng) => {
                             sm.updateSitePosition(_roundCoord(lat), _roundCoord(lng));
                         });
                         sm.selectSite(site);
                         this._buildSiteCard(site);
                         this._applyEditHighlight('site', site.id);
-
                     } else if (state === S.PICKING_SEGMENT_START) {
-                        if (!site) return;
-                        sm.pickSegmentSiteA(site);
-
+                        if (site) sm.pickSegmentSiteA(site);
                     } else if (state === S.PICKING_SEGMENT_END) {
-                        if (!site) return;
-                        sm.pickSegmentSiteB(site);
-                        this._drawPreview(sm.pendingConnection.siteA, site);
-
+                        if (site) { sm.pickSegmentSiteB(site); this._drawPreview(sm.pendingConnection.siteA, site); }
                     } else if (state === S.PICKING_CIRCUIT_START) {
-                        if (!site) return;
-                        sm.pickCircuitSiteA(site);
-
+                        if (site) sm.pickCircuitSiteA(site);
                     } else if (state === S.PICKING_CIRCUIT_END) {
-                        if (!site) return;
-                        sm.pickCircuitSiteB(site);
-                        this._drawPreview(sm.pendingConnection.siteA, site);
-
+                        if (site) { sm.pickCircuitSiteB(site); this._drawPreview(sm.pendingConnection.siteA, site); }
                     } else if (state === S.PICKING_REPLACEMENT_SITE) {
-                        if (!site) return;
-                        this._saveReplacementSite(site);
+                        if (site) this._saveReplacementSite(site);
                     }
                 });
             });
@@ -811,15 +611,13 @@
         }
 
         // -------------------------------------------------------------------------
-        // Segment / circuit click wiring
+        // Connection click wiring
         // -------------------------------------------------------------------------
         _wireConnectionClicksForEditMode() {
             const sm = this._sm;
 
-            // Remove per-layer segment handlers — selection is handled by the map-level handler below
             this._segmentLayers.forEach(layer => layer.off('click'));
 
-            // Map-level segment click: use proximity scan so overlapping segments show a pick popup
             if (this._editSegMapHandler) this._map.off('click', this._editSegMapHandler);
             this._editSegMapHandler = e => {
                 if (sm.state !== S.EDIT_IDLE && sm.state !== S.EDITING_CONNECTION) return;
@@ -838,13 +636,11 @@
                 if (nearby.length === 1) {
                     selectSeg(nearby[0].seg);
                 } else {
-                    // Show a compact pick popup identical in style to read-mode overlap popup
                     const segById = new Map(nearby.map(({ seg }) => [seg.id, seg]));
                     let html = `<div><strong>${nearby.length} segments here</strong>
                         <div style="font-size:0.78rem;color:#555;">Click a name to select for editing</div>`;
                     nearby.forEach(({ seg }) => {
-                        html += `<hr style="margin:4px 0;">
-                        <div>
+                        html += `<hr style="margin:4px 0;"><div>
                             <span class="seg-edit-pick" data-seg-id="${seg.id}"
                                   style="cursor:pointer;font-weight:500;color:#0d6efd;"
                                   onmouseover="this.style.textDecoration='underline'"
@@ -855,9 +651,7 @@
                     html += '</div>';
                     const popup = L.popup({ maxWidth: 340 }).setLatLng(e.latlng).setContent(html);
                     popup.on('add', () => {
-                        const el = popup.getElement();
-                        if (!el) return;
-                        el.querySelectorAll('.seg-edit-pick').forEach(span => {
+                        popup.getElement()?.querySelectorAll('.seg-edit-pick').forEach(span => {
                             span.addEventListener('click', () => {
                                 const seg = segById.get(Number(span.dataset.segId));
                                 if (seg) { this._map.closePopup(); selectSeg(seg); }
@@ -869,7 +663,6 @@
             };
             this._map.on('click', this._editSegMapHandler);
 
-            // Circuits — per-layer is fine, circuits don't overlap like path segments
             this._circuitLayers.forEach((layer, idStr) => {
                 layer.off('click');
                 layer.on('click', e => {
@@ -886,17 +679,14 @@
         }
 
         _wireConnectionClicksForReadMode() {
-            // Remove the edit-mode map-level segment handler
             if (this._editSegMapHandler) {
                 this._map.off('click', this._editSegMapHandler);
                 this._editSegMapHandler = null;
             }
-            // Restore original segment click behaviour — proximity scan + overlap popup
             this._segmentLayers.forEach(layer => {
                 layer.off('click');
                 if (this._handleLineClick) layer.on('click', this._handleLineClick);
             });
-            // Restore circuit click behaviour
             this._circuitLayers.forEach((layer, idStr) => {
                 layer.off('click');
                 layer.on('click', () => {
@@ -919,16 +709,40 @@
         }
 
         _removePreview() {
-            if (this._preview) {
-                this._preview.remove();
-                this._preview = null;
+            if (this._preview) { this._preview.remove(); this._preview = null; }
+        }
+
+        // -------------------------------------------------------------------------
+        // Save helpers
+        // -------------------------------------------------------------------------
+        _patchSiteCoords(mapObj) {
+            const sa = mapObj.site_a && this._allSitesById.get(mapObj.site_a.id.toString());
+            const sb = mapObj.site_b && this._allSitesById.get(mapObj.site_b.id.toString());
+            if (sa) { mapObj.site_a.lat = sa.lat; mapObj.site_a.lng = sa.lng; }
+            if (sb) { mapObj.site_b.lat = sb.lat; mapObj.site_b.lng = sb.lng; }
+        }
+
+        _zoomToMidpoint(siteA, siteB) {
+            if (siteA && siteB) {
+                this._map.setView(
+                    [(siteA.lat + siteB.lat) / 2, (siteA.lng + siteB.lng) / 2],
+                    this._map.getZoom()
+                );
             }
+        }
+
+        _afterSiteSave(lat, lng) {
+            this._marker.remove();
+            this._sm.completeSave();
+            this._applyFilters();
+            this._wireSiteClicksForEditMode();
+            this._renderEditPanel(this._sm.state);
+            if (lat != null) this._map.setView([lat, lng], this._map.getZoom());
         }
 
         // -------------------------------------------------------------------------
         // Save operations
         // -------------------------------------------------------------------------
-
         _saveSiteCoordinates() {
             const sm = this._sm;
             const ps = sm.pendingSite;
@@ -936,24 +750,19 @@
 
             const lat = _roundCoord(parseFloat(document.getElementById('editLat').value));
             const lng = _roundCoord(parseFloat(document.getElementById('editLng').value));
-            if (isNaN(lat) || isNaN(lng)) {
-                this._showError('Invalid coordinates.');
-                return;
-            }
+            if (isNaN(lat) || isNaN(lng)) { this._showError('Invalid coordinates.'); return; }
 
             sm.beginSave();
-            this._renderEditPanel(sm.state);   // re-render to show spinner
+            this._renderEditPanel(sm.state);
 
             const idStr    = ps.id.toString();
             const existing = this._allSitesById.get(idStr);
 
             this._api.updateSiteCoordinates(ps.id, lat, lng)
-                .then(updated => {
+                .then(() => {
                     if (existing) {
-                        // Existing positioned site — update coordinates in place
                         existing.lat = lat;
                         existing.lng = lng;
-                        // Update nested site coords in all segments and circuits that reference this site
                         this._allSegments.forEach(seg => {
                             if (seg.site_a && seg.site_a.id === ps.id) { seg.site_a.lat = lat; seg.site_a.lng = lng; }
                             if (seg.site_b && seg.site_b.id === ps.id) { seg.site_b.lat = lat; seg.site_b.lng = lng; }
@@ -962,49 +771,29 @@
                             if (circ.site_a && circ.site_a.id === ps.id) { circ.site_a.lat = lat; circ.site_a.lng = lng; }
                             if (circ.site_b && circ.site_b.id === ps.id) { circ.site_b.lat = lat; circ.site_b.lng = lng; }
                         });
-                        this._marker.remove();
-                        sm.completeSave();
-                        this._applyFilters();
-                        this._wireSiteClicksForEditMode();
-                        this._renderEditPanel(sm.state);
+                        this._afterSiteSave(lat, lng);
                     } else {
-                        // Unpositioned site — fetch full data then promote into dataset
                         return this._api.fetchSite(ps.id).then(site => {
                             const mapSite = {
-                                id:     site.id,
-                                name:   site.name,
-                                slug:   site.slug || '',
+                                id:     site.id,   name: site.name,   slug: site.slug || '',
                                 status: site.status ? (site.status.value || site.status) : 'active',
-                                lat,
-                                lng,
+                                lat, lng,
                                 url:    site.url || '',
-                                region: site.region || null,
-                                tenant: site.tenant || null,
+                                region: site.region || null,   tenant: site.tenant || null,
                                 tags:   site.tags   || [],
                             };
                             this._allSites.push(mapSite);
                             this._allSitesById.set(idStr, mapSite);
-                            // Remove from unpositioned list so the panel count is correct
                             sm.unpositionedSites = sm.unpositionedSites.filter(s => s.id !== ps.id);
-                            this._marker.remove();
-                            sm.completeSave();
-                            // applyFilters re-reads allSites, so the new site is included
-                            this._applyFilters();
-                            this._wireSiteClicksForEditMode();
-                            this._renderEditPanel(sm.state);
-                            this._map.setView([lat, lng], this._map.getZoom());
+                            this._afterSiteSave(lat, lng);
                         });
                     }
                 })
-                .catch(err => {
-                    sm.failSave(err.message);
-                    this._renderEditPanel(sm.state);
-                });
+                .catch(err => { sm.failSave(err.message); this._renderEditPanel(sm.state); });
         }
 
         _submitNewSiteForm() {
-            const sm = this._sm;
-
+            const sm  = this._sm;
             const name = (document.getElementById('newSiteName').value || '').trim();
             const slug = (document.getElementById('newSiteSlug').value || '').trim();
             const lat  = _roundCoord(parseFloat(document.getElementById('newSiteLat').value));
@@ -1018,37 +807,22 @@
 
             this._api.createSite(name, slug, lat, lng)
                 .then(site => {
-                    // Add to in-memory dataset in the shape the map expects
                     const mapSite = {
-                        id:     site.id,
-                        name:   site.name,
-                        slug:   site.slug,
+                        id: site.id, name: site.name, slug: site.slug,
                         status: site.status ? site.status.value || site.status : 'active',
-                        lat:    parseFloat(site.latitude),
-                        lng:    parseFloat(site.longitude),
-                        url:    site.url,
-                        region: null,
-                        tenant: null,
-                        tags:   [],
+                        lat: parseFloat(site.latitude), lng: parseFloat(site.longitude),
+                        url: site.url, region: null, tenant: null, tags: [],
                     };
                     this._allSites.push(mapSite);
                     this._allSitesById.set(site.id.toString(), mapSite);
-                    this._marker.remove();
-                    sm.completeSave();
-                    this._applyFilters();
-                    this._wireSiteClicksForEditMode();
-                    this._map.setView([mapSite.lat, mapSite.lng], this._map.getZoom());
+                    this._afterSiteSave(mapSite.lat, mapSite.lng);
                 })
-                .catch(err => {
-                    sm.failSave(err.message);
-                    this._renderEditPanel(sm.state);
-                });
+                .catch(err => { sm.failSave(err.message); this._renderEditPanel(sm.state); });
         }
 
         _submitNewSegmentForm() {
             const sm   = this._sm;
             const conn = sm.pendingConnection;
-
             const name      = (document.getElementById('newSegName').value || '').trim();
             const segType   = document.getElementById('newSegType').value;
             const provider  = Number(document.getElementById('newSegProvider').value);
@@ -1062,42 +836,25 @@
             sm.beginSave();
             this._renderEditPanel(sm.state);
 
-            this._api.createSegment({
-                name,
-                segment_type:   segType,
-                provider,
-                ownership_type: ownership,
-                status,
-                site_a:         conn.siteA.id,
-                site_b:         conn.siteB.id,
-            }).then(seg => this._api.fetchSegment(seg.id))
-              .then(seg => {
-                const mapSeg = _segmentToMapShape(seg);
-                // Brief site serializer has no lat/lng — look up from local site index
-                const sa = mapSeg.site_a && this._allSitesById.get(mapSeg.site_a.id.toString());
-                const sb = mapSeg.site_b && this._allSitesById.get(mapSeg.site_b.id.toString());
-                if (sa) { mapSeg.site_a.lat = sa.lat; mapSeg.site_a.lng = sa.lng; }
-                if (sb) { mapSeg.site_b.lat = sb.lat; mapSeg.site_b.lng = sb.lng; }
-                this._allSegments.push(mapSeg);
-                this._removePreview();
-                sm.completeSave();
-                this._applyFilters();
-                this._wireConnectionClicksForEditMode();
-                if (conn.siteA && conn.siteB) {
-                    const midLat = (conn.siteA.lat + conn.siteB.lat) / 2;
-                    const midLng = (conn.siteA.lng + conn.siteB.lng) / 2;
-                    this._map.setView([midLat, midLng], this._map.getZoom());
-                }
-            }).catch(err => {
-                sm.failSave(err.message);
-                this._renderEditPanel(sm.state);
-            });
+            this._api.createSegment({ name, segment_type: segType, provider, ownership_type: ownership, status,
+                                      site_a: conn.siteA.id, site_b: conn.siteB.id })
+                .then(seg => this._api.fetchSegment(seg.id))
+                .then(seg => {
+                    const mapSeg = _segmentToMapShape(seg);
+                    this._patchSiteCoords(mapSeg);
+                    this._allSegments.push(mapSeg);
+                    this._removePreview();
+                    sm.completeSave();
+                    this._applyFilters();
+                    this._wireConnectionClicksForEditMode();
+                    this._zoomToMidpoint(conn.siteA, conn.siteB);
+                })
+                .catch(err => { sm.failSave(err.message); this._renderEditPanel(sm.state); });
         }
 
         _submitNewCircuitForm() {
             const sm   = this._sm;
             const conn = sm.pendingConnection;
-
             const cid      = (document.getElementById('newCircCid').value || '').trim();
             const provider = Number(document.getElementById('newCircProvider').value);
             const type     = Number(document.getElementById('newCircType').value);
@@ -1110,32 +867,19 @@
             sm.beginSave();
             this._renderEditPanel(sm.state);
 
-            this._api.createCircuit({
-                cid, provider, type,
-                siteA: conn.siteA.id,
-                siteB: conn.siteB.id,
-            }).then(circ => this._api.fetchCircuit(circ.id))
-              .then(circ => {
-                const mapCirc = _circuitToMapShape(circ);
-                // Brief site serializer has no lat/lng — look up from local site index
-                const sa = mapCirc.site_a && this._allSitesById.get(mapCirc.site_a.id.toString());
-                const sb = mapCirc.site_b && this._allSitesById.get(mapCirc.site_b.id.toString());
-                if (sa) { mapCirc.site_a.lat = sa.lat; mapCirc.site_a.lng = sa.lng; }
-                if (sb) { mapCirc.site_b.lat = sb.lat; mapCirc.site_b.lng = sb.lng; }
-                this._allCircuits.push(mapCirc);
-                this._removePreview();
-                sm.completeSave();
-                this._applyFilters();
-                this._wireConnectionClicksForEditMode();
-                if (conn.siteA && conn.siteB) {
-                    const midLat = (conn.siteA.lat + conn.siteB.lat) / 2;
-                    const midLng = (conn.siteA.lng + conn.siteB.lng) / 2;
-                    this._map.setView([midLat, midLng], this._map.getZoom());
-                }
-            }).catch(err => {
-                sm.failSave(err.message);
-                this._renderEditPanel(sm.state);
-            });
+            this._api.createCircuit({ cid, provider, type, siteA: conn.siteA.id, siteB: conn.siteB.id })
+                .then(circ => this._api.fetchCircuit(circ.id))
+                .then(circ => {
+                    const mapCirc = _circuitToMapShape(circ);
+                    this._patchSiteCoords(mapCirc);
+                    this._allCircuits.push(mapCirc);
+                    this._removePreview();
+                    sm.completeSave();
+                    this._applyFilters();
+                    this._wireConnectionClicksForEditMode();
+                    this._zoomToMidpoint(conn.siteA, conn.siteB);
+                })
+                .catch(err => { sm.failSave(err.message); this._renderEditPanel(sm.state); });
         }
 
         _saveReplacementSite(site) {
@@ -1144,40 +888,29 @@
             if (!conn) return;
 
             const end = conn.endToChange;
-            sm.pickReplacementSite(site);   // updates conn.siteA/B, returns to editing_connection
-
+            sm.pickReplacementSite(site);
             sm.beginSave();
 
-            let promise;
-            if (conn.objectType === 'segment') {
-                promise = this._api.updateSegmentEndpoint(conn.existingId, end, site.id);
-            } else {
-                const termPk = end === 'a'
-                    ? (conn.termA && conn.termA.termination_pk)
-                    : (conn.termZ && conn.termZ.termination_pk);
-                promise = this._api.updateCircuitTerminationSite(termPk, site.id);
-            }
+            const promise = conn.objectType === 'segment'
+                ? this._api.updateSegmentEndpoint(conn.existingId, end, site.id)
+                : this._api.updateCircuitTerminationSite(
+                    end === 'a' ? conn.termA?.termination_pk : conn.termZ?.termination_pk,
+                    site.id
+                  );
 
             promise.then(() => {
-                // Update in-memory dataset
                 let updatedObj = null;
                 if (conn.objectType === 'segment') {
                     const seg = this._allSegments.find(s => s.id === conn.existingId);
                     if (seg) {
-                        if (end === 'a') seg.site_a = site;
-                        else             seg.site_b = site;
+                        if (end === 'a') seg.site_a = site; else seg.site_b = site;
                         updatedObj = seg;
                     }
                 } else {
                     const circ = this._allCircuits.find(c => c.id === conn.existingId);
                     if (circ) {
-                        if (end === 'a') {
-                            circ.site_a = site;
-                            if (circ.term_a) circ.term_a.site = site.name;
-                        } else {
-                            circ.site_b = site;
-                            if (circ.term_z) circ.term_z.site = site.name;
-                        }
+                        if (end === 'a') { circ.site_a = site; if (circ.term_a) circ.term_a.site = site.name; }
+                        else             { circ.site_b = site; if (circ.term_z) circ.term_z.site = site.name; }
                         updatedObj = circ;
                     }
                 }
@@ -1185,48 +918,34 @@
                 this._applyFilters();
                 this._wireSiteClicksForEditMode();
                 this._wireConnectionClicksForEditMode();
-                // Refresh the info card to show the updated endpoint
                 if (updatedObj) {
                     if (conn.objectType === 'segment') this._buildSegCard(updatedObj);
                     else                               this._buildCircCard(updatedObj);
                 }
-            }).catch(err => {
-                sm.failSave(err.message);
-                this._renderEditPanel(sm.state);
-            });
+            }).catch(err => { sm.failSave(err.message); this._renderEditPanel(sm.state); });
         }
 
         // -------------------------------------------------------------------------
-        // Helpers
+        // Misc helpers
         // -------------------------------------------------------------------------
-
         _showError(msg) {
             const panel = document.getElementById('editModePanel');
             if (!panel) return;
-            const existing = panel.querySelector('.edit-mode-error');
-            if (existing) existing.remove();
+            panel.querySelector('.edit-mode-error')?.remove();
             const el = document.createElement('div');
             el.className = 'alert alert-danger py-1 small mt-2 edit-mode-error';
             el.textContent = msg;
             panel.appendChild(el);
         }
-
-        _makeAllSitesNonDraggable() {
-            // CircleMarkers are never draggable — nothing to do.
-            // The draggable marker (EditModeMarker) is removed separately.
-        }
     }
 
     // -------------------------------------------------------------------------
-    // Module-level helpers (not on the class — no `this` needed)
+    // Module-level pure helpers
     // -------------------------------------------------------------------------
-
     function _esc(str) {
         return String(str || '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     function _card(title, body) {
@@ -1252,7 +971,6 @@
                (value !== undefined && value !== '' ? ` value="${_esc(String(value))}"` : '') + `></div>`;
     }
 
-    // Convert DRF segment response to the shape object_map.js expects
     function _segmentToMapShape(seg) {
         return {
             id:                  seg.id,
@@ -1278,11 +996,9 @@
         };
     }
 
-    // Convert DRF circuit response to the shape object_map.js expects
     function _circuitToMapShape(circ) {
         const termA = circ.termination_a || null;
         const termZ = circ.termination_z || null;
-        // NetBox >= 4.x uses termination (GFK) instead of the old site field
         const siteA = termA ? (termA.termination || termA.site || null) : null;
         const siteZ = termZ ? (termZ.termination || termZ.site || null) : null;
         return {

@@ -900,7 +900,8 @@
             }
 
             marker.bindPopup(html, { maxWidth: 280 });
-            marker.on('click', function () {
+            marker.on('click', function (e) {
+                L.DomEvent.stopPropagation(e);
                 if (siteObj) buildSiteInfoCard(siteObj);
             });
             siteGroup.addLayer(marker);
@@ -1204,7 +1205,7 @@
     }
 
     function handleLineClick(e) {
-        e.originalEvent.preventDefault();
+        L.DomEvent.stopPropagation(e);
         const nearby = findNearbySegments(e);
         if (!nearby.length) return;
         if (nearby.length === 1) {
@@ -1294,7 +1295,7 @@
                 `</div>`,
                 { maxWidth: 300 }
             );
-            line.on('click', () => buildCircuitInfoCard(circ));
+            line.on('click', e => { L.DomEvent.stopPropagation(e); buildCircuitInfoCard(circ); });
 
             circuitGroup.addLayer(line);
             circuitLayers.set(circ.id.toString(), line);
@@ -1410,6 +1411,13 @@
             infoCardClose.addEventListener('click', hideInfoCard);
         }
 
+        // Clicking the map background deselects the current object
+        map.on('click', () => {
+            hideInfoCard();
+            window._editModeLastSite       = null;
+            window._editModeLastConnection = null;
+        });
+
         // Object list: search + type toggles
         const listSearch = document.getElementById('listSearch');
         if (listSearch) listSearch.addEventListener('input', renderList);
@@ -1438,7 +1446,7 @@
 
         // Edit mode — only wired when the toolbar button is present (user has permission)
         if (_mapData.canEdit && typeof EditModeUI !== 'undefined') {
-            new EditModeUI(
+            new EditModeUI({
                 map,
                 allSites,
                 allSegments,
@@ -1457,8 +1465,8 @@
                 applyFilters,
                 circuitLayers,
                 handleLineClick,
-                findNearbySegments
-            );
+                findNearbySegments,
+            });
         }
     });
 
