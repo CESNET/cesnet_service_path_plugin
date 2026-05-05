@@ -5,6 +5,13 @@
 {% block title %}Network Map{% endblock %}
 
 {% block content %}
+<style>
+  /* Prevent the page body from scrolling — the map layout is viewport-fixed */
+  .page-wrapper { overflow: hidden; }
+  /* Bootstrap tab-pane active override: use flex for scrollable panes */
+  #pane-filters.tab-pane.show.active,
+  #pane-list.tab-pane.show.active { display: flex !important; }
+</style>
 <div class="d-flex justify-content-between align-items-center mb-2">
     <h1 class="page-title mb-0">
         <i class="mdi mdi-map" aria-hidden="true"></i> Network Map
@@ -162,34 +169,34 @@
 {% endif %}
 
 {# ── Two-column layout: map + filter sidebar ─────────────────────────────── #}
-<div class="d-flex gap-2 align-items-start">
+<div id="mapLayout" class="d-flex gap-2 align-items-stretch" style="height:var(--map-avail-height,80vh); min-height:400px;">
 
     {# ── Map ──────────────────────────────────────────────────────────────── #}
     <div style="flex:1; min-width:0;">
-        <div id="map" style="height:1000px; width:100%; border:1px solid #ddd; border-radius:4px;"></div>
+        <div id="map" style="height:100%; width:100%; border:1px solid #ddd; border-radius:4px;"></div>
     </div>
 
     {# ── Right column: info card + filter sidebar + edit panel ─────────── #}
-    <div style="width:285px; flex-shrink:0; display:flex; flex-direction:column; gap:0.5rem;">
+    <div style="width:285px; flex-shrink:0; display:flex; flex-direction:column; gap:0.5rem; min-height:0; overflow:hidden;">
 
     {# ── Info card — populated by JS on click ─────────────────────────────── #}
-    <div id="infoCard" class="card" style="display:none;">
+    <div id="infoCard" class="card" style="display:none; flex-shrink:0; max-height:35%;">
         <div class="card-header py-2 d-flex align-items-center justify-content-between">
             <span class="fw-bold small" id="infoCardTitle">
                 <i class="mdi mdi-information-outline"></i> Details
             </span>
             <button type="button" class="btn-close btn-sm" id="infoCardClose" aria-label="Close"></button>
         </div>
-        <div class="card-body p-2" id="infoCardBody" style="overflow-y:auto; max-height:360px; font-size:0.8rem;">
+        <div class="card-body p-2" id="infoCardBody" style="overflow-y:auto; font-size:0.8rem;">
         </div>
     </div>
 
     {# ── Right panel: Filters | List tabs ────────────────────────────────── #}
-    <div id="filterSidebar">
-        <div class="card h-100">
+    <div id="filterSidebar" style="flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden;">
+        <div class="card" style="flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden;">
 
             {# Tab nav in card header #}
-            <div class="card-header py-1">
+            <div class="card-header py-1" style="flex-shrink:0;">
                 <div class="d-flex align-items-center justify-content-between">
                     <ul class="nav nav-pills" id="rightPanelTabs" role="tablist" style="gap:2px;">
                         <li class="nav-item" role="presentation">
@@ -210,11 +217,11 @@
                 </div>
             </div>
 
-            <div class="tab-content">
+            <div class="tab-content" style="flex:1; min-height:0; overflow:hidden;">
 
                 {# ── Filters pane ──────────────────────────────── #}
-                <div class="tab-pane fade show active" id="pane-filters" role="tabpanel">
-                    <div class="card-body p-2" style="overflow-y:auto; max-height:970px; font-size:0.78rem;">
+                <div class="tab-pane fade show active h-100" id="pane-filters" role="tabpanel" style="flex-direction:column;">
+                    <div class="card-body p-2" style="overflow-y:auto; flex:1; font-size:0.78rem;">
 
                         <div class="d-grid mb-2">
                             <button type="button" id="clearFiltersTop" class="btn btn-outline-secondary btn-sm">
@@ -345,8 +352,8 @@
                 </div>{# end pane-filters #}
 
                 {# ── List pane ─────────────────────────────────── #}
-                <div class="tab-pane fade" id="pane-list" role="tabpanel">
-                    <div class="card-body p-2" style="font-size:0.78rem;">
+                <div class="tab-pane fade h-100" id="pane-list" role="tabpanel" style="flex-direction:column;">
+                    <div class="card-body p-2" style="font-size:0.78rem; display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden;">
 
                         {# Type toggles — mirrors main toolbar visibility #}
                         <div class="d-flex gap-1 mb-1">
@@ -381,7 +388,7 @@
                         <div id="listCount" class="text-muted mb-1" style="font-size:0.72rem;"></div>
 
                         {# Scrollable object rows #}
-                        <div id="objectList" style="overflow-y:auto; max-height:870px;">
+                        <div id="objectList" style="overflow-y:auto; flex:1; min-height:0;">
                         </div>
 
                     </div>
@@ -393,7 +400,7 @@
 
     {# ── Edit mode panel — shown instead of filter sidebar in edit mode ── #}
     {% if can_edit %}
-    <div id="editModePanel" style="display:none;">
+    <div id="editModePanel" style="display:none; flex:1; overflow-y:auto; min-height:0;">
         {# Populated entirely by edit_mode_ui.js #}
     </div>
     {% endif %}
@@ -424,6 +431,7 @@
 <script>
 var _mapData = JSON.parse(document.getElementById('map-data').textContent);
 var map = L.map('map').setView([_mapData.mapCenter.lat, _mapData.mapCenter.lng], _mapData.mapCenter.zoom);
+window._leafletMap = map;
 initializeMapLayers(map);
 initializeLayerSwitching(map);
 </script>
@@ -434,5 +442,22 @@ initializeLayerSwitching(map);
 <script src="{% static 'cesnet_service_path_plugin/js/edit_mode_marker.js' %}?v=7"></script>
 <script src="{% static 'cesnet_service_path_plugin/js/edit_mode_ui.js' %}?v=14"></script>
 {% endif %}
+
+<script>
+(function () {
+    function setMapHeight() {
+        const layout = document.getElementById('mapLayout');
+        if (!layout) return;
+        const top = layout.getBoundingClientRect().top + window.scrollY;
+        const available = window.innerHeight - top - 16;  // 16px bottom breathing room
+        document.documentElement.style.setProperty('--map-avail-height', Math.max(400, available) + 'px');
+        if (window._leafletMap) window._leafletMap.invalidateSize();
+    }
+    document.addEventListener('DOMContentLoaded', setMapHeight);
+    window.addEventListener('resize', setMapHeight);
+    // Also run immediately in case DOMContentLoaded already fired
+    if (document.readyState !== 'loading') setMapHeight();
+})();
+</script>
 
 {% endblock content %}
