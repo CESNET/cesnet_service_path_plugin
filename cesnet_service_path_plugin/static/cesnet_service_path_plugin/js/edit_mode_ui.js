@@ -630,7 +630,8 @@
         _wireSiteClicksForReadMode() {
             this._siteLayers.forEach((marker, idStr) => {
                 marker.off('click');
-                marker.on('click', () => {
+                marker.on('click', e => {
+                    L.DomEvent.stopPropagation(e);
                     const site = this._allSitesById.get(idStr);
                     if (site) this._buildSiteCard(site);
                 });
@@ -716,7 +717,8 @@
             });
             this._circuitLayers.forEach((layer, idStr) => {
                 layer.off('click');
-                layer.on('click', () => {
+                layer.on('click', e => {
+                    L.DomEvent.stopPropagation(e);
                     const circ = this._allCircuits.find(c => c.id.toString() === idStr);
                     if (circ) this._buildCircCard(circ);
                 });
