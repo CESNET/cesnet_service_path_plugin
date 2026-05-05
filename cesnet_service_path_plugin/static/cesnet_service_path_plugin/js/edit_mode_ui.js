@@ -224,6 +224,8 @@
                     const endLabel = sm.pendingConnection && sm.pendingConnection.endToChange === 'a' ? 'A' : 'B';
                     return _instruction('mdi-cursor-pointer', `Click the new <strong>site ${endLabel}</strong> on the map`);
                 }
+                case S.CONFIRMING_REPLACEMENT:
+                    return this._renderConfirmReplacementPanel();
                 default: return '';
             }})();
 
@@ -297,8 +299,6 @@
                 (sm.isSaving ? '<i class="mdi mdi-loading mdi-spin"></i> Saving…' : '<i class="mdi mdi-content-save"></i> Create site') +
                 '</button><button type="button" id="btnCancelNewSite" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
                 '</div>' +
-                '<a href="/dcim/sites/add/" target="_blank" class="btn btn-outline-secondary btn-sm w-100">' +
-                '<i class="mdi mdi-open-in-new"></i> Open full form</a>' +
                 '</form>'
             );
         }
@@ -339,8 +339,6 @@
                 (sm.isSaving ? '<i class="mdi mdi-loading mdi-spin"></i> Saving…' : '<i class="mdi mdi-content-save"></i> Create segment') +
                 '</button><button type="button" id="btnCancelNewSeg" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
                 '</div>' +
-                '<a href="/plugins/cesnet-service-path-plugin/segments/add/" target="_blank" class="btn btn-outline-secondary btn-sm w-100">' +
-                '<i class="mdi mdi-open-in-new"></i> Open full form</a>' +
                 '</form>'
             );
         }
@@ -367,8 +365,6 @@
                 (sm.isSaving ? '<i class="mdi mdi-loading mdi-spin"></i> Saving…' : '<i class="mdi mdi-content-save"></i> Create circuit') +
                 '</button><button type="button" id="btnCancelNewCirc" class="btn btn-outline-secondary btn-sm">Cancel</button>' +
                 '</div>' +
-                '<a href="/circuits/circuits/add/" target="_blank" class="btn btn-outline-secondary btn-sm w-100">' +
-                '<i class="mdi mdi-open-in-new"></i> Open full form</a>' +
                 '</form>'
             );
         }
@@ -391,6 +387,32 @@
                 '</div></div>' +
                 (sm.saveError ? `<div class="alert alert-danger py-1 small mb-2">${_esc(sm.saveError)}</div>` : '') +
                 '<button id="btnCancelEditConn" class="btn btn-outline-secondary btn-sm w-100">Cancel</button>'
+            );
+        }
+
+        _renderConfirmReplacementPanel() {
+            const sm   = this._sm;
+            const conn = sm.pendingConnection;
+            if (!conn) return '';
+            const end       = conn.endToChange === 'a' ? 'A' : 'B';
+            const oldSite   = conn.endToChange === 'a' ? conn.siteA : conn.siteB;
+            const newSite   = conn.pendingReplacementSite;
+            const icon      = conn.objectType === 'segment' ? 'mdi-vector-polyline' : 'mdi-transit-connection-variant';
+            const oldName   = oldSite ? _esc(oldSite.name) : '—';
+            const newName   = newSite ? _esc(newSite.name) : '—';
+            return _card(`<i class="mdi ${icon}"></i> Confirm change`,
+                `<div class="mb-2 small">` +
+                `<div class="mb-1">Change <strong>Site ${end}</strong>:</div>` +
+                `<div class="mb-1"><span class="text-muted">From:</span> <strong>${oldName}</strong></div>` +
+                `<div class="mb-2"><span class="text-muted">To:</span> <strong class="text-primary">${newName}</strong></div>` +
+                `</div>` +
+                (sm.saveError ? `<div class="alert alert-danger py-1 small mb-2">${_esc(sm.saveError)}</div>` : '') +
+                `<div class="d-flex gap-1">` +
+                `<button id="btnConfirmReplacement" class="btn btn-primary btn-sm flex-fill"${sm.isSaving ? ' disabled' : ''}>` +
+                (sm.isSaving ? '<i class="mdi mdi-loading mdi-spin"></i> Saving…' : '<i class="mdi mdi-check"></i> Confirm') +
+                `</button>` +
+                `<button id="btnCancelReplacement" class="btn btn-outline-secondary btn-sm">Cancel</button>` +
+                `</div>`
             );
         }
 
@@ -488,6 +510,11 @@
                 on('btnChangeEndA',     'click', () => sm.beginChangingEnd('a'));
                 on('btnChangeEndB',     'click', () => sm.beginChangingEnd('b'));
                 on('btnCancelEditConn', 'click', () => sm.escape());
+                break;
+
+            case S.CONFIRMING_REPLACEMENT:
+                on('btnConfirmReplacement', 'click', () => this._saveReplacementSite());
+                on('btnCancelReplacement',  'click', () => sm.escape());
                 break;
             }
         }
@@ -594,7 +621,7 @@
                     } else if (state === S.PICKING_CIRCUIT_END) {
                         if (site) { sm.pickCircuitSiteB(site); this._drawPreview(sm.pendingConnection.siteA, site); }
                     } else if (state === S.PICKING_REPLACEMENT_SITE) {
-                        if (site) this._saveReplacementSite(site);
+                        if (site) sm.pickReplacementSite(site);
                     }
                 });
             });
@@ -811,7 +838,7 @@
                         id: site.id, name: site.name, slug: site.slug,
                         status: site.status ? site.status.value || site.status : 'active',
                         lat: parseFloat(site.latitude), lng: parseFloat(site.longitude),
-                        url: site.url, region: null, tenant: null, tags: [],
+                        url: `/dcim/sites/${site.id}/`, region: null, tenant: null, tags: [],
                     };
                     this._allSites.push(mapSite);
                     this._allSitesById.set(site.id.toString(), mapSite);
@@ -882,13 +909,14 @@
                 .catch(err => { sm.failSave(err.message); this._renderEditPanel(sm.state); });
         }
 
-        _saveReplacementSite(site) {
+        _saveReplacementSite() {
             const sm   = this._sm;
             const conn = sm.pendingConnection;
-            if (!conn) return;
+            if (!conn || !conn.pendingReplacementSite) return;
 
-            const end = conn.endToChange;
-            sm.pickReplacementSite(site);
+            const site = conn.pendingReplacementSite;
+            const end  = conn.endToChange;
+            sm.confirmReplacement();
             sm.beginSave();
 
             const promise = conn.objectType === 'segment'
@@ -990,8 +1018,8 @@
                                                 lat: parseFloat(seg.site_b.latitude),
                                                 lng: parseFloat(seg.site_b.longitude) } : null,
             tags:                seg.tags || [],
-            url:                 seg.url || '',
-            map_url:             seg.url ? seg.url.replace('/api/plugins/', '/plugins/').replace(/\/$/, '/map/') : '',
+            url:                 `/plugins/cesnet-service-path-plugin/segments/${seg.id}/`,
+            map_url:             `/plugins/cesnet-service-path-plugin/segments/${seg.id}/map/`,
             type_data:           null,
         };
     }
@@ -1021,7 +1049,7 @@
             site_b:           siteZ ? { id: siteZ.id, name: siteZ.name,
                                         lat: parseFloat(siteZ.latitude),
                                         lng: parseFloat(siteZ.longitude) } : null,
-            url:              circ.url || '',
+            url:              `/circuits/circuits/${circ.id}/`,
         };
     }
 

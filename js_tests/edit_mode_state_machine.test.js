@@ -462,36 +462,71 @@ describe('editing existing connection', () => {
         expect(() => sm.beginChangingEnd('x')).toThrow();
     });
 
-    test('pickReplacementSite updates siteA and returns to editing_connection', () => {
+    test('pickReplacementSite transitions to confirming_replacement', () => {
         const { sm } = makeSM();
         sm.enterEditMode();
         sm.selectConnection('segment', 42, SITE_A, SITE_B);
         sm.beginChangingEnd('a');
         const SITE_NEW = { id: 99, name: 'New Site', lat: 48.0, lng: 17.0 };
         sm.pickReplacementSite(SITE_NEW);
+        expect(sm.state).toBe(S.CONFIRMING_REPLACEMENT);
+    });
+
+    test('pickReplacementSite stores site as pendingReplacementSite', () => {
+        const { sm } = makeSM();
+        sm.enterEditMode();
+        sm.selectConnection('segment', 42, SITE_A, SITE_B);
+        sm.beginChangingEnd('a');
+        const SITE_NEW = { id: 99, name: 'New Site', lat: 48.0, lng: 17.0 };
+        sm.pickReplacementSite(SITE_NEW);
+        expect(sm.pendingConnection.pendingReplacementSite.id).toBe(99);
+        expect(sm.pendingConnection.siteA.id).toBe(1);  // not yet updated
+    });
+
+    test('confirmReplacement updates siteA and returns to editing_connection', () => {
+        const { sm } = makeSM();
+        sm.enterEditMode();
+        sm.selectConnection('segment', 42, SITE_A, SITE_B);
+        sm.beginChangingEnd('a');
+        const SITE_NEW = { id: 99, name: 'New Site', lat: 48.0, lng: 17.0 };
+        sm.pickReplacementSite(SITE_NEW);
+        sm.confirmReplacement();
         expect(sm.state).toBe(S.EDITING_CONNECTION);
         expect(sm.pendingConnection.siteA.id).toBe(99);
         expect(sm.pendingConnection.siteB.id).toBe(2);  // unchanged
+        expect(sm.pendingConnection.pendingReplacementSite).toBeNull();
     });
 
-    test('pickReplacementSite updates siteB when endToChange is b', () => {
+    test('confirmReplacement updates siteB when endToChange is b', () => {
         const { sm } = makeSM();
         sm.enterEditMode();
         sm.selectConnection('circuit', 77, SITE_A, SITE_B);
         sm.beginChangingEnd('b');
         const SITE_NEW = { id: 55, name: 'Another Site', lat: 47.0, lng: 18.0 };
         sm.pickReplacementSite(SITE_NEW);
+        sm.confirmReplacement();
         expect(sm.pendingConnection.siteB.id).toBe(55);
         expect(sm.pendingConnection.siteA.id).toBe(1);  // unchanged
     });
 
-    test('escape from picking_replacement_site returns to editing_connection', () => {
+    test('escape from picking_replacement_site returns to edit_idle', () => {
         const { sm } = makeSM();
         sm.enterEditMode();
         sm.selectConnection('segment', 42, SITE_A, SITE_B);
         sm.beginChangingEnd('a');
         sm.escape();
         expect(sm.state).toBe(S.EDIT_IDLE);
+    });
+
+    test('escape from confirming_replacement returns to editing_connection', () => {
+        const { sm } = makeSM();
+        sm.enterEditMode();
+        sm.selectConnection('segment', 42, SITE_A, SITE_B);
+        sm.beginChangingEnd('a');
+        sm.pickReplacementSite({ id: 99, name: 'New Site', lat: 48.0, lng: 17.0 });
+        sm.escape();
+        expect(sm.state).toBe(S.EDITING_CONNECTION);
+        expect(sm.pendingConnection.siteA.id).toBe(1);  // original site preserved
     });
 });
 

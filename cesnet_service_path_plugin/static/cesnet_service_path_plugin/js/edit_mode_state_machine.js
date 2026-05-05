@@ -39,8 +39,9 @@
         PICKING_CIRCUIT_START:    'picking_circuit_start',
         PICKING_CIRCUIT_END:      'picking_circuit_end',
         NEW_CIRCUIT_FORM:         'new_circuit_form',
-        EDITING_CONNECTION:       'editing_connection',
-        PICKING_REPLACEMENT_SITE: 'picking_replacement_site',
+        EDITING_CONNECTION:        'editing_connection',
+        PICKING_REPLACEMENT_SITE:  'picking_replacement_site',
+        CONFIRMING_REPLACEMENT:    'confirming_replacement',
     });
 
     // States from which Escape returns to edit_idle
@@ -57,6 +58,7 @@
         STATES.NEW_CIRCUIT_FORM,
         STATES.EDITING_CONNECTION,
         STATES.PICKING_REPLACEMENT_SITE,
+        STATES.CONFIRMING_REPLACEMENT,
     ]);
 
     // -------------------------------------------------------------------------
@@ -116,6 +118,11 @@
             STATES.EDIT_IDLE,
         ]),
         [STATES.PICKING_REPLACEMENT_SITE]: new Set([
+            STATES.CONFIRMING_REPLACEMENT,
+            STATES.EDITING_CONNECTION,
+            STATES.EDIT_IDLE,
+        ]),
+        [STATES.CONFIRMING_REPLACEMENT]: new Set([
             STATES.EDITING_CONNECTION,
             STATES.EDIT_IDLE,
         ]),
@@ -235,7 +242,11 @@
             if (this.state === STATES.VIEW)      return;   // nothing to do
             if (this.state === STATES.EDIT_IDLE) return;   // nothing to do
             if (!ESCAPABLE.has(this.state))      return;
-            this.transitionTo(STATES.EDIT_IDLE);
+            if (this.state === STATES.CONFIRMING_REPLACEMENT) {
+                this.transitionTo(STATES.EDITING_CONNECTION);
+            } else {
+                this.transitionTo(STATES.EDIT_IDLE);
+            }
         }
 
         /** User clicked an existing positioned site marker. */
@@ -328,16 +339,22 @@
             this.transitionTo(STATES.PICKING_REPLACEMENT_SITE, { endToChange: end });
         }
 
-        /** User clicked a site marker as the replacement — save happens externally. */
+        /** User clicked a site marker as the replacement — show confirmation first. */
         pickReplacementSite(site) {
             if (!this.pendingConnection) return;
+            this.transitionTo(STATES.CONFIRMING_REPLACEMENT, { pendingReplacementSite: site });
+        }
+
+        /** User confirmed the replacement — save happens externally. */
+        confirmReplacement() {
+            if (!this.pendingConnection || !this.pendingConnection.pendingReplacementSite) return;
+            const site = this.pendingConnection.pendingReplacementSite;
             if (this.pendingConnection.endToChange === 'a') {
                 this.pendingConnection.siteA = site;
             } else {
                 this.pendingConnection.siteB = site;
             }
-            // Return to editing_connection so the UI can show updated endpoints
-            // and the caller can trigger the API save.
+            this.pendingConnection.pendingReplacementSite = null;
             this.transitionTo(STATES.EDITING_CONNECTION);
         }
 
@@ -420,6 +437,9 @@
             }
             if (payload.endToChange !== undefined && this.pendingConnection) {
                 this.pendingConnection.endToChange = payload.endToChange;
+            }
+            if (payload.pendingReplacementSite !== undefined && this.pendingConnection) {
+                this.pendingConnection.pendingReplacementSite = payload.pendingReplacementSite;
             }
 
             // Clear stale payload when returning to idle
