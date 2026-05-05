@@ -47,7 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version | Notes |
 |----------------|----------------|-------|
-|     4.5.4+     |      6.2.x     | Network Map UX overhaul, tag filters, object highlight |
+|     4.5.4+     |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode |
 |     4.5.4+     |      6.1.x     | Requires NetBox >= 4.5.4 (strawberry-graphql-django >= 0.79.0) |
 |   4.5.0–4.5.3  |      6.0.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
 |     4.4.x      |      5.4.x     | Last version compatible with NetBox 4.4.x |
@@ -134,12 +134,19 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Fallback visualization** showing straight lines when path data unavailable
 - **Overlapping segment detection** and selection on maps
 - **Path data export** as GeoJSON for external use
-- **Network Map** (new in 6.0.0, enhanced in 6.2.0): combined Sites + Segments + Circuits view
+- **Network Map** (new in 6.0.0, enhanced in 6.2.0, edit mode added in 6.2.1): combined Sites + Segments + Circuits view
   - Permanent right-side panel with filter sidebar and searchable object list
   - Tag filters for Sites, Segments, and Circuits
   - Object selection highlight — selected object shown in orange on the map
   - Clickable info card showing full object details including tag colors and circuit termination info
   - Filter pill buttons for status and type with instant client-side filtering
+  - Viewport-fixed layout — map fills the browser window; right panel scrolls independently
+  - **Edit mode** (requires write permission): toggle "Edit Map" to modify the network directly
+    from the map view
+    - Place unpositioned sites by dragging from the panel onto the map
+    - Create new sites, segments, and circuits via inline forms
+    - Move segment or circuit endpoints by clicking a connection then a new site
+    - Confirmation dialog before any endpoint replacement is saved
 - An example of a geographic service path visualized using the plugin:
     ![Sample Service Path Map](./docs/sample_path.png)
 

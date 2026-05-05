@@ -1,5 +1,60 @@
 # Changelog
 
+## [6.2.1] - 2026-05-04
+
+### Added
+
+- **Network Map — Edit mode**: A new "Edit Map" toggle lets authorised users modify the map
+  directly from the Network Map view without leaving the page.
+  - **Place unpositioned sites**: Drag sites that have no coordinates onto the map to assign
+    their latitude/longitude via the NetBox API.
+  - **Create sites**: Click an empty map location to open a form and create a new site with
+    coordinates pre-filled.
+  - **Create segments**: Select two sites and fill in the inline form to create a new segment
+    (name, type, provider, ownership, status).
+  - **Create circuits**: Select two sites and fill in the inline form to create a new circuit
+    (CID, provider, type). Terminations A/Z are created automatically; the circuit is
+    rolled back (deleted) if termination creation fails.
+  - **Edit segment/circuit endpoints**: Click an existing segment or circuit, then click a
+    different site to move one endpoint. A confirmation dialog shows the old and new site
+    before saving.
+  - **Confirmation dialog**: All endpoint replacement operations require explicit confirmation
+    before the API call is made; pressing Escape or "Cancel" returns to the connection edit
+    panel without changes.
+  - **View links**: After creating a site, segment, or circuit, the success panel includes a
+    direct link to the new object's detail page.
+
+### Changed
+
+- **Network Map — Viewport-fixed layout**: The map now fills the available browser viewport
+  height and no longer scrolls off-screen. The right panel (filter sidebar, object list,
+  edit mode panel) becomes independently scrollable within the same fixed height.
+- **Network Map — Sites always on top**: Sites render in a dedicated Leaflet pane above
+  segments and circuits so they remain clickable even when overlapping connections.
+
+### Fixed
+
+- **Network Map — Object highlight cleared on click**: Clicking a segment or circuit
+  immediately cleared the orange highlight because the background `map.click` deselect
+  handler fired after every object click. Fixed by stopping event propagation in all object
+  click handlers.
+- **Network Map — Objects not clickable after edit mode exit**: Re-wiring click handlers
+  for read mode was missing `stopPropagation`, causing the deselect handler to swallow
+  clicks. Fixed in both site and connection handlers.
+- **Network Map — Orphaned circuit on partial failure**: If creating circuit terminations
+  failed after the circuit was created, the orphaned circuit record was left in the database.
+  The API layer now issues a best-effort DELETE rollback before propagating the error.
+
+### Compatibility
+
+| cesnet_service_path_plugin | NetBox |
+|---|---|
+| 6.2.x | 4.5.4+ |
+| 6.1.x | 4.5.4+ |
+| 6.0.x | 4.5.0 – 4.5.3 |
+
+---
+
 ## [6.2.0] - 2026-04-27
 
 ### Added

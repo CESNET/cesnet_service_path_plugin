@@ -164,9 +164,14 @@
     // -------------------------------------------------------------------------
     // Leaflet layer groups
     // -------------------------------------------------------------------------
+    // Dedicated pane for sites so they always render above segments and circuits.
+    // Default overlayPane is z-index 400; sitesPane at 450 guarantees click priority.
+    const sitesPane = map.createPane('sitesPane');
+    sitesPane.style.zIndex = '450';
+
     const segmentPathGroup = L.layerGroup().addTo(map);
     const circuitGroup     = L.layerGroup();   // not added to map initially — circuits hidden by default
-    const siteGroup        = L.layerGroup().addTo(map);
+    const siteGroup        = L.layerGroup({ pane: 'sitesPane' }).addTo(map);
 
     // id → Leaflet layer, for re-styling without full redraw
     const segmentLayers = new Map();
@@ -864,6 +869,7 @@
 
             const color  = siteObj ? getSiteColor(siteObj) : '#6c757d';
             const marker = L.circleMarker([lat, lng], {
+                pane:        'sitesPane',
                 radius:      7,
                 fillColor:   color,
                 color:       '#fff',
