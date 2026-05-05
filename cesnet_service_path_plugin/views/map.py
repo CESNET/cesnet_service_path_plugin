@@ -379,6 +379,7 @@ class ObjectMapView(View):
     template_name = "cesnet_service_path_plugin/object_map.html"
 
     def get(self, request):
+        can_edit = request.user.has_perm('dcim.change_site')
         filter_form = MapFilterForm()
 
         # Always load all renderable objects — filtering is done client-side in JS.
@@ -458,5 +459,6 @@ class ObjectMapView(View):
             "segments_api_url": request.build_absolute_uri(
                 "/plugins/cesnet-service-path-plugin/segments/map/api/"
             ),
+            "can_edit": can_edit,
         }
         return render(request, self.template_name, context)

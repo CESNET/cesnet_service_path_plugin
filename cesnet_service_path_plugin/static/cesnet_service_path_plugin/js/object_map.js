@@ -164,9 +164,14 @@
     // -------------------------------------------------------------------------
     // Leaflet layer groups
     // -------------------------------------------------------------------------
+    // Dedicated pane for sites so they always render above segments and circuits.
+    // Default overlayPane is z-index 400; sitesPane at 450 guarantees click priority.
+    const sitesPane = map.createPane('sitesPane');
+    sitesPane.style.zIndex = '450';
+
     const segmentPathGroup = L.layerGroup().addTo(map);
     const circuitGroup     = L.layerGroup();   // not added to map initially — circuits hidden by default
-    const siteGroup        = L.layerGroup().addTo(map);
+    const siteGroup        = L.layerGroup({ pane: 'sitesPane' }).addTo(map);
 
     // id → Leaflet layer, for re-styling without full redraw
     const segmentLayers = new Map();
@@ -864,6 +869,7 @@
 
             const color  = siteObj ? getSiteColor(siteObj) : '#6c757d';
             const marker = L.circleMarker([lat, lng], {
+                pane:        'sitesPane',
                 radius:      7,
                 fillColor:   color,
                 color:       '#fff',
@@ -900,7 +906,8 @@
             }
 
             marker.bindPopup(html, { maxWidth: 280 });
-            marker.on('click', function () {
+            marker.on('click', function (e) {
+                L.DomEvent.stopPropagation(e);
                 if (siteObj) buildSiteInfoCard(siteObj);
             });
             siteGroup.addLayer(marker);
@@ -1033,6 +1040,8 @@
     }
 
     function buildSiteInfoCard(site) {
+        window._editModeLastSite = site;
+        window._editModeLastConnection = null;
         highlightObject('site', site.id);
         const badge = siteStatusBadge[site.status] || 'secondary';
         const rows = _table([
@@ -1053,6 +1062,8 @@
     }
 
     function buildSegmentInfoCard(seg) {
+        window._editModeLastSite = null;
+        window._editModeLastConnection = { objectType: 'segment', obj: seg };
         highlightObject('segment', seg.id);
         const sc = segmentStatusBadge[seg.status] || 'secondary';
         let rows = _table([
@@ -1114,6 +1125,8 @@
     }
 
     function buildCircuitInfoCard(circ) {
+        window._editModeLastSite = null;
+        window._editModeLastConnection = { objectType: 'circuit', obj: circ };
         highlightObject('circuit', circ.id);
         const sc = circuitStatusBadge[circ.status] || 'secondary';
         const rows = _table([
@@ -1198,7 +1211,7 @@
     }
 
     function handleLineClick(e) {
-        e.originalEvent.preventDefault();
+        L.DomEvent.stopPropagation(e);
         const nearby = findNearbySegments(e);
         if (!nearby.length) return;
         if (nearby.length === 1) {
@@ -1230,7 +1243,7 @@
             }
         });
 
-        function applyGeoFeatures(features) {
+        function applyGeoFeatures(features, initialLoad) {
             features.forEach(feature => {
                 if (feature.properties.type !== 'path') return;
                 if (!visibleIds.has(feature.properties.id)) return;
@@ -1245,18 +1258,18 @@
                 segmentLayers.set(feature.properties.id.toString(), layer);
             });
             if (_selectedType === 'segment') highlightObject('segment', _selectedId);
-            fitMap();
+            if (initialLoad) fitMap();
         }
 
         if (cachedGeoFeatures) {
-            applyGeoFeatures(cachedGeoFeatures);
+            applyGeoFeatures(cachedGeoFeatures, false);
         } else {
             fetch(apiUrl)
                 .then(r => r.json())
                 .then(data => {
                     if (!data.features) return;
                     cachedGeoFeatures = data.features;
-                    applyGeoFeatures(cachedGeoFeatures);
+                    applyGeoFeatures(cachedGeoFeatures, true);
                 })
                 .catch(() => fitMap());
         }
@@ -1288,9 +1301,7 @@
                 `</div>`,
                 { maxWidth: 300 }
             );
-            line.on('click', (function(c) {
-                return function() { buildCircuitInfoCard(c); };
-            })(circ));
+            line.on('click', e => { L.DomEvent.stopPropagation(e); buildCircuitInfoCard(circ); });
 
             circuitGroup.addLayer(line);
             circuitLayers.set(circ.id.toString(), line);
@@ -1406,6 +1417,13 @@
             infoCardClose.addEventListener('click', hideInfoCard);
         }
 
+        // Clicking the map background deselects the current object
+        map.on('click', () => {
+            hideInfoCard();
+            window._editModeLastSite       = null;
+            window._editModeLastConnection = null;
+        });
+
         // Object list: search + type toggles
         const listSearch = document.getElementById('listSearch');
         if (listSearch) listSearch.addEventListener('input', renderList);
@@ -1431,6 +1449,31 @@
 
         // Tile layer switcher
         initializeLayerSwitching(map);
+
+        // Edit mode — only wired when the toolbar button is present (user has permission)
+        if (_mapData.canEdit && typeof EditModeUI !== 'undefined') {
+            new EditModeUI({
+                map,
+                allSites,
+                allSegments,
+                allCircuits,
+                allSitesById,
+                renderSites,
+                renderSegments,
+                renderCircuits,
+                buildSiteInfoCard,
+                buildSegmentInfoCard,
+                buildCircuitInfoCard,
+                showInfoCard,
+                hideInfoCard,
+                siteLayers,
+                segmentLayers,
+                applyFilters,
+                circuitLayers,
+                handleLineClick,
+                findNearbySegments,
+            });
+        }
     });
 
 })();

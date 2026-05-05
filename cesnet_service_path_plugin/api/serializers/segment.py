@@ -49,9 +49,9 @@ class SegmentBaseSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:cesnet_service_path_plugin-api:segment-detail")
     provider = ProviderSerializer(required=True, nested=True)
     site_a = SiteSerializer(required=True, nested=True)
-    location_a = LocationSerializer(required=False, nested=True)
+    location_a = LocationSerializer(required=False, nested=True, allow_null=True)
     site_b = SiteSerializer(required=True, nested=True)
-    location_b = LocationSerializer(required=False, nested=True)
+    location_b = LocationSerializer(required=False, nested=True, allow_null=True)
     circuits = CircuitSerializer(required=False, many=True, nested=True)
 
     # Computed field: type_specific_data (returns data from relational models based on segment_type)

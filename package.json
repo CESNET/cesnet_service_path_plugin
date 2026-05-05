@@ -1,0 +1,16 @@
+{
+  "name": "cesnet-service-path-plugin-js",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testMatch": [
+      "**/js_tests/**/*.test.js"
+    ],
+    "testEnvironment": "node"
+  }
+}

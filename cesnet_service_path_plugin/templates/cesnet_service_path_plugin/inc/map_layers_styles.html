@@ -52,4 +52,15 @@
 .segment-highlighted {
     filter: drop-shadow(0 0 3px rgba(0, 123, 255, 0.8));
 }
+
+/* Edit mode cursors */
+#map.edit-cursor-crosshair { cursor: crosshair !important; }
+#map.edit-cursor-crosshair .leaflet-interactive { cursor: crosshair !important; }
+#map.edit-cursor-pointer .leaflet-interactive { cursor: pointer !important; }
+
+/* Edit mode draggable marker icon */
+.edit-mode-marker {
+    background: none;
+    border: none;
+}
 </style>
