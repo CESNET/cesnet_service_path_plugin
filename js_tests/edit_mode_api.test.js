@@ -333,6 +333,35 @@ describe('createCircuit', () => {
             makeResp(201, { id: 77 }),
             makeResp(400, { detail: 'Site not found.' }),
             makeResp(201, { id: 102 }),
+            makeResp(204, null),             // rollback DELETE
+        );
+        const api = makeApi(fn);
+        await expect(
+            api.createCircuit({ cid: 'CID-01', provider: 3, type: 5, siteA: 999, siteB: 20 })
+        ).rejects.toThrow('Site not found.');
+    });
+
+    test('DELETEs the circuit when termination creation fails', async () => {
+        const fn = mockFetch(
+            makeResp(201, { id: 77 }),
+            makeResp(400, { detail: 'Site not found.' }),
+            makeResp(201, { id: 102 }),
+            makeResp(204, null),             // rollback DELETE
+        );
+        const api = makeApi(fn);
+        await api.createCircuit({ cid: 'CID-01', provider: 3, type: 5, siteA: 999, siteB: 20 })
+            .catch(() => {});
+        const deleteCall = fn.mock.calls.find(c => c[1].method === 'DELETE');
+        expect(deleteCall).toBeDefined();
+        expect(deleteCall[0]).toBe('/api/circuits/circuits/77/');
+    });
+
+    test('still rejects with original error even if rollback DELETE fails', async () => {
+        const fn = mockFetch(
+            makeResp(201, { id: 77 }),
+            makeResp(400, { detail: 'Site not found.' }),
+            makeResp(201, { id: 102 }),
+            makeResp(500, { detail: 'Delete failed.' }),  // rollback fails
         );
         const api = makeApi(fn);
         await expect(

@@ -287,7 +287,14 @@
                     termination_type: 'dcim.site',
                     termination_id:   data.siteB,
                 });
-                return Promise.all([termA, termZ]).then(() => circuit);
+                return Promise.all([termA, termZ])
+                    .then(() => circuit)
+                    .catch(err => {
+                        // Roll back the orphaned circuit before propagating the error.
+                        return this._request('DELETE', `/api/circuits/circuits/${circuit.id}/`)
+                            .catch(() => {})   // ignore rollback failure — best effort
+                            .then(() => { throw err; });
+                    });
             });
         }
 
