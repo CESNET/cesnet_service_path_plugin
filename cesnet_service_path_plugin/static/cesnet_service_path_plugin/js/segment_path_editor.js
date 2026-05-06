@@ -43,6 +43,16 @@
         weight: 2,
     };
 
+    // Last vertex is filled with the path colour so the user can see where
+    // the path ends and where the next click will extend it.
+    const LAST_VERTEX_STYLE = {
+        radius: 8,
+        color: '#e65100',
+        fillColor: '#e65100',
+        fillOpacity: 1,
+        weight: 2,
+    };
+
     const VERTEX_HOVER_COLOR = '#e65100';
 
     class SegmentPathEditor {
@@ -153,15 +163,19 @@
             // Draw polyline
             this._polyline = L.polyline(this._coords, POLYLINE_STYLE).addTo(this._map);
 
-            // Draw vertex handles
+            // Draw vertex handles — last vertex gets a distinct style
+            const lastIdx = this._coords.length - 1;
             this._coords.forEach((coord, idx) => {
-                this._addHandle(coord, idx);
+                this._addHandle(coord, idx, idx === lastIdx);
             });
         }
 
-        _addHandle(coord, idx) {
+        _addHandle(coord, idx, isLast = false) {
+            const baseStyle = isLast ? LAST_VERTEX_STYLE : VERTEX_STYLE;
+            const restoreFill = isLast ? LAST_VERTEX_STYLE.fillColor : '#fff';
+
             const handle = L.circleMarker(coord, {
-                ...VERTEX_STYLE,
+                ...baseStyle,
                 draggable: false,  // We implement drag manually via mousedown
             }).addTo(this._map);
 
@@ -179,11 +193,11 @@
 
             // Hover feedback
             handle.on('mouseover', () => {
-                handle.setStyle({ fillColor: VERTEX_HOVER_COLOR });
+                handle.setStyle({ fillColor: VERTEX_HOVER_COLOR, fillOpacity: 0.6 });
                 this._map.getContainer().style.cursor = 'grab';
             });
             handle.on('mouseout', () => {
-                handle.setStyle({ fillColor: '#fff' });
+                handle.setStyle({ fillColor: restoreFill, fillOpacity: 1 });
                 this._map.getContainer().style.cursor = 'crosshair';
             });
 
@@ -200,8 +214,11 @@
 
             const onMove = (e) => {
                 const latlng = e.latlng;
+                // Move the dragged vertex handle
                 handle.setLatLng(latlng);
+                // Update coordinate array
                 this._coords[idx] = [latlng.lat, latlng.lng];
+                // Rubber-band the polyline so adjacent segments follow the vertex
                 if (this._polyline) this._polyline.setLatLngs(this._coords);
             };
 
@@ -210,6 +227,10 @@
                 this._map.off('mouseup',   onUp);
                 this._map.dragging.enable();
                 this._map.getContainer().style.cursor = 'crosshair';
+
+                // Full re-render so the last-vertex highlight is recalculated
+                // correctly after any vertex has been moved.
+                this._render();
 
                 // Re-enable click after a short delay so the mouseup doesn't
                 // immediately trigger a click event on some browsers.

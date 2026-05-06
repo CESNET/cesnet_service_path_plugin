@@ -3,7 +3,8 @@ import logging
 import django_filters
 from circuits.models import Circuit, Provider
 from dcim.models import Location, Region, Site
-from django.db.models import Q
+from django.db.models import IntegerField, Q
+from django.db.models.expressions import Func
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
 from dcim.choices import InterfaceTypeChoices
@@ -120,6 +121,15 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         label="Has Path Data",
     )
 
+    has_editable_path = django_filters.ChoiceFilter(
+        choices=[
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        method="_has_editable_path",
+        label="Has Editable Path",
+    )
+
     has_type_specific_data = django_filters.ChoiceFilter(
         choices=[
             ("", "Any"),
@@ -205,6 +215,7 @@ class SegmentFilterSet(NetBoxModelFilterSet):
             "site_b",
             "location_b",
             "has_path_data",
+            "has_editable_path",
         ]
 
     def _at_any_site(self, queryset, name, value):
@@ -283,6 +294,41 @@ class SegmentFilterSet(NetBoxModelFilterSet):
         else:
             # Only "No" selected, show segments without path data
             return queryset.filter(path_geometry__isnull=True)
+
+    def _has_editable_path(self, queryset, name, value):
+        """
+        Filter segments by whether their path can be edited in the map editor.
+
+        A path is editable when it consists of exactly one LineString.
+        Multi-segment paths may have disconnected gaps that prevent
+        auto-joining, so they are considered not editable here.
+
+        Uses ST_NumGeometries via annotation because MultiLineStringField
+        does not support a num_geom lookup directly.
+        """
+        if value in (None, "", []):
+            return queryset
+
+        editable = value in [True, "True", "true", "1"]
+
+        annotated = queryset.annotate(
+            _num_geom=Func(
+                "path_geometry",
+                function="ST_NumGeometries",
+                output_field=IntegerField(),
+            )
+        )
+
+        if editable:
+            return annotated.filter(
+                path_geometry__isnull=False,
+                _num_geom=1,
+            )
+        else:
+            return annotated.exclude(
+                path_geometry__isnull=False,
+                _num_geom=1,
+            )
 
     def _has_type_specific_data(self, queryset, name, value):
         """

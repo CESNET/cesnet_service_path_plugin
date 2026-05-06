@@ -91,11 +91,17 @@
         // ------------------------------------------------------------------
 
         _enterEditMode() {
+            if (this._cfg.onEnterEdit) this._cfg.onEnterEdit();
             this._editor.enter(this._cfg.existingCoords || []);
-            this._editor.on('change', () => { this._dirty = true; });
+            this._editor.on('change', () => {
+                this._dirty = true;
+                this._updateHint();
+            });
             this._dirty = false;
 
             this._swapToolbar(true);
+            this._swapInfoBar(true);
+            this._updateHint();
             window.addEventListener('beforeunload', this._beforeUnloadHandler);
         }
 
@@ -103,7 +109,9 @@
             this._editor.exit();
             this._dirty = false;
             this._swapToolbar(false);
+            this._swapInfoBar(false);
             window.removeEventListener('beforeunload', this._beforeUnloadHandler);
+            if (this._cfg.onExitEdit) this._cfg.onExitEdit();
         }
 
         // ------------------------------------------------------------------
@@ -228,6 +236,30 @@
 
             viewEls.forEach(el => el.classList.toggle('d-none', editMode));
             editEls.forEach(el => el.classList.toggle('d-none', !editMode));
+        }
+
+        // ------------------------------------------------------------------
+        // Info bar / hint bar
+        // ------------------------------------------------------------------
+
+        _swapInfoBar(editMode) {
+            const infoBar = document.getElementById('segment-info-bar');
+            const hintBar = document.getElementById('edit-hint-bar');
+            if (infoBar) infoBar.classList.toggle('d-none', editMode);
+            if (hintBar) hintBar.classList.toggle('d-none', !editMode);
+        }
+
+        _updateHint() {
+            const hintText = document.getElementById('edit-hint-text');
+            if (!hintText) return;
+            const n = this._editor.getCoordinates().length;
+            if (n === 0) {
+                hintText.textContent = 'Click on the map to place the first point.';
+            } else if (n === 1) {
+                hintText.textContent = 'Click to add more points.';
+            } else {
+                hintText.textContent = `${n} points — click to extend, Undo to remove last.`;
+            }
         }
 
         // ------------------------------------------------------------------

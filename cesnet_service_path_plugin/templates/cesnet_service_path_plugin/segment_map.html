@@ -60,8 +60,8 @@
                             This segment does not have path data and sites don't have coordinates.
                         </div>
                     {% else %}
-                        <!-- Segment info -->
-                        <div class="alert alert-info mb-3">
+                        <!-- Segment info — hidden while edit mode is active -->
+                        <div id="segment-info-bar" class="alert alert-info mb-2">
                             <strong>{{ object.provider }}</strong> |
                             <span class="badge text-bg-{{ object.get_status_color }}">{{ object.get_status_display }}</span> |
                             <span class="badge text-bg-{{ object.get_ownership_type_color }}">{{ object.get_ownership_type_display }}</span> |
@@ -79,6 +79,14 @@
                                     No path data available - showing straight line between sites
                                 </small>
                             {% endif %}
+                        </div>
+                        <!-- Edit-mode hint bar — shown instead of segment info while drawing -->
+                        <div id="edit-hint-bar" class="alert alert-warning mb-2 d-none" role="status">
+                            <i class="mdi mdi-pencil-circle" aria-hidden="true"></i>
+                            <span id="edit-hint-text">Click on the map to place the first point.</span>
+                            <span class="text-muted ms-2" style="font-size:0.85em;">
+                                Right-click a vertex to delete it &nbsp;·&nbsp; Drag a vertex to move it
+                            </span>
                         </div>
                         <!-- "Too complex to edit" banner — shown by JS when needed -->
                         <div id="path-complex-warning" class="alert alert-warning d-none" role="alert">
@@ -245,6 +253,10 @@
                     // Add site markers first
                     addSiteMarkers();
                     
+                    // Holds the read-only GeoJSON path layer so the editor UI can
+                    // hide it while drawing and restore it on cancel.
+                    let readOnlyPathLayer = null;
+
                     if (hasPathData) {
                         // Load segment path if available
                         fetch(apiUrl)
@@ -252,7 +264,7 @@
                             .then(data => {
                                 if (data.features && data.features.length > 0) {
                                     // Add to map with updated styling
-                                    const pathLayer = L.geoJSON(data, {
+                                    readOnlyPathLayer = L.geoJSON(data, {
                                         style: {
                                             color: segmentStyle.color,
                                             weight: segmentStyle.weight,
@@ -260,6 +272,7 @@
                                             dashArray: segmentStyle.dashArray || null
                                         }
                                     }).addTo(map);
+                                    const pathLayer = readOnlyPathLayer;
                                     
                                     pathLayer.bindPopup(
                                         '<div>' +
@@ -338,6 +351,8 @@
                             siteB:        siteBData,
                             existingCoords: existingCoords,
                             isTooComplex:   isTooComplex,
+                            onEnterEdit: () => { if (readOnlyPathLayer) readOnlyPathLayer.remove(); },
+                            onExitEdit:  () => { if (readOnlyPathLayer) readOnlyPathLayer.addTo(map); },
                         });
                     })();
                     {% endif %}
