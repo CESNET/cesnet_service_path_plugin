@@ -233,11 +233,19 @@ class SegmentSerializer(SegmentBaseSerializer):
         return instance
 
     def create(self, validated_data):
-        """Handle file upload during creation"""
+        """Handle file upload or direct geometry write during creation"""
         path_file = validated_data.pop("path_file", None)
+        path_geometry = validated_data.pop("path_geometry", None)
 
         # Create instance without path data first
         instance = super().create(validated_data)
+
+        # Direct geometry write (from map editor) takes precedence over file upload.
+        if path_geometry is not None:
+            instance.path_geometry = path_geometry
+            instance.path_source_format = "manual"
+            instance.save()
+            return instance
 
         # Process uploaded file if provided
         if path_file:

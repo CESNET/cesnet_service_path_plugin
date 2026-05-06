@@ -115,14 +115,19 @@
                             </a>
                         </div>
                     {% else %}
-                        {% if perms.cesnet_service_path_plugin.change_segment %}
-                            <div class="card-actions">
+                        <div class="card-actions">
+                            {% if perms.cesnet_service_path_plugin.change_segment %}
                                 <a href="{% url 'plugins:cesnet_service_path_plugin:segment_map' pk=object.pk %}"
                                    class="btn btn-outline-warning btn-sm">
                                     <i class="mdi mdi-draw" aria-hidden="true"></i> Draw Segment Path on Map
                                 </a>
-                            </div>
-                        {% endif %}
+                            {% elif object.site_a.latitude and object.site_b.latitude %}
+                                <a href="{% url 'plugins:cesnet_service_path_plugin:segment_map' pk=object.pk %}"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    <i class="mdi mdi-map" aria-hidden="true"></i> View on Map
+                                </a>
+                            {% endif %}
+                        </div>
                     {% endif %}
                 </h5>
                 <div class="card-body">
