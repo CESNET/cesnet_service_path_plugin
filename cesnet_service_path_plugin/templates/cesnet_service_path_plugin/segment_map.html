@@ -12,14 +12,45 @@
                         Map: {{ object.name }}
                     </h5>
                     <div class="card-actions">
-                        <a href="{{ object.get_absolute_url }}"
-                           class="btn btn-outline-secondary btn-sm">
-                            <i class="mdi mdi-arrow-left" aria-hidden="true"></i> Back to Segment
-                        </a>
-                        <a href="{% url 'plugins:cesnet_service_path_plugin:segment_geojson_download' pk=object.pk %}"
-                           class="btn btn-outline-primary btn-sm">
-                            <i class="mdi mdi-download" aria-hidden="true"></i> Download GeoJSON
-                        </a>
+                        <!-- Fit to path + layer switcher — always visible -->
+                        <button id="fitBounds" class="btn btn-sm btn-outline-primary">
+                            <i class="mdi mdi-fit-to-page-outline"></i> Fit to Path
+                        </button>
+                        {% include './inc/map_layer_dropdown.html' %}
+                        <!-- View-mode toolbar (shown by default) -->
+                        <span class="path-view-toolbar">
+                            <a href="{{ object.get_absolute_url }}"
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="mdi mdi-arrow-left" aria-hidden="true"></i> Back to Segment
+                            </a>
+                            <a href="{% url 'plugins:cesnet_service_path_plugin:segment_geojson_download' pk=object.pk %}"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="mdi mdi-download" aria-hidden="true"></i> Download GeoJSON
+                            </a>
+                            {% if perms.cesnet_service_path_plugin.change_segment %}
+                                <button id="path-edit-btn" class="btn btn-outline-warning btn-sm">
+                                    <i class="mdi mdi-pencil" aria-hidden="true"></i> Edit Path
+                                </button>
+                            {% endif %}
+                        </span>
+                        <!-- Edit-mode toolbar (hidden until edit mode is entered) -->
+                        <span class="path-edit-toolbar d-none">
+                            <button id="path-save-btn" class="btn btn-success btn-sm">
+                                <i class="mdi mdi-content-save" aria-hidden="true"></i> Save
+                            </button>
+                            <button id="path-cancel-btn" class="btn btn-outline-secondary btn-sm">
+                                <i class="mdi mdi-close" aria-hidden="true"></i> Cancel
+                            </button>
+                            <button id="path-undo-btn" class="btn btn-outline-secondary btn-sm">
+                                <i class="mdi mdi-undo" aria-hidden="true"></i> Undo
+                            </button>
+                            <button id="path-clear-btn" class="btn btn-outline-warning btn-sm">
+                                <i class="mdi mdi-eraser" aria-hidden="true"></i> Clear
+                            </button>
+                            <button id="path-delete-btn" class="btn btn-outline-danger btn-sm">
+                                <i class="mdi mdi-trash-can-outline" aria-hidden="true"></i> Delete Path
+                            </button>
+                        </span>
                     </div>
                 </div>
                 <div class="card-body">
@@ -49,17 +80,16 @@
                                 </small>
                             {% endif %}
                         </div>
-                        <!-- Map controls -->
-                        <div class="mb-3">
-                            <button id="fitBounds" class="btn btn-sm btn-outline-primary">
-                                <i class="mdi mdi-fit-to-page-outline"></i> Fit to Path
-                            </button>
-                            <!-- Use the new layer dropdown -->
-                            {% include './inc/map_layer_dropdown.html' %}
+                        <!-- "Too complex to edit" banner — shown by JS when needed -->
+                        <div id="path-complex-warning" class="alert alert-warning d-none" role="alert">
+                            <i class="mdi mdi-alert-circle" aria-hidden="true"></i>
+                            This path has disconnected segments and cannot be edited here.
+                            Delete it to draw a new one, or edit the geometry externally.
                         </div>
-                        <!-- Map container -->
+                        <!-- Map container — height fills the available viewport space -->
                         <div id="map"
-                             style="height: 600px;
+                             style="height: var(--map-avail-height, 80vh);
+                                    min-height: 400px;
                                     width: 100%;
                                     border: 1px solid #ddd;
                                     border-radius: 4px"></div>
@@ -83,11 +113,19 @@
                             "length": "{% if object.path_length_km %}{{ object.path_length_km }} km{% else %}Length unknown{% endif %}",
                             "route": "{{ object.site_a|escapejs }} ↔ {{ object.site_b|escapejs }}"
                         },
-                        "apiUrl": "{% url 'plugins:cesnet_service_path_plugin:segment_geojson_api' pk=object.pk %}"
+                        "apiUrl": "{% url 'plugins:cesnet_service_path_plugin:segment_geojson_api' pk=object.pk %}",
+                        "editorApiUrl": "{% url 'plugins-api:cesnet_service_path_plugin-api:segment-detail' pk=object.pk %}",
+                        "clearPathUrl": "{% url 'plugins:cesnet_service_path_plugin:segment_path_clear' pk=object.pk %}",
+                        "existingCoords": {{ path_coordinates_json|safe }},
+                        "segmentId": {{ object.pk }}
                     }
                         </script>
                         <!-- Include common layer configuration -->
                         {% include './inc/map_layers_config.html' %}
+                        <!-- Path editor scripts -->
+                        <script src="{% static 'cesnet_service_path_plugin/js/segment_path_geometry.js' %}"></script>
+                        <script src="{% static 'cesnet_service_path_plugin/js/segment_path_editor.js' %}"></script>
+                        <script src="{% static 'cesnet_service_path_plugin/js/segment_path_editor_ui.js' %}"></script>
                         <script>
                     // Parse template data
                     const templateData = JSON.parse(document.getElementById('segment-data').textContent);
@@ -99,9 +137,23 @@
                     const segmentInfo = templateData.segmentInfo;
                     const apiUrl = templateData.apiUrl;
                     
+                    // Responsive map height — mirrors the network map pattern.
+                    function setMapHeight() {
+                        const mapEl = document.getElementById('map');
+                        const top = mapEl.getBoundingClientRect().top + window.scrollY;
+                        const available = window.innerHeight - top - 16; // 16px bottom breathing room
+                        document.documentElement.style.setProperty(
+                            '--map-avail-height', Math.max(400, available) + 'px'
+                        );
+                        if (typeof map !== 'undefined') map.invalidateSize();
+                    }
+                    document.addEventListener('DOMContentLoaded', setMapHeight);
+                    window.addEventListener('resize', setMapHeight);
+
                     // Create map
                     const map = L.map('map').setView([49.75, 15.5], 7);
-                    
+                    setMapHeight(); // Apply immediately after map creation
+
                     // Initialize layers using common function
                     initializeMapLayers(map);
                     
@@ -250,6 +302,45 @@
                     
                     // Initialize layer switching functionality
                     initializeLayerSwitching(map);
+
+                    // Initialise the path editor UI (only wires buttons; does nothing
+                    // until the user clicks "Edit Path").
+                    {% if perms.cesnet_service_path_plugin.change_segment %}
+                    (function () {
+                        const existingCoords = templateData.existingCoords || [];
+
+                        // Determine if the stored MultiLineString can be auto-joined.
+                        // get_path_coordinates() returns one array per LineString; the
+                        // view has already flattened them into Leaflet [lat,lng] pairs,
+                        // so we pass an empty coordArrays array (no join needed) and
+                        // set isTooComplex only when the raw MultiLineString had gaps.
+                        // The real check is done here using the raw GeoJSON coord arrays
+                        // which we retrieve separately via the geometry module.
+                        //
+                        // Because the view already flattened the coords into a single
+                        // sequence for the editor, we need to detect complexity from the
+                        // raw segment data.  We use a simple heuristic: if the flattened
+                        // coords came from a multi-segment path and the join would have
+                        // failed, the view would have produced coords that are not
+                        // continuously connected.  We re-check here using the geometry
+                        // module on the raw per-linestring data embedded via a second
+                        // template variable.
+                        //
+                        // For simplicity in v1: isTooComplex is determined server-side
+                        // and passed as a template boolean (see view context below).
+                        const isTooComplex = {{ is_too_complex|yesno:"true,false" }};
+
+                        new SegmentPathEditorUI(map, {
+                            segmentId:    templateData.segmentId,
+                            apiUrl:       templateData.editorApiUrl,
+                            clearPathUrl: templateData.clearPathUrl,
+                            siteA:        siteAData,
+                            siteB:        siteBData,
+                            existingCoords: existingCoords,
+                            isTooComplex:   isTooComplex,
+                        });
+                    })();
+                    {% endif %}
                         </script>
                     {% endif %}
                 </div>

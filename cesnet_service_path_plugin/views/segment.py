@@ -355,6 +355,48 @@ def segment_map_view(request, pk):
         "opacity": 0.8,
     }  # Red color for better visibility
 
+    # Embed existing path coordinates for the editor (Leaflet [lat, lng] order).
+    # get_path_coordinates() returns GeoJSON [lng, lat] arrays per LineString;
+    # we convert here so the editor always receives Leaflet-order pairs.
+    path_coordinates_leaflet = []
+    is_too_complex = False
+    if segment.has_path_data():
+        raw_lines = segment.get_path_coordinates()  # list of [[lng, lat], ...] per LineString
+        if len(raw_lines) > 1:
+            # Check whether consecutive lines are connected within 10 m tolerance.
+            # Re-use the same logic as the JS geometry module (Haversine, threshold = 10 m).
+            import math
+            def _haversine(lat1, lng1, lat2, lng2):
+                R = 6_371_000
+                to_rad = math.radians
+                d_lat = to_rad(lat2 - lat1)
+                d_lng = to_rad(lng2 - lng1)
+                a = (math.sin(d_lat / 2) ** 2 +
+                     math.cos(to_rad(lat1)) * math.cos(to_rad(lat2)) *
+                     math.sin(d_lng / 2) ** 2)
+                return 2 * R * math.asin(math.sqrt(a))
+
+            JOIN_TOLERANCE_M = 10
+            joined = list(raw_lines[0])
+            for next_line in raw_lines[1:]:
+                prev_end = joined[-1]        # [lng, lat]
+                next_start = next_line[0]    # [lng, lat]
+                gap = _haversine(prev_end[1], prev_end[0], next_start[1], next_start[0])
+                if gap > JOIN_TOLERANCE_M:
+                    is_too_complex = True
+                    break
+                joined.extend(next_line[1:])
+
+            if not is_too_complex:
+                # Successfully joined — convert to Leaflet [lat, lng]
+                path_coordinates_leaflet = [[lat, lng] for lng, lat in joined]
+            else:
+                # Too complex — pass empty list; editor will be disabled
+                path_coordinates_leaflet = []
+        else:
+            # Single LineString — convert directly
+            path_coordinates_leaflet = [[lat, lng] for lng, lat in raw_lines[0]]
+
     context = {
         "object": segment,
         "segment": segment,
@@ -365,6 +407,8 @@ def segment_map_view(request, pk):
         "site_a_data_json": json.dumps(site_a_data) if site_a_data else "null",
         "site_b_data_json": json.dumps(site_b_data) if site_b_data else "null",
         "segment_style_json": json.dumps(segment_style),
+        "path_coordinates_json": json.dumps(path_coordinates_leaflet),
+        "is_too_complex": is_too_complex,
     }
     return render(request, "cesnet_service_path_plugin/segment_map.html", context)
 

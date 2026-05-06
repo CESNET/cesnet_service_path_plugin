@@ -41,6 +41,7 @@ class SegmentTable(NetBoxTable):
         """,
         verbose_name="Path Length",
         orderable=True,
+        order_by="path_length_km",
         attrs={"td": {"class": "text-end"}},  # Right-align numbers
     )
 
