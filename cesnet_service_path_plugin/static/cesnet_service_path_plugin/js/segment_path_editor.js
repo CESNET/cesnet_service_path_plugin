@@ -1,9 +1,10 @@
 /**
  * segment_path_editor.js — Leaflet draw/edit engine for segment path drawing.
  *
- * Manages click-to-add, drag-to-move, right-click-to-delete vertices, undo
- * stack, and live polyline rendering.  Has no knowledge of the save mechanism,
- * toolbar buttons, or API — that belongs in segment_path_editor_ui.js.
+ * Manages click-to-add, drag-to-move, right-click-to-delete vertices, click-on-
+ * line to insert a vertex at the exact click position, undo stack, and live
+ * polyline rendering.  Has no knowledge of the save mechanism, toolbar buttons,
+ * or API — that belongs in segment_path_editor_ui.js.
  *
  * Depends on Leaflet (L) being present as a global.
  *
@@ -62,8 +63,8 @@
             this._history  = [];   // snapshots for undo — each entry is a coords array copy
             this._active   = false;
 
-            this._polyline = null;
-            this._handles  = [];   // L.circleMarker per vertex
+            this._polyline  = null;
+            this._handles   = [];   // L.circleMarker per vertex
             this._listeners = { change: [] };
 
             // Bound so we can remove them later
@@ -160,8 +161,20 @@
 
             if (this._coords.length === 0) return;
 
-            // Draw polyline
+            // Draw polyline — clicking on the line inserts a vertex at that point
             this._polyline = L.polyline(this._coords, POLYLINE_STYLE).addTo(this._map);
+            this._polyline.on('click', (e) => {
+                L.DomEvent.stop(e);
+                const idx = this._nearestSegmentIndex(e.latlng);
+                this._insertAfter(idx, e.latlng);
+            });
+            // Show a "+" cursor when hovering the line so the affordance is clear
+            this._polyline.on('mouseover', () => {
+                this._map.getContainer().style.cursor = 'cell';
+            });
+            this._polyline.on('mouseout', () => {
+                this._map.getContainer().style.cursor = 'crosshair';
+            });
 
             // Draw vertex handles — last vertex gets a distinct style
             const lastIdx = this._coords.length - 1;
@@ -250,6 +263,32 @@
             this._coords.splice(idx, 1);
             this._render();
             this._emit('change');
+        }
+
+        // Insert a new vertex after coords[idx] at the given latlng, then
+        // immediately enter drag mode so the user can fine-tune the position.
+        _insertAfter(idx, latlng) {
+            this._pushHistory();
+            this._coords.splice(idx + 1, 0, [latlng.lat, latlng.lng]);
+            this._render();
+            const newHandle = this._handles[idx + 1];
+            if (newHandle) this._startDrag(newHandle, idx + 1);
+            this._emit('change');
+        }
+
+        // Find the index of the segment (coords[i] → coords[i+1]) closest to
+        // the given latlng, using squared pixel distance for speed.
+        _nearestSegmentIndex(latlng) {
+            const pt = this._map.latLngToLayerPoint(latlng);
+            let bestIdx = 0;
+            let bestDist = Infinity;
+            for (let i = 0; i < this._coords.length - 1; i++) {
+                const a = this._map.latLngToLayerPoint(L.latLng(this._coords[i]));
+                const b = this._map.latLngToLayerPoint(L.latLng(this._coords[i + 1]));
+                const d = L.LineUtil.pointToSegmentDistance(pt, a, b);
+                if (d < bestDist) { bestDist = d; bestIdx = i; }
+            }
+            return bestIdx;
         }
 
         // ------------------------------------------------------------------
