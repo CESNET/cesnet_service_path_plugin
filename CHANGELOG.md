@@ -1,5 +1,23 @@
 # Changelog
 
+## [6.2.3] - 2026-05-11
+
+### Changed
+
+- **Compatibility — NetBox 4.6 support**: Raised `max_version` to `4.6.99` after successful
+  testing against NetBox 4.6.x. Plugin version 6.2.x is now supported on both NetBox 4.5.4+
+  and NetBox 4.6.x.
+
+### Compatibility
+
+| cesnet_service_path_plugin | NetBox |
+|---|---|
+| 6.2.x | 4.5.4 – 4.6.x |
+| 6.1.x | 4.5.4+ |
+| 6.0.x | 4.5.0 – 4.5.3 |
+
+---
+
 ## [6.2.2] - 2026-05-07
 
 ### Added
