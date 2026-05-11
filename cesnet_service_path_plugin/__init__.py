@@ -22,7 +22,7 @@ class CesnetServicePathPluginConfig(PluginConfig):
     author = __email__
     graphql_schema = "graphql.schema"
     min_version = "4.5.4"
-    max_version = "4.5.99"
+    max_version = "4.6.99"
 
 
 config = CesnetServicePathPluginConfig

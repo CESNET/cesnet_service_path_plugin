@@ -5,7 +5,7 @@ A NetBox plugin for managing service paths and segments in network infrastructur
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![PyPI version](https://img.shields.io/pypi/v/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
 [![Python versions](https://img.shields.io/pypi/pyversions/cesnet-service-path-plugin.svg)](https://pypi.org/project/cesnet-service-path-plugin/)
-[![NetBox compatibility](https://img.shields.io/badge/NetBox-4.5-blue.svg)](https://github.com/netbox-community/netbox)
+[![NetBox compatibility](https://img.shields.io/badge/NetBox-4.5%20%7C%204.6-blue.svg)](https://github.com/netbox-community/netbox)
 
 ## 📑 Table of Contents
 
@@ -47,7 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version | Notes |
 |----------------|----------------|-------|
-|     4.5.4+     |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode; interactive segment path editor (6.2.2) |
+|  4.5.4 – 4.6.x |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode; interactive segment path editor (6.2.2); NetBox 4.6 support (6.2.3) |
 |     4.5.4+     |      6.1.x     | Requires NetBox >= 4.5.4 (strawberry-graphql-django >= 0.79.0) |
 |   4.5.0–4.5.3  |      6.0.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
 |     4.4.x      |      5.4.x     | Last version compatible with NetBox 4.4.x |
@@ -218,8 +218,9 @@ Before installing the plugin, ensure you have:
 
 1. **PostgreSQL with PostGIS extension** (version 3.0 or higher recommended)
 2. **System libraries**: GDAL, GEOS, and PROJ runtime binaries
-3. **NetBox 4.5.4 or higher** (for plugin version 6.2.x)
+3. **NetBox 4.5.4–4.6.x** (for plugin version 6.2.x)
    - **Important**: Plugin version 6.2.x requires NetBox >= 4.5.4 (ships with strawberry-graphql-django >= 0.79.0)
+   - NetBox 4.6.x is supported from plugin version 6.2.3 onwards
    - For NetBox 4.5.0–4.5.3, use plugin version 6.0.x
    - If you're running NetBox 4.4.x, use plugin version 5.4.x or earlier
 
