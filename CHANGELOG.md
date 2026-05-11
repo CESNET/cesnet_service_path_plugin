@@ -1,5 +1,59 @@
 # Changelog
 
+## [6.2.2] - 2026-05-07
+
+### Added
+
+- **Segment Map — Interactive path editor**: Authorised users can now draw and edit a segment's
+  geographic path directly on the single-segment map view without uploading a file.
+  - **Click-to-draw**: Click on the map to place vertices one by one, building up a LineString path.
+  - **Drag to move**: Drag any existing vertex to reposition it; the polyline rubber-bands in real time.
+  - **Click line to insert**: Click anywhere on the drawn polyline to insert a new vertex at that
+    exact position. The new vertex immediately enters drag mode for precise placement.
+  - **Right-click to delete**: Right-click any vertex to remove it from the path.
+  - **Last vertex highlight**: The most recently placed vertex is rendered with a distinct solid fill
+    so the path end is always obvious.
+  - **Undo**: Step back through the edit history one action at a time.
+  - **Clear**: Remove all vertices and start fresh without leaving edit mode.
+  - **Delete Path**: Delete the stored geometry for the segment entirely (with confirmation).
+  - **Proximity warnings**: If the path start or end is more than 100 m from the respective site
+    marker, a confirmation dialog is shown before saving.
+  - **Multi-segment auto-join**: Existing paths stored as MultiLineString (e.g. from file upload)
+    are automatically joined into a single editable LineString when gaps between segments are ≤ 10 m.
+    Paths with larger gaps are flagged as "too complex to edit here".
+  - **Read-only layer hide**: The static GeoJSON path layer is hidden while the editor is active
+    and restored on cancel, preventing visual overlap during editing.
+  - **Permission-gated**: Edit controls are only shown to users with `change_segment` permission.
+- **Segment Map — Context-sensitive map button**: The button on the segment detail page now adapts
+  to four states based on path data availability and user permissions (View / View+Edit / Draw /
+  hidden). View-only users with no stored path data but positioned sites still get a "View on Map"
+  link to see the fallback straight line.
+- **Segment list — Path length column**: The `path_length_km` value is now shown as a sortable
+  column in the segment list table.
+- **Segment filter — Has Editable Path**: New filter `has_editable_path` limits results to segments
+  whose path geometry is a single LineString (i.e. directly editable in the map editor). Segments
+  with disconnected multi-segment paths are excluded.
+- **Segment API — Direct geometry write**: `PATCH /api/.../segments/{id}/` now accepts a
+  `path_geometry` JSON field (`{"type": "LineString", "coordinates": [...]}`) to save a path from
+  the map editor without a file upload. `path_source_format` is set to `"manual"` automatically.
+  `POST` (create) also supports `path_geometry` with the same behaviour.
+
+### Fixed
+
+- **Segment serializer — `create()` missing manual geometry handling**: Creating a segment via
+  `POST` with a `path_geometry` field did not set `path_source_format = "manual"`. Fixed to match
+  the `update()` behaviour.
+
+### Compatibility
+
+| cesnet_service_path_plugin | NetBox |
+|---|---|
+| 6.2.x | 4.5.4+ |
+| 6.1.x | 4.5.4+ |
+| 6.0.x | 4.5.0 – 4.5.3 |
+
+---
+
 ## [6.2.1] - 2026-05-04
 
 ### Added
