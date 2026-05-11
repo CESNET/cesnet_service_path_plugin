@@ -47,7 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version | Notes |
 |----------------|----------------|-------|
-|  4.5.4 – 4.6.x |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode; interactive segment path editor (6.2.2); NetBox 4.6 support (6.2.3) |
+|  4.5.4 – 4.6.x |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode; interactive segment path editor (6.2.2); NetBox 4.6 support (6.2.3); dependency cleanup + GIS bug fix (6.2.4) |
 |     4.5.4+     |      6.1.x     | Requires NetBox >= 4.5.4 (strawberry-graphql-django >= 0.79.0) |
 |   4.5.0–4.5.3  |      6.0.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
 |     4.4.x      |      5.4.x     | Last version compatible with NetBox 4.4.x |
@@ -229,10 +229,10 @@ Before installing the plugin, ensure you have:
 **Ubuntu/Debian:**
 ```bash
 sudo apt-get update
-sudo apt-get install postgresql-15-postgis-3 gdal-bin libgdal34 libgeos-c1t64 libproj25
+sudo apt-get install postgresql-15-postgis-3 libgdal-dev
 ```
 
-**Note**: Package names may vary by Ubuntu/Debian version. Use `apt-cache search libgdal` to find the correct version for your system.
+**Note**: Only `libgdal` needs to be installed as a system library. The Python packages `geopandas`, `shapely`, and `pyproj` ship as self-contained manylinux wheels with bundled native libraries. Use `apt-cache search libgdal` to find the correct versioned package name for your Ubuntu release (e.g. `libgdal34` on Ubuntu 24.04, `libgdal38` on Ubuntu 26.04).
 
 **macOS:**
 ```bash
@@ -296,28 +296,27 @@ The official NetBox Docker images do not include the required geographic librari
 Create a `Dockerfile` extending the official NetBox image:
 
 ```dockerfile
-FROM netboxcommunity/netbox:v4.5
+FROM netboxcommunity/netbox:v4.6.0
 
 # copy plugin requirements
 COPY ./plugin_requirements.txt /opt/netbox/
 
-# Install git and minimal PostGIS runtime dependencies
+# Install libgdal — required by Django's PostGIS backend (django.contrib.gis).
+# The versioned package name depends on the base image's Ubuntu release:
+#   Ubuntu 24.04 (NetBox <= 4.5.x): libgdal34t64
+#   Ubuntu 26.04 (NetBox >= 4.6.0): libgdal38
+# shapely, pyproj, and pyogrio ship self-contained manylinux wheels and
+# do NOT require separate system library packages.
 RUN apt-get update && apt-get install -y \
-    git \
-    gdal-bin \
-    libgdal34 \
-    libgeos-c1t64 \
-    libproj25 \
+    libgdal38 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PostGIS and geospatial Python dependencies
+# Install PostGIS Python driver and plugin dependencies
 RUN /usr/local/bin/uv pip install \
     psycopg2-binary \
     -r /opt/netbox/plugin_requirements.txt
 ```
-
-**Note**: Library package names (like `libgdal34`) may vary depending on the base image's Ubuntu/Debian version. Check available packages if you encounter errors.
 
 Then create a `plugin_requirements.txt` file:
 ```
@@ -864,17 +863,16 @@ pip install -e ".[dev]"
 
 4. Install geographic dependencies:
 ```bash
-# Ubuntu/Debian - only runtime libraries needed
-sudo apt-get install gdal-bin libgdal34 libgeos-c1t64 libproj25
+# Ubuntu/Debian - only libgdal is needed as a system library
+# (shapely, pyproj, pyogrio ship bundled native libs inside their wheels)
+sudo apt-get install libgdal-dev   # or the versioned package, e.g. libgdal38
 
 # macOS
-brew install gdal geos proj
+brew install gdal
 
-# Install Python packages
-pip install geopandas fiona shapely python-dateutil
+# Python packages are installed automatically via pip install -e ".[dev]"
+# (geopandas, shapely, python-dateutil are declared in pyproject.toml)
 ```
-
-**Note**: For development, you typically only need the runtime libraries. The Python packages (geopandas, fiona, shapely) use precompiled wheels that already include the necessary bindings. Development headers (`-dev` packages) are only needed if you're compiling these libraries from source.
 
 ### Testing Geographic Features
 
@@ -929,10 +927,10 @@ Contract information appears on segment detail pages when:
 ### Common Issues
 
 1. **PostGIS not enabled**: Ensure PostGIS extension is installed in your database
-2. **GDAL library missing**: Install system GDAL runtime libraries (`gdal-bin`, `libgdal34`) before Python packages
+2. **GDAL library missing**: Install the system `libgdal` package before Python packages. The versioned name depends on your Ubuntu release — use `apt-cache search libgdal` to find it (e.g. `libgdal34t64` on Ubuntu 24.04, `libgdal38` on Ubuntu 26.04)
 3. **Path upload fails**: Check file format and ensure it contains LineString geometries
 4. **Map not loading**: Verify JavaScript console for tile layer errors
-5. **Library version mismatch**: If you encounter errors about missing libraries, check that library package names match your OS version (e.g., `libgdal34` vs `libgdal32`)
+5. **GDAL library version mismatch**: If you encounter errors about a missing `libgdal` shared object, the versioned package name has changed between Ubuntu releases. Use `apt-cache search libgdal` to find the correct name and update your Dockerfile accordingly
 6. **Contract info not visible**: Check user permissions for `view_contractinfo`
 7. **Currency not appearing**: Verify plugin configuration in `configuration/plugins.py`
 8. **Topology not rendering**: Check browser console for Cytoscape.js CDN errors
@@ -957,7 +955,7 @@ LOGGING = {
 
 - Created using [Cookiecutter](https://github.com/audreyr/cookiecutter) and [`netbox-community/cookiecutter-netbox-plugin`](https://github.com/netbox-community/cookiecutter-netbox-plugin)
 - Based on the [NetBox plugin tutorial](https://github.com/netbox-community/netbox-plugin-tutorial)
-- Geographic features powered by [GeoPandas](https://geopandas.org/), [Leaflet](https://leafletjs.com/), and [PostGIS](https://postgis.net/)
+- Geographic features powered by [GeoPandas](https://geopandas.org/), [pyogrio](https://pyogrio.readthedocs.io/), [Leaflet](https://leafletjs.com/), and [PostGIS](https://postgis.net/)
 - Topology visualization powered by [Cytoscape.js](https://js.cytoscape.org/)
 
 ## License

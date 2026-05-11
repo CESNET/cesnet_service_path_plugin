@@ -1,5 +1,48 @@
 # Changelog
 
+## [6.2.4] - 2026-05-11
+
+### Fixed
+
+- **GIS — `MultiLineString` missing SRID**: `gdf_to_multilinestring()` returned a
+  `MultiLineString` without `srid=4326`, causing `.srid` to be `None` on the resulting
+  geometry object. Fixed by passing `srid=4326` explicitly to the constructor.
+
+### Changed
+
+- **Dependency — replaced `fiona` with `pyogrio`**: `fiona` has been removed as an explicit
+  dependency. KML layer enumeration (`fiona.listlayers`) is now handled by `pyogrio.list_layers`,
+  which is already a declared dependency of `geopandas` and ships as a self-contained manylinux
+  wheel. No behaviour change for users.
+- **Dependency cleanup — removed unused explicit dependencies**: `pyproj` and `rtree` were
+  declared in `plugin_requirements.txt` but never imported directly by the plugin. Both are
+  transitively provided by `geopandas` when needed. Removed to reduce installation noise.
+- **Docker — reduced required system packages**: The custom NetBox Docker image now only needs
+  `libgdal` as a system package. `libgeos-c1t64` and `libproj25` are no longer required at the
+  OS level because `shapely` and `pyproj` bundle their own native libraries inside their
+  manylinux wheels.
+
+### Added
+
+- **Tests — GIS utilities**: Added two test modules covering `utils_gis.py`:
+  - `test_utils_gis_unit` — no-database tests for format detection, KMZ extraction, KML layer
+    reading, and 3D→2D coordinate stripping (`django.test.SimpleTestCase`).
+  - `test_utils_gis_integration` — full PostGIS round-trip tests for `gdf_to_multilinestring`,
+    `validate_path_geometry`, `process_path_file` (GeoJSON / KML / KMZ), and
+    `export_segment_paths_as_geojson` (`django.test.TestCase`).
+  - Synthetic fixture files (`sample.geojson`, `sample.kml`, `sample.kmz`) with no real
+    network data.
+
+### Compatibility
+
+| cesnet_service_path_plugin | NetBox |
+|---|---|
+| 6.2.x | 4.5.4 – 4.6.x |
+| 6.1.x | 4.5.4+ |
+| 6.0.x | 4.5.0 – 4.5.3 |
+
+---
+
 ## [6.2.3] - 2026-05-11
 
 ### Changed
