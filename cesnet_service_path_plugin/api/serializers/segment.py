@@ -6,6 +6,7 @@ from dcim.api.serializers import (
     LocationSerializer,
     SiteSerializer,
 )
+from django.contrib.gis.geos import LineString, MultiLineString
 from django.core.exceptions import ValidationError as DjangoValidationError
 from netbox.api.serializers import NetBoxModelSerializer
 from rest_framework import serializers
@@ -122,6 +123,15 @@ class SegmentSerializer(SegmentBaseSerializer):
         help_text="Upload a file containing the path geometry. Supported formats: GeoJSON (.geojson, .json), KML (.kml), KMZ (.kmz)",
     )
 
+    # Accept a bare GeoJSON LineString geometry object for manual/drawn paths.
+    # The serializer wraps it into MultiLineString before saving and sets
+    # path_source_format = "manual" automatically.
+    path_geometry = serializers.JSONField(
+        required=False,
+        write_only=True,
+        help_text='GeoJSON LineString geometry object: {"type": "LineString", "coordinates": [[lng, lat], ...]}',
+    )
+
     # Only include lightweight path info
     has_path_data = serializers.SerializerMethodField(read_only=True)
 
@@ -152,6 +162,7 @@ class SegmentSerializer(SegmentBaseSerializer):
             "path_notes",
             "has_path_data",
             "path_file",
+            "path_geometry",
             "contract_info",
             "tags",
         )
@@ -170,26 +181,48 @@ class SegmentSerializer(SegmentBaseSerializer):
     def get_has_path_data(self, obj):
         return obj.has_path_data()
 
+    def validate_path_geometry(self, value):
+        """Accept a bare GeoJSON LineString geometry object and return a Django MultiLineString."""
+        if value is None:
+            return value
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Expected a GeoJSON geometry object.")
+        if value.get("type") != "LineString":
+            raise serializers.ValidationError(
+                f"Only LineString geometry is accepted, got '{value.get('type')}'."
+            )
+        coords = value.get("coordinates")
+        if not coords or not isinstance(coords, list) or len(coords) < 2:
+            raise serializers.ValidationError(
+                "LineString must contain at least 2 coordinate pairs."
+            )
+        try:
+            # GeoJSON coordinates are [lng, lat] — Django GIS LineString expects the same order.
+            line = LineString(coords, srid=4326)
+            return MultiLineString(line, srid=4326)
+        except Exception as e:
+            raise serializers.ValidationError(f"Invalid geometry coordinates: {e}")
+
     def update(self, instance, validated_data):
-        """Handle file upload during update"""
+        """Handle file upload and direct geometry during update."""
         path_file = validated_data.pop("path_file", None)
+        path_geometry = validated_data.pop("path_geometry", None)
 
         # Update other fields first
         instance = super().update(instance, validated_data)
 
-        # Process uploaded file if provided
-        if path_file:
+        # Direct geometry write (from map editor) takes precedence over file upload.
+        if path_geometry is not None:
+            instance.path_geometry = path_geometry
+            instance.path_source_format = "manual"
+            instance.save()
+        elif path_file:
             try:
-                # Process the uploaded file using existing utility functions
                 file_format = determine_file_format_from_extension(path_file.name)
-                path_geometry = process_path_data(path_file, file_format)
-
-                # Update instance with processed geometry
-                instance.path_geometry = path_geometry
+                instance.path_geometry = process_path_data(path_file, file_format)
                 instance.path_source_format = file_format
                 # path_length_km will be auto-calculated in the model's save method
                 instance.save()
-
             except DjangoValidationError as e:
                 logger.warning(f"Validation Path file error: {str(e)}")
                 raise serializers.ValidationError(f"Error processing file '{path_file.name}'")
@@ -200,11 +233,19 @@ class SegmentSerializer(SegmentBaseSerializer):
         return instance
 
     def create(self, validated_data):
-        """Handle file upload during creation"""
+        """Handle file upload or direct geometry write during creation"""
         path_file = validated_data.pop("path_file", None)
+        path_geometry = validated_data.pop("path_geometry", None)
 
         # Create instance without path data first
         instance = super().create(validated_data)
+
+        # Direct geometry write (from map editor) takes precedence over file upload.
+        if path_geometry is not None:
+            instance.path_geometry = path_geometry
+            instance.path_source_format = "manual"
+            instance.save()
+            return instance
 
         # Process uploaded file if provided
         if path_file:

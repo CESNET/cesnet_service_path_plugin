@@ -1,0 +1,317 @@
+/**
+ * segment_path_editor.js — Leaflet draw/edit engine for segment path drawing.
+ *
+ * Manages click-to-add, drag-to-move, right-click-to-delete vertices, click-on-
+ * line to insert a vertex at the exact click position, undo stack, and live
+ * polyline rendering.  Has no knowledge of the save mechanism, toolbar buttons,
+ * or API — that belongs in segment_path_editor_ui.js.
+ *
+ * Depends on Leaflet (L) being present as a global.
+ *
+ * Usage:
+ *   const editor = new SegmentPathEditor(map);
+ *   editor.enter([[lat, lng], ...]);  // [] for new path, existing coords to edit
+ *   editor.exit();
+ *   editor.getCoordinates();          // → [[lat, lng], ...]  (Leaflet order)
+ *   editor.clear();
+ *   editor.undo();
+ *   editor.on('change', () => { ... });
+ */
+
+(function (root, factory) {
+    'use strict';
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = factory();
+    } else {
+        root.SegmentPathEditor = factory().SegmentPathEditor;
+    }
+}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+    'use strict';
+
+    // Visual style constants
+    const POLYLINE_STYLE = {
+        color: '#e65100',
+        weight: 3,
+        opacity: 0.9,
+        dashArray: null,
+    };
+
+    const VERTEX_STYLE = {
+        radius: 6,
+        color: '#e65100',
+        fillColor: '#fff',
+        fillOpacity: 1,
+        weight: 2,
+    };
+
+    // Last vertex is filled with the path colour so the user can see where
+    // the path ends and where the next click will extend it.
+    const LAST_VERTEX_STYLE = {
+        radius: 8,
+        color: '#e65100',
+        fillColor: '#e65100',
+        fillOpacity: 1,
+        weight: 2,
+    };
+
+    const VERTEX_HOVER_COLOR = '#e65100';
+
+    class SegmentPathEditor {
+        constructor(map) {
+            this._map      = map;
+            this._coords   = [];   // [[lat, lng], ...]
+            this._history  = [];   // snapshots for undo — each entry is a coords array copy
+            this._active   = false;
+
+            this._polyline  = null;
+            this._handles   = [];   // L.circleMarker per vertex
+            this._listeners = { change: [] };
+
+            // Bound so we can remove them later
+            this._onMapClick = this._onMapClick.bind(this);
+        }
+
+        // ------------------------------------------------------------------
+        // Public API
+        // ------------------------------------------------------------------
+
+        /** Enter edit mode, optionally pre-loading existing coordinates. */
+        enter(initialCoords = []) {
+            if (this._active) this.exit();
+            this._active  = true;
+            this._coords  = initialCoords.map(c => [c[0], c[1]]);
+            this._history = [];
+
+            this._map.on('click', this._onMapClick);
+            this._map.getContainer().style.cursor = 'crosshair';
+
+            this._render();
+        }
+
+        /** Exit edit mode and clean up all editor layers and event listeners. */
+        exit() {
+            this._active = false;
+            this._map.off('click', this._onMapClick);
+            this._map.getContainer().style.cursor = '';
+
+            this._clearLayers();
+            this._coords  = [];
+            this._history = [];
+        }
+
+        /** Return a copy of the current coordinate array ([[lat, lng], ...]). */
+        getCoordinates() {
+            return this._coords.map(c => [c[0], c[1]]);
+        }
+
+        /** Remove all points but stay in edit mode. */
+        clear() {
+            if (!this._active) return;
+            this._pushHistory();
+            this._coords = [];
+            this._render();
+            this._emit('change');
+        }
+
+        /** Remove the last added point. */
+        undo() {
+            if (!this._active) return;
+            if (this._history.length === 0) return;
+            this._coords = this._history.pop();
+            this._render();
+            this._emit('change');
+        }
+
+        /** Register an event listener.  Currently only 'change' is supported. */
+        on(event, cb) {
+            if (this._listeners[event]) this._listeners[event].push(cb);
+            return this;
+        }
+
+        /** Return true if the editor is currently active. */
+        isActive() {
+            return this._active;
+        }
+
+        // ------------------------------------------------------------------
+        // Internal — event handlers
+        // ------------------------------------------------------------------
+
+        _onMapClick(e) {
+            this._pushHistory();
+            this._coords.push([e.latlng.lat, e.latlng.lng]);
+            this._render();
+            this._emit('change');
+        }
+
+        // ------------------------------------------------------------------
+        // Internal — history
+        // ------------------------------------------------------------------
+
+        _pushHistory() {
+            this._history.push(this._coords.map(c => [c[0], c[1]]));
+        }
+
+        // ------------------------------------------------------------------
+        // Internal — rendering
+        // ------------------------------------------------------------------
+
+        _render() {
+            this._clearLayers();
+
+            if (this._coords.length === 0) return;
+
+            // Draw polyline — clicking on the line inserts a vertex at that point
+            this._polyline = L.polyline(this._coords, POLYLINE_STYLE).addTo(this._map);
+            this._polyline.on('click', (e) => {
+                L.DomEvent.stop(e);
+                const idx = this._nearestSegmentIndex(e.latlng);
+                this._insertAfter(idx, e.latlng);
+            });
+            // Show a "+" cursor when hovering the line so the affordance is clear
+            this._polyline.on('mouseover', () => {
+                this._map.getContainer().style.cursor = 'cell';
+            });
+            this._polyline.on('mouseout', () => {
+                this._map.getContainer().style.cursor = 'crosshair';
+            });
+
+            // Draw vertex handles — last vertex gets a distinct style
+            const lastIdx = this._coords.length - 1;
+            this._coords.forEach((coord, idx) => {
+                this._addHandle(coord, idx, idx === lastIdx);
+            });
+        }
+
+        _addHandle(coord, idx, isLast = false) {
+            const baseStyle = isLast ? LAST_VERTEX_STYLE : VERTEX_STYLE;
+            const restoreFill = isLast ? LAST_VERTEX_STYLE.fillColor : '#fff';
+
+            const handle = L.circleMarker(coord, {
+                ...baseStyle,
+                draggable: false,  // We implement drag manually via mousedown
+            }).addTo(this._map);
+
+            // Drag support via mousedown → mousemove → mouseup on the map
+            handle.on('mousedown', (e) => {
+                L.DomEvent.stop(e);
+                this._startDrag(handle, idx);
+            });
+
+            // Right-click → delete vertex
+            handle.on('contextmenu', (e) => {
+                L.DomEvent.stop(e);
+                this._deleteVertex(idx);
+            });
+
+            // Hover feedback
+            handle.on('mouseover', () => {
+                handle.setStyle({ fillColor: VERTEX_HOVER_COLOR, fillOpacity: 0.6 });
+                this._map.getContainer().style.cursor = 'grab';
+            });
+            handle.on('mouseout', () => {
+                handle.setStyle({ fillColor: restoreFill, fillOpacity: 1 });
+                this._map.getContainer().style.cursor = 'crosshair';
+            });
+
+            this._handles.push(handle);
+        }
+
+        _startDrag(handle, idx) {
+            // Temporarily disable map click so the drag end doesn't add a point
+            this._map.off('click', this._onMapClick);
+            this._map.dragging.disable();
+            this._map.getContainer().style.cursor = 'grabbing';
+
+            this._pushHistory();
+
+            const onMove = (e) => {
+                const latlng = e.latlng;
+                // Move the dragged vertex handle
+                handle.setLatLng(latlng);
+                // Update coordinate array
+                this._coords[idx] = [latlng.lat, latlng.lng];
+                // Rubber-band the polyline so adjacent segments follow the vertex
+                if (this._polyline) this._polyline.setLatLngs(this._coords);
+            };
+
+            const onUp = () => {
+                this._map.off('mousemove', onMove);
+                this._map.off('mouseup',   onUp);
+                this._map.dragging.enable();
+                this._map.getContainer().style.cursor = 'crosshair';
+
+                // Full re-render so the last-vertex highlight is recalculated
+                // correctly after any vertex has been moved.
+                this._render();
+
+                // Re-enable click after a short delay so the mouseup doesn't
+                // immediately trigger a click event on some browsers.
+                setTimeout(() => {
+                    this._map.on('click', this._onMapClick);
+                }, 10);
+
+                this._emit('change');
+            };
+
+            this._map.on('mousemove', onMove);
+            this._map.on('mouseup',   onUp);
+        }
+
+        _deleteVertex(idx) {
+            this._pushHistory();
+            this._coords.splice(idx, 1);
+            this._render();
+            this._emit('change');
+        }
+
+        // Insert a new vertex after coords[idx] at the given latlng, then
+        // immediately enter drag mode so the user can fine-tune the position.
+        _insertAfter(idx, latlng) {
+            this._pushHistory();
+            this._coords.splice(idx + 1, 0, [latlng.lat, latlng.lng]);
+            this._render();
+            const newHandle = this._handles[idx + 1];
+            if (newHandle) this._startDrag(newHandle, idx + 1);
+            this._emit('change');
+        }
+
+        // Find the index of the segment (coords[i] → coords[i+1]) closest to
+        // the given latlng, using squared pixel distance for speed.
+        _nearestSegmentIndex(latlng) {
+            const pt = this._map.latLngToLayerPoint(latlng);
+            let bestIdx = 0;
+            let bestDist = Infinity;
+            for (let i = 0; i < this._coords.length - 1; i++) {
+                const a = this._map.latLngToLayerPoint(L.latLng(this._coords[i]));
+                const b = this._map.latLngToLayerPoint(L.latLng(this._coords[i + 1]));
+                const d = L.LineUtil.pointToSegmentDistance(pt, a, b);
+                if (d < bestDist) { bestDist = d; bestIdx = i; }
+            }
+            return bestIdx;
+        }
+
+        // ------------------------------------------------------------------
+        // Internal — cleanup
+        // ------------------------------------------------------------------
+
+        _clearLayers() {
+            if (this._polyline) {
+                this._polyline.remove();
+                this._polyline = null;
+            }
+            this._handles.forEach(h => h.remove());
+            this._handles = [];
+        }
+
+        // ------------------------------------------------------------------
+        // Internal — events
+        // ------------------------------------------------------------------
+
+        _emit(event) {
+            (this._listeners[event] || []).forEach(cb => cb());
+        }
+    }
+
+    return { SegmentPathEditor };
+}));

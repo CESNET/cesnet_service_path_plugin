@@ -47,7 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version | Notes |
 |----------------|----------------|-------|
-|     4.5.4+     |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode |
+|     4.5.4+     |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode; interactive segment path editor (6.2.2) |
 |     4.5.4+     |      6.1.x     | Requires NetBox >= 4.5.4 (strawberry-graphql-django >= 0.79.0) |
 |   4.5.0–4.5.3  |      6.0.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
 |     4.4.x      |      5.4.x     | Last version compatible with NetBox 4.4.x |
@@ -134,6 +134,14 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 - **Fallback visualization** showing straight lines when path data unavailable
 - **Overlapping segment detection** and selection on maps
 - **Path data export** as GeoJSON for external use
+- **Interactive segment path editor** (new in 6.2.2): draw and edit a segment's geographic path
+  directly on the single-segment map — no file upload required
+  - Click on the map to place vertices; click the drawn line to insert a point at the exact
+    click position; drag a vertex to reposition it; right-click a vertex to delete it
+  - Undo/clear/delete controls; proximity warnings when path ends are far from site markers
+  - Existing multi-segment paths are auto-joined when possible; complex paths fall back to
+    a read-only display with a warning
+  - Permission-gated: only users with `change_segment` can enter edit mode
 - **Network Map** (new in 6.0.0, enhanced in 6.2.0, edit mode added in 6.2.1): combined Sites + Segments + Circuits view
   - Permanent right-side panel with filter sidebar and searchable object list
   - Tag filters for Sites, Segments, and Circuits

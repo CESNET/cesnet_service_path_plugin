@@ -326,6 +326,17 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
         help_text="Filter segments that have path geometry data",
     )
 
+    has_editable_path = forms.ChoiceField(
+        required=False,
+        choices=[
+            ("", "Any"),
+            (True, "Yes"),
+            (False, "No"),
+        ],
+        label=_("Has Editable Path"),
+        help_text="Filter segments whose path can be edited in the map editor (single continuous LineString)",
+    )
+
     has_contract_info = forms.ChoiceField(
         required=False,
         choices=[
@@ -465,6 +476,7 @@ class SegmentFilterForm(NetBoxModelFilterSetForm):
             "segment_type",
             "network_label",
             "has_path_data",
+            "has_editable_path",
             "has_contract_info",
             "has_type_specific_data",
             name="Basic",
