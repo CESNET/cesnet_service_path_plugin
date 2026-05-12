@@ -21,16 +21,17 @@ def check_gis_environment():
     Check if GIS environment is properly configured
     Call this in Django shell on production to diagnose issues
     """
-    import fiona
+    import pyogrio
     import geopandas as gpd
     import tempfile
     import os
 
     logger.info("=== GIS Environment Check ===")
     logger.info(f"GeoPandas version: {gpd.__version__}")
-    logger.info(f"Fiona version: {fiona.__version__}")
-    logger.info(f"Supported drivers: {list(fiona.supported_drivers.keys())}")
-    logger.info(f"KML driver available: {'KML' in fiona.supported_drivers}")
+    logger.info(f"Pyogrio version: {pyogrio.__version__}")
+    drivers = pyogrio.list_drivers()
+    logger.info(f"Supported drivers: {list(drivers.keys())}")
+    logger.info(f"KML driver available: {'KML' in drivers}")
     logger.info(f"Temp directory: {tempfile.gettempdir()}")
     logger.info(f"Temp dir writable: {os.access(tempfile.gettempdir(), os.W_OK)}")
 
@@ -243,7 +244,7 @@ def read_all_kml_layers(kml_file):
     Returns:
         List[GeoDataFrame]: List of GeoDataFrames, one per layer
     """
-    import fiona
+    import pyogrio
 
     layer_gdfs = []
 
@@ -257,11 +258,11 @@ def read_all_kml_layers(kml_file):
 
         # Get all layer names from the KML file
         try:
-            layers = fiona.listlayers(kml_file)
+            layers = [name for name, _ in pyogrio.list_layers(kml_file)]
             logger.debug(f"🔍 Found {len(layers)} layer(s) in {Path(kml_file).name}: {layers}")
         except Exception as list_error:
             logger.error(f"🔍 Could not list layers in {kml_file}: {list_error}")
-            logger.error(f"🔍 fiona.listlayers exception type: {type(list_error)}")
+            logger.error(f"🔍 pyogrio.list_layers exception type: {type(list_error)}")
             # Try fallback immediately
             layers = []
 
@@ -438,7 +439,7 @@ def gdf_to_multilinestring(gdf):
     logger.info(f"🔍 Successfully extracted {len(linestrings)} line segments (converted to 2D)")
 
     # Create MultiLineString from all collected LineStrings
-    return MultiLineString(*linestrings)
+    return MultiLineString(*linestrings, srid=4326)
 
 
 def validate_path_geometry(geometry):

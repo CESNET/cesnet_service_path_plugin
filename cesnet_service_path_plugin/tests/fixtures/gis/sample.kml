@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Test Network Path</name>
+    <description>Synthetic test fixture - no real data</description>
+    <Style id="line-test-normal">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>3</width>
+      </LineStyle>
+    </Style>
+    <Placemark>
+      <name>Test Segment 1</name>
+      <styleUrl>#line-test-normal</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          14.100000,50.100000,0
+          14.150000,50.120000,0
+          14.200000,50.140000,0
+          14.250000,50.160000,0
+          14.300000,50.180000,0
+          14.350000,50.200000,0
+          14.400000,50.220000,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Test Segment 2</name>
+      <styleUrl>#line-test-normal</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          15.100000,49.800000,0
+          15.150000,49.820000,0
+          15.200000,49.840000,0
+          15.250000,49.860000,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>
