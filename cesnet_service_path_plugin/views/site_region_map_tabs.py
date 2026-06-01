@@ -17,13 +17,20 @@ from cesnet_service_path_plugin.views.map import (
 )
 
 
-def _network_map_context(request, segments_data, sites_data, circuits_data, title, prefilter):
+def _network_map_context(request, segments_data, sites_data, circuits_data, title, prefilter,
+                         bounds_sites_data=None, bounds_segments_data=None, bounds_circuits_data=None):
     """
     Build the shared context dict for the Network Map tab card.
     prefilter — dict of initial JS filter state, e.g. {"at_any_site": [pk]}
+    bounds_* — optional narrower datasets used only for initial fitBounds calculation;
+               falls back to the full datasets when not provided.
     """
     region_ancestors = _build_region_ancestors()
-    map_bounds = _compute_bounds(sites_data, segments_data, circuits_data)
+    map_bounds = _compute_bounds(
+        bounds_sites_data    if bounds_sites_data    is not None else sites_data,
+        bounds_segments_data if bounds_segments_data is not None else segments_data,
+        bounds_circuits_data if bounds_circuits_data is not None else circuits_data,
+    )
 
     if map_bounds["minLat"] is None:
         map_center = {"lat": 49.75, "lng": 15.5, "zoom": 7}
@@ -84,11 +91,24 @@ class SiteSegmentMapTabView(generic.ObjectView):
         segments_data = _build_segments_data(segment_qs)
         circuits_data = _build_circuits_data(circuit_qs)
 
+        # Compute initial map bounds from only the objects relevant to this site
+        bounds_site_qs = Site.objects.filter(
+            pk=instance.pk,
+            latitude__isnull=False,
+            longitude__isnull=False,
+        ).select_related("region", "group", "tenant")
+        bounds_segment_qs = SegmentFilterSet(
+            {"at_any_site": [instance.pk]}, queryset=Segment.objects.all()
+        ).qs
+
         return _network_map_context(
             request,
             segments_data, sites_data, circuits_data,
             title=f"Network Map — {instance.name}",
             prefilter={"at_any_site": [instance.pk]},
+            bounds_sites_data=_build_sites_data(bounds_site_qs),
+            bounds_segments_data=_build_segments_data(bounds_segment_qs),
+            bounds_circuits_data=[],
         )
 
 

@@ -91,7 +91,7 @@
 
         <div class="card-body p-0">
             <div id="tab-map"
-                 style="height:600px; width:100%; border-radius:0 0 4px 4px;">
+                 style="height:var(--tab-map-height,75vh); min-height:400px; width:100%; border-radius:0 0 4px 4px;">
             </div>
         </div>
     </div>
@@ -119,9 +119,37 @@
 (function () {
     var _mapData = JSON.parse(document.getElementById('tab-map-data').textContent);
     var map = L.map('tab-map').setView([_mapData.mapCenter.lat, _mapData.mapCenter.lng], _mapData.mapCenter.zoom);
+    var _b = _mapData.mapBounds;
+    if (_b && _b.minLat !== null) {
+        map.fitBounds([[_b.minLat, _b.minLng], [_b.maxLat, _b.maxLng]], { padding: [20, 20] });
+    }
     initializeMapLayers(map);
     // Store the map instance on the element so object_map_tab.js can retrieve it
     document.getElementById('tab-map')._leaflet_map = map;
 })();
 </script>
 <script src="{% static 'cesnet_service_path_plugin/js/object_map_tab.js' %}"></script>
+
+<script>
+(function () {
+    function setTabMapHeight() {
+        var mapEl = document.getElementById('tab-map');
+        if (!mapEl) return;
+        var top = mapEl.getBoundingClientRect().top + window.scrollY;
+        var available = window.innerHeight - top - 16;
+        document.documentElement.style.setProperty('--tab-map-height', Math.max(400, available) + 'px');
+        var leafletMap = mapEl._leaflet_map;
+        if (leafletMap) leafletMap.invalidateSize();
+    }
+
+    document.addEventListener('DOMContentLoaded', setTabMapHeight);
+    window.addEventListener('resize', setTabMapHeight);
+    if (document.readyState !== 'loading') setTabMapHeight();
+
+    // Re-run when any Bootstrap tab is shown (handles map hidden on page load)
+    document.addEventListener('shown.bs.tab', function (e) {
+        var pane = document.querySelector(e.target.getAttribute('data-bs-target'));
+        if (pane && pane.querySelector('#tab-map')) setTabMapHeight();
+    });
+})();
+</script>
