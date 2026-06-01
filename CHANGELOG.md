@@ -1,5 +1,34 @@
 # Changelog
 
+## [6.2.5] - 2026-06-01
+
+### Fixed
+
+- **Network Map tab — responsive height**: The embedded map card on Site and Region detail pages
+  now resizes dynamically with the browser window instead of using a fixed 600 px height. A
+  `resize` event listener recalculates available viewport height and calls Leaflet's
+  `invalidateSize()` to keep the map in sync. A `shown.bs.tab` listener handles the case where
+  the map tab is not active on page load (Leaflet would otherwise initialise with zero dimensions).
+- **Network Map tab — initial fit-to-bounds**: The map now opens zoomed to the bounding box of
+  its objects rather than a fixed zoom level. For Site tabs the bounds are computed from the
+  site's own connected segments only (not the full network), so a single-site view opens at the
+  correct local zoom. For Region tabs the existing region-filtered queryset already provided
+  correct bounds.
+- **Network Map tab — fitBounds after resize**: `fitBounds` is re-applied after every
+  `invalidateSize` call so the zoom level remains correct for the final container dimensions,
+  fixing a subtle issue where the early `fitBounds` could be calculated against the pre-resize
+  container size.
+
+### Compatibility
+
+| cesnet_service_path_plugin | NetBox |
+|---|---|
+| 6.2.x | 4.5.4 – 4.6.x |
+| 6.1.x | 4.5.4+ |
+| 6.0.x | 4.5.0 – 4.5.3 |
+
+---
+
 ## [6.2.4] - 2026-05-11
 
 ### Fixed

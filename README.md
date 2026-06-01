@@ -47,7 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version | Notes |
 |----------------|----------------|-------|
-|  4.5.4 – 4.6.x |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode; interactive segment path editor (6.2.2); NetBox 4.6 support (6.2.3); dependency cleanup + GIS bug fix (6.2.4) |
+|  4.5.4 – 4.6.x |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode; interactive segment path editor (6.2.2); NetBox 4.6 support (6.2.3); dependency cleanup + GIS bug fix (6.2.4); tab map responsive resize + fit-to-bounds (6.2.5) |
 |     4.5.4+     |      6.1.x     | Requires NetBox >= 4.5.4 (strawberry-graphql-django >= 0.79.0) |
 |   4.5.0–4.5.3  |      6.0.x     | **Breaking change**: Filter system updated, NOT compatible with 4.4.x |
 |     4.4.x      |      5.4.x     | Last version compatible with NetBox 4.4.x |
@@ -155,6 +155,9 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
     - Create new sites, segments, and circuits via inline forms
     - Move segment or circuit endpoints by clicking a connection then a new site
     - Confirmation dialog before any endpoint replacement is saved
+- **Network Map tab** (on Site and Region detail pages): embedded map card showing objects related to the current object
+  - Dynamically resizes with the browser window and correctly handles Bootstrap tab activation
+  - Automatically fits the initial view to the bounds of the displayed objects (site's own segments, or all region objects)
 - An example of a geographic service path visualized using the plugin:
     ![Sample Service Path Map](./docs/sample_path.png)
 
