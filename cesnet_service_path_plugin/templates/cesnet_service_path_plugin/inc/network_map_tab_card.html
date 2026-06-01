@@ -132,6 +132,12 @@
 
 <script>
 (function () {
+    var _tabMapData = JSON.parse(document.getElementById('tab-map-data').textContent);
+    var _tb = _tabMapData.mapBounds;
+    var _tabBounds = (_tb && _tb.minLat !== null)
+        ? [[_tb.minLat, _tb.minLng], [_tb.maxLat, _tb.maxLng]]
+        : null;
+
     function setTabMapHeight() {
         var mapEl = document.getElementById('tab-map');
         if (!mapEl) return;
@@ -139,7 +145,10 @@
         var available = window.innerHeight - top - 16;
         document.documentElement.style.setProperty('--tab-map-height', Math.max(400, available) + 'px');
         var leafletMap = mapEl._leaflet_map;
-        if (leafletMap) leafletMap.invalidateSize();
+        if (leafletMap) {
+            leafletMap.invalidateSize();
+            if (_tabBounds) leafletMap.fitBounds(_tabBounds, { padding: [20, 20] });
+        }
     }
 
     document.addEventListener('DOMContentLoaded', setTabMapHeight);
