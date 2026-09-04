@@ -1,5 +1,24 @@
 # Changelog
 
+## [6.3.0] - 2026-09-04
+
+### Breaking
+
+- **NetBox 4.7 only**: `min_version` raised to `4.7.0` and `max_version` to `4.7.99` after
+  successful testing against NetBox 4.7.0 (Django 6.1, django-tables2 3.0). No source changes
+  required. NetBox 4.5.4 – 4.6.x installs must stay on the 6.2.x line (latest 6.2.5).
+
+### Compatibility
+
+| cesnet_service_path_plugin | NetBox |
+|---|---|
+| 6.3.x | 4.7.x |
+| 6.2.x | 4.5.4 – 4.6.x |
+| 6.1.x | 4.5.4+ |
+| 6.0.x | 4.5.0 – 4.5.3 |
+
+---
+
 ## [6.2.5] - 2026-06-01
 
 ### Fixed
