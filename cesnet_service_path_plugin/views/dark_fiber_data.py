@@ -44,7 +44,7 @@ class DarkFiberSegmentDataEditView(generic.ObjectEditView):
                 return return_url
 
         # Default: return to segment detail if we have an object
-        if obj and obj.segment:
+        if obj and obj.segment_id:
             return obj.segment.get_absolute_url()
 
         # Fallback to default behavior
