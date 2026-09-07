@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.3.1] - 2026-09-07
+
+### Fixed
+
+- **Type-specific data add views — 500 without `?segment=`**: `dark-fiber-data/add/`,
+  `ethernet-service-data/add/` and `optical-spectrum-data/add/` raised `RelatedObjectDoesNotExist`
+  when opened without the `segment` query parameter, because `get_return_url` accessed
+  `obj.segment` on an unsaved object. Now checks `obj.segment_id`. The UI always passes the
+  parameter, so only direct URL access was affected.
+
+---
+
 ## [6.3.0] - 2026-09-04
 
 ### Breaking
