@@ -5,9 +5,10 @@ from circuits.tables import CircuitTable
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from netbox.plugins import PluginTemplateExtension
+from utilities.permissions import get_permission_for_model
 from utilities.tables import register_table_column
 
-from cesnet_service_path_plugin.models import Segment, ServicePathSegmentMapping, ServicePath
+from cesnet_service_path_plugin.models import Segment, SegmentCircuitMapping, ServicePath, ServicePathSegmentMapping
 from cesnet_service_path_plugin.utils import build_service_path_topology, build_segment_topology
 import logging
 
@@ -20,10 +21,25 @@ plugin_settings = settings.PLUGINS_CONFIG.get("cesnet_service_path_plugin", {})
 # Extra Views
 
 
+class _PermittedTableExtension(PluginTemplateExtension):
+    """Skip the card when the user can't view what the embedded htmx table lists;
+    otherwise the table request 403s and leaves an empty card + console error."""
+
+    template_name = None
+    permission = get_permission_for_model(Segment, "view")
+
+    def full_width_page(self):
+        if not self.context["request"].user.has_perm(self.permission):
+            return ""
+        return self.render(self.template_name)
+
+
 class CircuitSegmentExtension(PluginTemplateExtension):
     models = ["circuits.circuit"]
 
     def full_width_page(self):
+        if not self.context["request"].user.has_perm(get_permission_for_model(SegmentCircuitMapping, "view")):
+            return ""
         circuit = self.context["object"]
 
         # Get the first segment associated with this circuit
@@ -62,31 +78,19 @@ class CircuitSegmentExtension(PluginTemplateExtension):
         )
 
 
-class ProviderSegmentExtension(PluginTemplateExtension):
+class ProviderSegmentExtension(_PermittedTableExtension):
     models = ["circuits.provider"]
-
-    def full_width_page(self):
-        return self.render(
-            "cesnet_service_path_plugin/provider_segments_extension.html",
-        )
+    template_name = "cesnet_service_path_plugin/provider_segments_extension.html"
 
 
-class SiteSegmentExtension(PluginTemplateExtension):
+class SiteSegmentExtension(_PermittedTableExtension):
     models = ["dcim.site"]
-
-    def full_width_page(self):
-        return self.render(
-            "cesnet_service_path_plugin/site_segments_extension.html",
-        )
+    template_name = "cesnet_service_path_plugin/site_segments_extension.html"
 
 
-class LocationSegmentExtension(PluginTemplateExtension):
+class LocationSegmentExtension(_PermittedTableExtension):
     models = ["dcim.location"]
-
-    def full_width_page(self):
-        return self.render(
-            "cesnet_service_path_plugin/location_segments_extension.html",
-        )
+    template_name = "cesnet_service_path_plugin/location_segments_extension.html"
 
 
 class TenantProviderExtension(PluginTemplateExtension):
