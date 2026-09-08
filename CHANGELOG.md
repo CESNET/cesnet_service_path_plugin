@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.3.2] - 2026-09-08
+
+### Fixed
+
+- **"Segments" card rendered without permission**: the Site / Location / Provider / Circuit detail
+  page extensions rendered the htmx "Segments" card for every user. Users without
+  `cesnet_service_path_plugin.view_segment` (or `view_segmentcircuitmapping` on circuits) got an
+  empty card and a 403 console error from the embedded table request. The card is now skipped
+  when the user lacks the permission the embedded list view checks.
+
+---
+
 ## [6.3.1] - 2026-09-07
 
 ### Fixed
