@@ -1,5 +1,15 @@
 # Changelog
 
+## [6.4.0] - 2026-10-01
+
+### Changed
+
+- All five filtersets (`ContractInfo`, `Segment`, `SegmentCircuitMapping`, `ServicePath`,
+  `ServicePathSegmentMapping`) are registered with NetBox's `@register_filterset`, so they are
+  discoverable through the application registry.
+- `pyproject.toml` declares the `netbox.plugins` entry point and advertises Python 3.12 - 3.14
+  (`requires-python >= 3.12` was already in place).
+
 ## [6.3.2] - 2026-09-08
 
 ### Fixed

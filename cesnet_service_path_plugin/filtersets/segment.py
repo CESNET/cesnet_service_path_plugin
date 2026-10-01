@@ -7,6 +7,7 @@ from django.db.models import IntegerField, Q
 from django.db.models.expressions import Func
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
+from utilities.filtersets import register_filterset
 from dcim.choices import InterfaceTypeChoices
 
 from cesnet_service_path_plugin.models import Segment
@@ -24,6 +25,7 @@ from cesnet_service_path_plugin.models.segment_types import SegmentTypeChoices
 logger = logging.getLogger(__name__)
 
 
+@register_filterset
 class SegmentFilterSet(NetBoxModelFilterSet):
     q = django_filters.CharFilter(
         method="search",

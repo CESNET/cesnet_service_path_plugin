@@ -1,6 +1,7 @@
 import django_filters
 from django.db.models import Q
 from netbox.filtersets import NetBoxModelFilterSet
+from utilities.filtersets import register_filterset
 
 from cesnet_service_path_plugin.models import ContractInfo
 from cesnet_service_path_plugin.models.custom_choices import (
@@ -10,6 +11,7 @@ from cesnet_service_path_plugin.models.custom_choices import (
 )
 
 
+@register_filterset
 class ContractInfoFilterSet(NetBoxModelFilterSet):
     """FilterSet for ContractInfo model with versioning support"""
 

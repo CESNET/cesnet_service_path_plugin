@@ -2,11 +2,13 @@ import django_filters
 from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
+from utilities.filtersets import register_filterset
 
 from cesnet_service_path_plugin.models import ServicePath
 from cesnet_service_path_plugin.models.custom_choices import KindChoices, StatusChoices
 
 
+@register_filterset
 class ServicePathFilterSet(NetBoxModelFilterSet):
     q = django_filters.CharFilter(
         method="search",
