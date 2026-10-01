@@ -4,8 +4,10 @@ from django.db.models import Q
 from extras.filters import TagFilter
 from cesnet_service_path_plugin.models import Segment, SegmentCircuitMapping
 from netbox.filtersets import NetBoxModelFilterSet
+from utilities.filtersets import register_filterset
 
 
+@register_filterset
 class SegmentCircuitMappingFilterSet(NetBoxModelFilterSet):
     q = django_filters.CharFilter(
         method="search",

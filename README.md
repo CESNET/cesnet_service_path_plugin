@@ -47,6 +47,7 @@ The CESNET ServicePath Plugin extends NetBox's capabilities by providing compreh
 
 | NetBox Version | Plugin Version | Notes |
 |----------------|----------------|-------|
+|     4.7.x      |      6.4.x     | Filtersets registered with NetBox registry; `netbox.plugins` entry point |
 |     4.7.x      |      6.3.x     | **NetBox 4.7 only** (min_version 4.7.0) |
 |  4.5.4 – 4.6.x |      6.2.x     | Network Map UX overhaul, tag filters, object highlight, edit mode; interactive segment path editor (6.2.2); NetBox 4.6 support (6.2.3); dependency cleanup + GIS bug fix (6.2.4); tab map responsive resize + fit-to-bounds (6.2.5) |
 |     4.5.4+     |      6.1.x     | Requires NetBox >= 4.5.4 (strawberry-graphql-django >= 0.79.0) |

@@ -2,6 +2,7 @@ import django_filters
 from django.db.models import Q
 from extras.filters import TagFilter
 from netbox.filtersets import NetBoxModelFilterSet
+from utilities.filtersets import register_filterset
 
 from cesnet_service_path_plugin.models import (
     Segment,
@@ -10,6 +11,7 @@ from cesnet_service_path_plugin.models import (
 )
 
 
+@register_filterset
 class ServicePathSegmentMappingFilterSet(NetBoxModelFilterSet):
     q = django_filters.CharFilter(
         method="search",

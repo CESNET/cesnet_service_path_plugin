@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cesnet_service_path_plugin"
-version = "6.3.2"
+version = "6.4.0"
 description = "Adds ability to create, edit and view service paths in the network."
 authors = [
     {name = "Jan Krupa", email = "jan.krupa@cesnet.cz"},
@@ -24,15 +24,18 @@ classifiers = [
     "Framework :: Django",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
 [project.urls]
 Homepage = "https://github.com/CESNET/cesnet_service_path_plugin"
 Repository = "https://github.com/CESNET/cesnet_service_path_plugin"
 Issues = "https://github.com/CESNET/cesnet_service_path_plugin/issues"
+
+[project.entry-points."netbox.plugins"]
+cesnet_service_path_plugin = "cesnet_service_path_plugin:config"
 
 [project.optional-dependencies]
 dev = [
